@@ -1,0 +1,37 @@
+                              Bulbs   
+
+          a Python persistence framework for graph databases
+
+
+What is Bulbs?
+
+Bulbs is a Python persistence framework for graph databases that connects
+to Rexster, a REST server optimized for recommendations. Rexster is part
+of the TinkerPop stack. You can connect to any Blueprints-enabled graph
+database, including Neo4j, OrientDB, Dex, OpenRDF Sail, and TinkerGraph.
+
+Is it ready?
+
+A preview release is out now, and I welecome feedback on how to improve it.
+The API will probably change somewhat until we hit 1.0.
+
+What do I need?
+
+Rexster (https://github.com/tinkerpop/rexster) and a few Python libraries,
+such as simplejson and httplib2.
+
+Where are the docs?
+
+Go to http://bulbflow.com for the current documentation.
+
+Where can I get help?
+
+The Gremlin User group (https://groups.google.com/forum/#!forum/gremlin-users)
+of email me at james@jamesthornton.com.
+
+
+
+
+
+
+
