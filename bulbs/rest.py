@@ -64,7 +64,7 @@ class Resource(object):
         assert method in ("GET","POST","DELETE"), \
             "Only GET, POST, DELETE are allowed."
 
-        headers = {'Accept': 'application/json'}
+        headers = {'Accept': 'application/json', 'connection': 'close'}
 
         # httplib2 let's you cache http responses with memcache 
         # really cool, look into that later
