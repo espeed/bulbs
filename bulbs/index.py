@@ -9,6 +9,7 @@ An interface for interacting with indices on Rexster.
 """
 
 from element import Vertex, Edge
+from gremlin import Gremlin
 from config import TYPE_VAR
 
 class Index(object):
@@ -242,7 +243,19 @@ class Index(object):
         params = {'key':key,'value':value,'class':self.index_class,'id':_id}
         resp = self.resource.delete(target,params)
         return resp
-             
+
+    def rebuild(self,raw=False):
+        # need class_map b/c the Blueprints need capitalized class names, 
+        # but Rexster returns lower-case class names for index_class
+        class_map = dict(vertex='Vertex',edge='Edge')
+        klass = class_map[self.index_class]
+        script = "index = g.getIndex('%s',%s);" % (self.index_name,klass)
+        script = script + "AutomaticIndexHelper.reIndexElements(g, index, g.getVertices())"
+        resp = Gremlin(self.resource).execute(script,raw=True)
+        if raw or not resp.results:
+            return resp
+        return list(resp.results)
+
     def _get_index_class(self,index_class):
         """
         Returns the index class. This is a hack that can go away when Rexster

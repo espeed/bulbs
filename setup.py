@@ -52,7 +52,7 @@ def run_tests():
     return suite()
 
 setup (
-    name = 'Bulbs',
+    name = 'bulbs',
     version = '0.2-dev',
     url = 'http://bulbflow.com',
     license = 'BSD',

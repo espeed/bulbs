@@ -36,6 +36,8 @@ class IndexTestCase(unittest.TestCase):
         i1.remove(james._id,'name','James')
         james = i1.get_unique('name','James')
         assert james is None
+        results = i1.rebuild()
+        assert type(results) == list
         self.graph.indices.delete(index_name)
 
         

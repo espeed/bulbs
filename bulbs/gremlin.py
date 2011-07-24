@@ -27,7 +27,7 @@ class Gremlin(object):
 
     def query(self,script,*classes,**kwds):
         """
-        Returns raw results of arbitrary Gremlin scripts run through Rexster.
+        Returns initialized results of arbitrary Gremlin scripts run through Rexster.
 
         :param script: Gremlin script to send to Rexster. Since this begins 
                        from the context of a graph instead of an element, the 
@@ -52,8 +52,6 @@ class Gremlin(object):
                         defined in the class to initialize the returned items
                         to a Person object.
 
-        :param kwds: name/value pairs of optional arguments:
-                        
         :param return_keys: Optional keyword param. A comman-separated list of
                             keys (DB properties) to return. If set to None, it
                             returns all properties. Defaults to None.
@@ -62,21 +60,45 @@ class Gremlin(object):
                     initialize data. Defaults to False. 
         
         """
-        script = self._trim_lines(script)
-        # do these imports here to avoid circular dependency issue with element.py
-        from element import Vertex, Edge
-        default_class_map = dict(vertex=Vertex,edge=Edge)
-        self.class_map.update(default_class_map)
-        self._add_classes(classes)
-        return_keys = kwds.pop('return_keys',None)
         raw = kwds.pop('raw',False)
-        params = dict(script=script)
-        if return_keys:
-            params.update(return_keys=return_keys)
-        resp = self.resource.get(self.base_target,params)
+        resp = self._query(script,*classes,**kwds)
         for result in resp.results:
             yield self._initialize_result(result,raw)
  
+
+    def execute(self,script,**kwds):
+        """
+        Returns raw results of arbitrary Gremlin scripts run through Rexster.
+
+        :param script: Gremlin script to send to Rexster. Since this begins 
+                       from the context of a graph instead of an element, the 
+                       script should begin with the reference to itself 
+                       (g) instead of a reference to the element (v or e). 
+                       Example:
+
+                       .. code-block:: groovy
+
+                          // do this... 
+                          g.v(1).outE('created') 
+                           
+                          // instead of... 
+                          v.outE('created')
+
+        :param return_keys: Optional keyword param. A comman-separated list of
+                            keys (DB properties) to return. If set to None, it
+                            returns all properties. Defaults to None.
+
+        :param raw: Optional keyword param. If set to True, it won't try to 
+                    initialize data. Defaults to False. 
+        
+        """
+        raw = kwds.pop('raw',False)
+        classes = ()
+        resp = self._query(script,*classes,**kwds)
+        if raw:
+            return resp
+        return list(resp.results)
+
 
     def lds_query(self,script,raw=False):
         """Return queries on remote LinkedData stores."""
@@ -84,13 +106,24 @@ class Gremlin(object):
         lds_hack = "g = new LinkedDataSailGraph(new MemoryStoreSailGraph());"
         script = lds_hack + self._trim_lines(script)
         params = dict(script=script)
+        resp = self.resource.get(self.base_target,params)
+        for result in resp.results:
+            yield self._initialize_result(result,raw)
+
+    def _query(self,script,*classes,**kwds):
+        """Returns raw results of arbitrary Gremlin scripts run through Rexster."""
+        script = self._trim_lines(script)
+        # do these imports here to avoid circular dependency issue with element.py
+        from element import Vertex, Edge
+        default_class_map = dict(vertex=Vertex,edge=Edge)
+        self.class_map.update(default_class_map)
+        self._add_classes(classes)
+        return_keys = kwds.pop('return_keys',None)
+        params = dict(script=script)
         if return_keys:
             params.update(return_keys=return_keys)
         resp = self.resource.get(self.base_target,params)
-        if raw:
-            return resp
-        return resp.results
-
+        return resp
 
     def _element_query(self,element,script,*classes,**kwds):
         """
