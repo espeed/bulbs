@@ -24,7 +24,7 @@ class TypeSystemMeta(type):
 
         # loop through the class namespace looking for Property instances
         for key, value in namespace.items():
-            print key,value
+            #print key,value
             if isinstance(value, Property):
                 if value.name is None:
                     # name will be none unless set via kwd param
