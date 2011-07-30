@@ -24,6 +24,15 @@ def element_repr(element):
         return "==>e[%d][%d-%s->%d]" % \
             (element.eid,element.outV.eid,element.label,element.inV.eid)
 
+def coerce_id(_id):
+    # try to coerce the element ID string to an int.
+    # ORIENTDB USES STRINGS SO THIS WON'T WORK FOR IT
+    try:
+        return int(_id)
+    except:
+        return _id
+
+
 #def pop_arg(self,args,position,arg_type):
 #    value = None
 #    args = list(args)

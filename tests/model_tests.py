@@ -15,7 +15,7 @@ class NodeTestCase(unittest.TestCase):
         self.james = Person(name="James", age=34)
 
     def test_properties(self):
-        assert type(self.james.eid) == int
+        int(self.james.eid)
         assert self.james.element_type == "person"
         assert self.james.name == "James"
         assert self.james.age == 34

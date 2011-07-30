@@ -20,14 +20,14 @@ class VertexProxyTestCase(unittest.TestCase):
     def test_create(self):
         james = self.graph.vertices.create({'name':'James'})
         assert isinstance(james,Vertex)
-        assert type(james._id) == int
+        int(james._id)
         assert james._type == "vertex"
         assert james.name == "James"
 
     def test_update(self):
         james = self.graph.vertices.create({'name':'James'})
         james = self.graph.vertices.update(james._id, {'name':'James','age':'34'})
-        assert type(james._id) == int
+        int(james._id)
         assert james._type == "vertex"
         assert james.name == "James"
         assert james.age == '34'
@@ -66,7 +66,7 @@ class VertexTestCase(unittest.TestCase):
         self.graph.edges.create(self.julie,"test",self.james)
         
     def test_init(self):
-        assert type(self.james._id) == int
+        int(self.james._id)
         assert self.james._type == "vertex"
         assert self.james.name == "James"
 

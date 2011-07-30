@@ -178,7 +178,7 @@ class Gremlin(object):
         raw = kwds.pop('raw',False)
         self._add_classes(classes)
         #path = element.path()
-        target = "%s/%d/tp/gremlin" % (element._base_target(),element._id)
+        target = "%s/%s/tp/gremlin" % (element._base_target(),element._id)
         params = dict(script=script)
         if return_keys:
             params.update(return_keys=return_keys)
