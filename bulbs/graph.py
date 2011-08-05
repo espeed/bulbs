@@ -227,6 +227,19 @@ class SailGraph(Graph):
         resp = self.resource.delete(target,params=None)
         return resp
 
+    def load_rdf(self,url):
+        """
+        Loads an RDF file into the database, and returns the Rexster 
+        response object.
+
+        :param url: The URL of the RDF file to load.
+
+        """
+        script = "g.loadRDF('%s', 'n-triples')" % url
+        params = dict(script=script)
+        resp = self.resource.get(self.base_target,params)
+        return resp
+
     def _base_target(self):
         "Returns the base target URL path for vertices on Rexster."""
         base_target = "%s/%s" % (self.resource.db_name,"prefixes")
