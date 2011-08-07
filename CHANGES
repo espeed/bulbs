@@ -3,7 +3,18 @@ Bulbs Changelog
 
 Here you can see the full list of changes between each Bulbs release.
 
-Version 0.1
+Version 0.2.1
+-------------
+
+Bugfix release, released on August 7, 2011.
+
+- Removed debug print line from typesystem.py
+- Added Gremlin execute method.
+- Added rebuild index method.
+- Added support for non-integer IDs.
+- Fixed port-exhaustion on Windows.
+
+Version 0.2
 -----------
 
 Released on July 5th 2011, codename Lightbulb

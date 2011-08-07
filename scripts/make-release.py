@@ -32,7 +32,6 @@ def parse_changelog():
                 change_info = lineiter.next().strip()
                 if change_info:
                     break
-
             match = re.search(r'released on (\w+\s+\d+\w+\s+\d+)'
                               r'(?:, codename (.*))?(?i)', change_info)
             if match is None:
@@ -72,7 +71,6 @@ def set_filename_version(filename, version_number, pattern):
 
     with open(filename, 'w') as f:
         f.write(contents)
-
 
 def set_init_version(version):
     info('Setting __init__.py version to %s', version)
