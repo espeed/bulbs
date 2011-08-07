@@ -32,11 +32,11 @@ def parse_changelog():
                 change_info = lineiter.next().strip()
                 if change_info:
                     break
-            match = re.search(r'released on (\w+\s+\d+\w+\s+\d+)'
+            match = re.search(r'released on (\w+\s+\d+\s+\d+)'
                               r'(?:, codename (.*))?(?i)', change_info)
+
             if match is None:
                 continue
-
             datestr, codename = match.groups()
             return version, parse_date(datestr), codename
 
@@ -51,8 +51,8 @@ def bump_version(version):
 
 
 def parse_date(string):
-    string = string.replace('th ', ' ').replace('nd ', ' ') \
-                   .replace('rd ', ' ').replace('st ', ' ')
+    #string = string.replace('th ', ' ').replace('nd ', ' ') \
+    #               .replace('rd ', ' ').replace('st ', ' ')
     return datetime.strptime(string, '%B %d %Y')
 
 
@@ -130,6 +130,7 @@ def main():
     if version in tags:
         fail('Version "%s" is already tagged', version)
     if release_date.date() != date.today():
+        print release_date.date()
         fail('Release date is not today (%s != %s)')
 
     if not git_is_clean():
