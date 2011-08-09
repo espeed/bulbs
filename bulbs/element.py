@@ -38,6 +38,7 @@ class Element(object):
         :param results: The results list returned by Rexster.
 
         """
+        self._data = {}
         self.resource = resource
         self._set_element_data(results)
         self._gremlin = Gremlin(self.resource)
