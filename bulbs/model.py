@@ -427,6 +427,13 @@ class Relationship(Edge,Model):
     """
 
     def __init__(self,*args,**kwds):
+        args = list(args)
+        if args and isinstance(args[1],Vertex):
+            # 2nd arg is a Vertex so they're in form of CreatedBy(entry,james)
+            # TODO: clean up this arg thing -- this is a quick hack to fix a bug
+            outV = args.pop(0)
+            inV = args.pop(0) 
+            args = (outV,self.label,inV)
         self.initialize(args,kwds)
     
     @classmethod
