@@ -11,3 +11,4 @@ old/
 *.pyc
 *.pyo
 *~
+*.class
