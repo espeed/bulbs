@@ -149,7 +149,10 @@ class Model(TypeSystem):
         self.before_created()
         # Using super here b/c Vertex and Edge have different create methods
         #resp = super(self.__class__,self).create(*args,raw=True)
-        resp = self._element_proxy.create(*args,raw=True)
+        # got a "mismatched input, expecting double star" in Jython so
+        # passing raw as a "double star"
+        kwds = dict(raw=True)
+        resp = self._element_proxy.create(*args,**kwds)
         self._initialize_element(self.resource,resp.results)
         #self.set_element_data(resp.results)
         self.after_created()

@@ -7,6 +7,7 @@
 An interface for executing Gremlin scripts on Rexster.
 
 """
+import simplejson as json
 from config import TYPE_VAR
 
 
@@ -26,6 +27,7 @@ class Gremlin(object):
 
 
     def query(self,script,*classes,**kwds):
+        print "HI"
         """
         Returns initialized results of arbitrary Gremlin scripts run through Rexster.
 
@@ -112,7 +114,7 @@ class Gremlin(object):
 
     def _query(self,script,*classes,**kwds):
         """Returns raw results of arbitrary Gremlin scripts run through Rexster."""
-        script = self._trim_lines(script)
+        #script = self._trim_lines(script)
         # do these imports here to avoid circular dependency issue with element.py
         from element import Vertex, Edge
         default_class_map = dict(vertex=Vertex,edge=Edge)
