@@ -10,5 +10,6 @@ old/
 *.egg-info/
 *.pyc
 *.pyo
+*.class
 *~
 

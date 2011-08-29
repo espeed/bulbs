@@ -494,15 +494,23 @@ class ElementProxy(object):
             return resp
         return self.element_class(self.resource,resp.results)
 
-    def get(self,_id):
+    def get(self,_id,raw=False):
         """ 
         Retrieves an element from Rexster and returns it. 
         
         :param _id: The ID of the element you want to retrieve.
 
+        :param raw: Optional keyword param. If raw is False (which is the 
+                    default) it will try to instantiate the element to the 
+                    element_class specified when the proxy object was created.
+                    However, if the raw param is set to True, it will won't 
+                    instantiate the object and will return the raw Response 
+                    object.
         """
         target = "%s/%s" % (self._base_target(),_id)
         resp = self.resource.get(target,params=None)
+        if raw is True:
+            return resp
         if resp.results:
             return self.element_class(self.resource,resp.results)        
     
