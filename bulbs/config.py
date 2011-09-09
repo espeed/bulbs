@@ -8,8 +8,8 @@ import os
 #import sys
 
 ENVIRONMENT_VARIABLE = "BULBS_CONFIG"
-DATABASE_URL = "http://localhost:8182/tinkergraph"
-SAIL_URL = "http://localhost:8182/sailgraph"
+DATABASE_URL = "http://localhost:8182/graphs/tinkergraph"
+SAIL_URL = "http://localhost:8182/graphs/sailgraph"
 TYPE_VAR = "element_type"  
 MAX_RETRIES = 8
 DEBUG = False

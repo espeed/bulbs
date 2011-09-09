@@ -56,8 +56,13 @@ class Model(TypeSystem):
 
     @classmethod
     def get_all(self):
-        """Returns all the elements for the element's base class."""
-        return self._element_proxy.get_all()
+        """Returns all the elements for the model type."""
+        index_name = self._element_proxy._path()
+        target = "%s/indices/%s" % (self.resource.db_name,index_name)
+        params = dict(key="element_type",value=self.element_type)
+        resp = self.resource.get(target,params)
+        for result in resp.results:
+            yield self(self.resource,result)
 
     @classmethod 
     def remove(self,_id,params):
