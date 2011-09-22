@@ -14,7 +14,7 @@ import urllib2
 import httplib2
 import simplejson as json
 from urlparse import urlsplit
-from posixpath import basename
+from posixpath import split
 import config
 
 DEBUG = config.DEBUG
@@ -32,14 +32,12 @@ class Resource(object):
         """
 
         print "DB_URL", db_url
-        self.db_url = db_url
-        if db_url.endswith("/"):
-            # strip off trailing slash
-            db_url = db_url[:-1]
-        url_object = urlsplit(db_url)
-        self.base_url = "%s://%s/graphs" % (url_object.scheme,url_object.netloc)
-        self.db_name = basename(url_object.path)        
-        self.http = httplib2.Http()       
+        # strip off trailing slash
+        self.db_url = db_url.rstrip('/')
+        url_object = urlsplit(self.db_url)
+        root_path, self.db_name = split(url_object.path)
+        self.base_url = "%s://%s%s" % (url_object.scheme, url_object.netloc, root_path)
+        self.http = httplib2.Http()
 
     def get(self,target,params):
         """Convenience method that sends GET requests to the resource.""" 

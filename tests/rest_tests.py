@@ -8,6 +8,12 @@ class RestTestCase(unittest.TestCase):
     def setUp(self):
         self.resource = Resource(config.DATABASE_URL)
 
+    def test_init(self):
+        res = Resource('http://localhost:8182/not-graphs/gratefulgraph')
+
+        assert res.base_url == 'http://localhost:8182/not-graphs'
+        assert res.db_name == 'gratefulgraph'
+
     def test_post(self):
         name_in = "james"
         email_in = "james@jamesthornton.com"
