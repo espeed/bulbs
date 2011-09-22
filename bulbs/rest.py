@@ -31,7 +31,7 @@ class Resource(object):
 
         """
 
-        print "DB_URL", db_url
+        #print "DB_URL", db_url
         # strip off trailing slash
         self.db_url = db_url.rstrip('/')
         url_object = urlsplit(self.db_url)
