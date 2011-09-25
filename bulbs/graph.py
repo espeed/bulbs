@@ -165,8 +165,7 @@ class Graph(object):
 
         """
         script = "g.loadGraphML('%s')" % url
-        params = dict(script=script)
-        resp = self.resource.get(self.base_target,params)
+        resp = self.gremlin.execute(script)
         return resp
 
     def save_graphml(self):
@@ -179,9 +178,8 @@ class Graph(object):
         g.saveGraphML('data/graphml');
         new File('data/graphml').getText();
         """
-        params = dict(script=script)
-        resp = self.resource.get(self.base_target,params)
-        return resp.results
+        results = self.gremlin.execute(script)
+        return results[0]
 
     def clear(self):
         """

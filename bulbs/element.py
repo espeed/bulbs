@@ -397,13 +397,32 @@ class Edge(Element):
     def _outV(self):
         """Returns the outgoing vertex ID of the edge."""
         #return int(self._data['_outV'])
-        return utils.coerce_id(self._data['_outV'])
+        _outV = self._data.get('_outV')
+        if _outV is None and hasattr(self,"__outV"):
+            _outV = self.__outV
+        return utils.coerce_id(_outV)
+
+    @_outV.setter
+    def _outV(self, value):
+        self.__outV = value
         
     @property
     def _inV(self):
         """Returns the incoming vertex ID of the edge."""
         #return int(self._data['_inV'])
-        return utils.coerce_id(self._data['_inV'])
+        #return utils.coerce_id(self._data['_inV'])
+        _inV = self._data.get('_inV')
+        if _inV is None and hasattr(self,"__inV"):
+            _inV = self.__inV
+        return utils.coerce_id(_inV)
+
+    @_inV.setter
+    def _inV(self, value):
+     #   _inV = EdgeProxy(self.resource)._coerce_vertex_id(value)
+     #   super(Element, self).__setattr__("_inV", _inV)
+     #   #EdgeProxy(self.resource)._coerce_vertex_id(value)
+        #super(Element, self).__setattr__("_inV", value)
+        self.__inV = value
 
     # TODO: Make outV and inV return a specific Model class and not a generic 
     # Vertex
@@ -420,7 +439,14 @@ class Edge(Element):
     @property
     def label(self):
         """Returns the edge's label."""
-        return self._label
+        _label = self._data.get('_label')
+        if _label is None and hasattr(self,"__label"):
+            _label = self.__label
+        return _label
+
+    @label.setter
+    def label(self,value):
+        self.__label = value
 
 
 class ElementProxy(object):
