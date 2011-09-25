@@ -155,7 +155,6 @@ class Graph(object):
             element_class = class_map[index_name]
             return (element_class(self.resource,result) for result in resp.results)
 
-    
     def load_graphml(self,url):
         """
         Loads a GraphML file into the database, and returns the Rexster 

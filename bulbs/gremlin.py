@@ -27,7 +27,6 @@ class Gremlin(object):
 
 
     def query(self,script,*classes,**kwds):
-        print "HI"
         """
         Returns initialized results of arbitrary Gremlin scripts run through Rexster.
 
