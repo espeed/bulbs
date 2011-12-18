@@ -36,7 +36,8 @@ class Graph(object):
 
     """
 
-    def __init__(self,db_url=config.DATABASE_URL):
+    def __init__(self,db_url=None):
+        db_url = db_url if db_url else config.DATABASE_URL
         self.resource = Resource(db_url)
         self.vertices = VertexProxy(self.resource)
         self.edges = EdgeProxy(self.resource)
