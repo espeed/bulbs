@@ -12,9 +12,9 @@ from element import Vertex, VertexProxy, EdgeProxy, Edge
 from index import IndexProxy
 from gremlin import Gremlin
 
-from config import Config, REXSTER_URI, NEO4J_URI, SAIL_URI
-from rexster import RexsterResource, RexsterIndex
-from neo4jserver import Neo4jResource, Neo4jIndex
+from config import Config
+from rexster import RexsterResource, RexsterIndex, REXSTER_URI, SAIL_URI
+from neo4jserver import Neo4jResource, Neo4jIndex, NEO4J_URI
 
 class Graph(object):
     """

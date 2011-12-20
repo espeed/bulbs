@@ -1,5 +1,5 @@
 import unittest
-from bulbs.config import Config, REXSTER_URI
+from bulbs.config import Config
 #from bulbs.rest import Request
 
 from bulbs.utils import build_path
@@ -9,7 +9,7 @@ class RestTestCase(unittest.TestCase):
     
     def setUp(self):
         #self.resource = Resource(config.DATABASE_URL)
-        config = Config(REXSTER_URI)
+        config = Config(root_uri=None)
         self.request = RexsterRequest(config)
 
     def test_init(self):

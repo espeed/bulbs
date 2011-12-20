@@ -167,7 +167,7 @@ class VertexProxy(object):
         assert issubclass(element_class,Vertex)
         self.element_class = element_class
         self.resource = resource
-        self.resource.config.register_class(element_class)
+        self.resource.registry.add_class(element_class)
 
     def create(self,data={}):
         """Adds an element to the database and returns it."""
@@ -215,7 +215,7 @@ class EdgeProxy(object):
         assert issubclass(element_class,Edge)
         self.element_class = element_class
         self.resource = resource
-        self.resource.config.register_class(element_class)
+        self.resource.registry.add_class(element_class)
 
     def create(self,outV,label,inV,data={}):
         """Adds an edge to the database and returns it.""" 

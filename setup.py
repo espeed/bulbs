@@ -3,7 +3,7 @@ Bulbs
 -----
 
 Bulbs is a Python persistence framework for graph databases that 
-connects to Rexster.
+connects to Neo4j Server, Rexster, OrientDB, Lightsocket, and more.
 
 """
 from setuptools import Command, setup
@@ -53,21 +53,22 @@ def run_tests():
 
 setup (
     name = 'bulbs',
-    version = '0.2.2',
+    version = '0.3d',
     url = 'http://bulbflow.com',
     license = 'BSD',
     author = 'James Thornton',
     author_email = 'james@jamesthornton.com',
     description = 'A Python persistence framework for graph databases that '
-                  'connects to Rexster.',
+                  'connects to Neo4j Server, Rexster, OrientDB, Lightsocket.',
     long_description = __doc__,
-    keywords = "graph database DB persistence framework rexster gremlin",   
+    keywords = "graph database DB persistence framework rexster gremlin cypher neo4j orientdb",   
     packages = ['bulbs'],
     zip_safe=False,
     platforms='any',
     install_requires=[
-        'httplib2>=0.7.1',
-        'simplejson>=2.1.6',
+        'httplib2>=0.7.2',
+        'ujson>=1.15',
+        'pyyaml>=3.10',
         ],
     classifiers = [
         "Programming Language :: Python",

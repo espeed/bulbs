@@ -90,8 +90,8 @@ class TryTestCase(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-    #suite.addTest(unittest.makeSuite(Neo4jResourceTestCase))
-    #suite.addTest(unittest.makeSuite(Neo4jIndexTestCase))
+    suite.addTest(unittest.makeSuite(Neo4jResourceTestCase))
+    suite.addTest(unittest.makeSuite(Neo4jIndexTestCase))
     suite.addTest(unittest.makeSuite(TryTestCase))
     return suite
 

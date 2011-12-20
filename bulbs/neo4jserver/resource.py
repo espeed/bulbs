@@ -119,7 +119,6 @@ class Neo4jResponse(Response):
         # Neo4jServer returns empty content on update
         if content:
             content = json.loads(content)
-            #print "CONTENT", content
             return content
 
     def get_results(self):
@@ -165,7 +164,7 @@ class Neo4jResource(Resource):
 
         self.config = config
         self.config.debug = True
-        self.registry = Registry()
+        self.registry = Registry(config)
         self.scripts = Scripts()
         dir_name = os.path.dirname(__file__)
         self.scripts.override(get_file_path(dir_name,"gremlin.groovy"))
@@ -179,7 +178,6 @@ class Neo4jResource(Resource):
     #
 
     def gremlin(self,script,params=None): 
-        #print script
         params = dict(script=script,params=params)
         return self.request.post(self.gremlin_path,params)
 
@@ -196,7 +194,6 @@ class Neo4jResource(Resource):
     #
 
     def create_vertex(self,data):
-        #print "CREATEEEEEEEE"
         # TODO: remove None values
         return self.request.post(self.vertex_path,data)
 
@@ -214,10 +211,8 @@ class Neo4jResource(Resource):
         # I created a Gremlin method for it. - James
         params = dict(_id=_id)
         script = self.scripts.get("delete_vertex")
-        resp = self.gremlin(script,params)
-        #print "RAAAAAAAAAAAAA", resp.raw
-        return resp
-
+        return self.gremlin(script,params)
+        
     #
     # Edge Proxy
     #
@@ -227,10 +222,8 @@ class Neo4jResource(Resource):
         path = build_path(self.vertex_path,outV,self.edge_path)
         inV_uri = "%s/node/%s" % (self.config.root_uri.rstrip("/"), inV)
         params = {'to':inV_uri,'type':label, 'data':data}
-        resp = self.request.post(path,params)
-        #print "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", resp.raw
-        return resp
-
+        return self.request.post(path,params)
+        
     def get_edge(self,_id):
         path = build_path("relationship",_id)
         return self.request.get(path,params=None)
@@ -317,7 +310,6 @@ class Neo4jResource(Resource):
         if result:
             result['name'] = name
             resp.results = Neo4jResult(result)
-        #print "INDEX", resp.raw
         return resp
 
     def delete_vertex_index(self,name): 
@@ -412,6 +404,6 @@ class Neo4jResource(Resource):
         return self.request.delete(path,params=None)
     
     def _get_type_system(self):
-        type_system_map = dict(json=JSONTypeSystem())
+        type_system_map = dict(json=JSONTypeSystem)
         type_system = type_system_map[self.config.type_system]
         return type_system()

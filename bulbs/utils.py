@@ -21,6 +21,7 @@ def initialize_elements(resource,response):
         for result in response.results:
             yield initialize_element(resource,result)
 
+# TODO: this may be deprecated in favor of get_element_key
 def get_element_type(resource,result):    
     element_type = result.data.get(resource.config.type_var,None)
     if not element_type:
@@ -28,13 +29,26 @@ def get_element_type(resource,result):
         element_type = result.get_type()
     return element_type
 
+def get_element_key(resource,result):
+    var_map = dict(vertex=resource.config.type_var,
+                   edge=resource.config.label_var)
+    base_type = result.get_type()
+    key_var = var_map[base_type]
+    element_key = result.data.get(key_var,None)
+    if not element_key:
+        # just return the generic type for the Vertex/Edge class
+        element_key = base_type
+    return element_key
+
+    
 def get_element_class(resource,result):
-    element_type = get_element_type(resource,result)
-    element_class = resource.config.class_map[element_type]
+    #element_type = get_element_type(resource,result)
+    element_key = get_element_key(resource,result)
+    element_class = resource.registry.get_class(element_key)
     return element_class
 
  
-def get_only_result(resp):
+def get_one_result(resp):
     # If you're using this utility, that means the results attribute in the 
     # Response object should always contain a single result object,
     # not multiple items. But gremlin returns all results as a list

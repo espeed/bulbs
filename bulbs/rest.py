@@ -73,12 +73,9 @@ class Request(object):
         """
         self.config = config
         self.content_type = content_type
-        self.content_type = self._get_content_type(type_system_map)
         self.http = httplib2.Http()    
         self._add_credentials(config.username,config.password)
-        
-
-
+    
     def get(self,path,params=None):
         """Convenience method that sends GET requests to the resource.""" 
         return self.request("GET",path,params)
@@ -117,7 +114,7 @@ class Request(object):
         http_resp = self.http.request(uri,method,body,headers)
 
         #print http_resp
-        return self.response_class(http_resp,self.config)
+        return self.response_class(http_resp)
 
     def _display_debug(self,uri,method,body,headers):
         print "%s url:  %s  " % (method, uri)

@@ -6,7 +6,7 @@ from bulbs.utils import build_path, get_file_path
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
 from bulbs.index import IndexProxy
 from bulbs.gremlin import Gremlin
-from bulbs.yaml import YamlScripts as Scripts
+from bulbs.yaml import Yaml as Scripts
 from bulbs.typesystem import JSONTypeSystem
 
 # specific to this resource
@@ -41,16 +41,9 @@ def get_type_system(config):
 class RexsterResult(Result):
 
     def __init__(self,result):
-        #self.config = config
-        #self.registery = Registry()
-        # rename data properties
         self.raw = result
         self.data = result
 
-    #def get_data(self):
-        #print "RESULT", 
-    #    return self.result
-    
     def get_id(self):
         _id = self.data['_id']
         return int(_id)
@@ -86,19 +79,13 @@ class RexsterResponse(Response):
         self.handle_response(response)
         self.headers = self.get_headers(response)
         self.content = self.get_content(response)
-        self.raw = self.get_raw(response,config)
         self.results, self.total_size = self.get_results()
-        #self.set_extra_vars(response)
+        self.raw = self.response
 
     def handle_response(self,http_resp):
         headers, content = http_resp
         response_handler = response_handlers.get(headers.status)
         response_handler(http_resp)
-
-    def get_raw(self,response,config):
-        # don't set raw in production else you'll bloat the object
-        if config.debug:
-            return response
 
     def get_headers(self,response):
         headers, content = response
@@ -111,14 +98,11 @@ class RexsterResponse(Response):
         see http://httplib2.googlecode.com/hg/doc/html/libhttplib2.html
         """
         headers, content = response
-        # Neo4jServer returns empty content on update
         if content:
             content = json.loads(content)
-            #print "CONTENT", content
             return content
 
     def get_results(self):
-        #try:
         if type(self.content.get('results')) == list:
             results = (self.result_class(result) for result in self.content['results'])
             total_size = len(self.content['results'])
@@ -129,17 +113,10 @@ class RexsterResponse(Response):
             results = None
             total_size = 0
         return results, total_size
-        #except:
-        #print "CONTENT", type(self.content), self.content
-            # this is because delete returns no content
-         #   return None, 0
-
-    
 
 class RexsterRequest(Request):
     
     response_class = RexsterResponse
-
 
 
 class RexsterResource(Resource):
@@ -160,7 +137,7 @@ class RexsterResource(Resource):
         """
         self.config = config
         self.config.debug = True
-        self.registry = Registry()
+        self.registry = Registry(config)
         self.scripts = Scripts() 
         dir_name = os.path.dirname(__file__)
         self.scripts.override(get_file_path(dir_name,"gremlin.groovy"))
@@ -181,8 +158,7 @@ class RexsterResource(Resource):
     #
     def gremlin(self,script): 
         params = dict(script=script)
-        resp = self.request.post(self.gremlin_path,params)
-        return resp
+        return self.request.post(self.gremlin_path,params)
 
     #
     # Vertices
@@ -198,10 +174,8 @@ class RexsterResource(Resource):
     def update_vertex(self,_id,data):
         #data = self.convert_to_db(data)
         path = build_path(self.vertex_path,_id)
-        resp = self.request.put(path,data)
-        #print resp.raw
-        return resp
-
+        return self.request.put(path,data)
+        
     def delete_vertex(self,_id):
         path = build_path(self.vertex_path,_id)
         return self.request.delete(path,params=None)
@@ -222,8 +196,7 @@ class RexsterResource(Resource):
     def update_edge(self,_id,data):
         #data = self.convert_to_db(data)
         path = build_path(self.edge_path,_id)
-        resp = self.request.put(path,data)
-        return resp
+        return self.request.put(path,data)
 
     def delete_edge(self,_id):
         path = build_path(self.edge_path,_id)
@@ -237,14 +210,12 @@ class RexsterResource(Resource):
         keys = json.dumps(keys) if keys else "null"
         params = dict(index_name=index_name,element_class=element_class,keys=keys)
         script = self.scripts.get('create_automatic_vertex_index',params)
-        #print script
         return self.gremlin(script)
         
     def create_indexed_vertex_automatic(self,data,index_name):
         data = json.dumps(data)
         params = dict(data=data,index_name=index_name)
         script = self.scripts.get('create_automatic_indexed_vertex',params)
-        print script
         return self.gremlin(script)
 
     def create_vertex_index(self,name,*args,**kwds):
@@ -280,8 +251,7 @@ class RexsterResource(Resource):
         
     def delete_index(self,name): 
         path = build_path(self.index_path,name)
-        resp = self.request.delete(path,params=None)
-        return resp
+        return self.request.delete(path,params=None)
 
     def delete_vertex_index(self,name):
         self.delete_index(name)
@@ -305,7 +275,6 @@ class RexsterResource(Resource):
     def lookup_vertex(self,index_name,key,value):
         path = build_path(self.index_path,index_name)
         params = dict(key=key,value=value)
-        #print "PP", path, params
         return self.request.get(path,params)
 
     def remove_vertex(self,name,_id,key=None,value=None):
@@ -328,7 +297,6 @@ class RexsterResource(Resource):
 
     def index_keys(self,name):
         path = build_path(self.index_path,name,"keys")
-        #print path
         return self.request.get(path,params=None)
 
 

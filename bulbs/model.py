@@ -9,7 +9,7 @@ Base classes for modeling domain objects that wrap vertices and edges.
 """
 from bulbs.property import Property
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
-from bulbs.utils import initialize_element, get_only_result
+from bulbs.utils import initialize_element, get_one_result
 
 # utility function used by NodeProxy and RelationshipProxy
 def instantiate_model(element_class,resource,kwds):
@@ -105,15 +105,6 @@ class Model(object):
             data[key] = self._resource.type_system.to_db(value)
         return data
 
-    #def _get_element_key(self):
-    #    if issubclass(self,Vertex):
-    #        element_key = getattr(self,self._resource.config.type_var)
-    #    elif issubclass(self,Edge):
-    #        element_key = getattr(self,self._resource.config.label_var)
-    #    else:
-    #        raise TypeError("Not an Element class.")
-    #    return element_key
-
     def _get_index(self,index_name):
         try:
             index = self._resource.registry.get_index(index_name)
@@ -198,8 +189,8 @@ class NodeProxy(VertexProxy):
         node = instantiate_model(self.element_class,self.resource,kwds)
         data = node._get_property_data()
         resp = node._create(data,self.index)
-        # see comments in utils.get_only_result for why we're using this
-        result = get_only_result(resp)  
+        # see comments in utils.get_one_result for why we're using this
+        result = get_one_result(resp)  
         # doing it this way you're losing any extra kwds that may have been set
         return initialize_element(self.resource,result)
         
@@ -207,7 +198,7 @@ class NodeProxy(VertexProxy):
         node = instantiate_model(self.element_class,self.resource,kwds)
         data = node._get_property_data()
         resp = node._update(_id,data,self.index)
-        result = get_only_result(resp)
+        result = get_one_result(resp)
         # TODO: make this work for neo4j b/c neo4j doesn't return data
         return initialize_element(self.resource,result)
 
@@ -227,14 +218,14 @@ class RelationshipProxy(EdgeProxy):
         print "DATAAAA", data
         resp = relationship._create(outV,label,inV,data)
         print resp.raw
-        result = get_only_result(resp)
+        result = get_one_result(resp)
         return initialize_element(self.resource,result)
 
     def update(self,_id,*args,**kwds):
         relationship = instantiate_model(self.element_class,self.resource,kwds)
         data = relationship._get_property_data()
         resp = relationship._update(_id,data)
-        result = get_only_result(resp)
+        result = get_one_result(resp)
         return initialize_element(self.resource,result)
 
     def get_all(self):

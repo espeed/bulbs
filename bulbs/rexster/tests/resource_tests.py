@@ -1,7 +1,7 @@
 import unittest
-from bulbs.config import Config, REXSTER_URI
+from bulbs.config import Config
 from bulbs.tests.resource_tests import ResourceTestCase
-from bulbs.rexster.resource import RexsterResource
+from bulbs.rexster.resource import RexsterResource, REXSTER_URI
 
 import time
 
