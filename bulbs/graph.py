@@ -7,11 +7,14 @@
 Interface for interacting with a graph database through Rexster.
 
 """
-import config
-from rest import Resource
-from element import Vertex, VertexProxy, Edge, EdgeProxy
+
+from element import Vertex, VertexProxy, EdgeProxy, Edge
 from index import IndexProxy
 from gremlin import Gremlin
+
+from config import Config, REXSTER_URI, NEO4J_URI, SAIL_URI
+from rexster import RexsterResource, RexsterIndex
+from neo4jserver import Neo4jResource, Neo4jIndex
 
 class Graph(object):
     """
@@ -19,7 +22,9 @@ class Graph(object):
 
     Instantiates the database :class:`~bulbs.rest.Resource` object using 
     the specified database URL and sets up proxy objects to the database.
-        
+    
+
+
     :keyword db_url: The URL to the specific database on Rexster. 
     :ivar vertices: :class:`~bulbs.element.VertexProxy` object for the Resource.
     :ivar edges: :class:`~bulbs.element.EdgeProxy` object for the Resource.
@@ -36,125 +41,9 @@ class Graph(object):
 
     """
 
-    def __init__(self,db_url=None):
-        db_url = db_url if db_url else config.DATABASE_URL
-        self.resource = Resource(db_url)
-        self.vertices = VertexProxy(self.resource)
-        self.edges = EdgeProxy(self.resource)
-        self.indices = IndexProxy(self.resource)
-        self.gremlin = Gremlin(self.resource)
-
-    #def __rshift__(self,b):
-    #    return list(self)
-
-    @property
-    def V(self):
-        """
-        Returns all the vertices of the graph.
-
-        Example::
+    def __init__(self,resource):
+        self.resource = resource
         
-        >>> g = Graph()
-        >>> vertices = g.V
-
-        :rtype: List of :class:`~bulbs.element.Vertex` objects. 
-
-        """
-        vertices = self.gremlin.query("g.V",Vertex,raw=True)
-        return list(vertices)
-    
-    @property
-    def E(self):
-        """
-        Returns all the edges of the graph. 
-
-        Example::
-        
-        >>> g = Graph()
-        >>> edges = g.E
-
-        :rtype: List of :class:`~bulbs.element.Edge` objects.
-
-        """
-        edges = self.gremlin.query("g.E",Edge,raw=True)
-        return list(edges)
-
-    def idxV(self,**kwds):
-        """
-        Looks up a key/value pair in the vertex index and
-        returns a generator containing the vertices matching the key and value.
-
-        :keyword pair: The key/value pair to match on.
-        :keyword raw: Boolean. If True, return the raw Response object. 
-                      Defaults to False.
-
-        Example::
-
-        >>> g = Graph()
-        >>> vertices = g.idxV(name="James")
-
-        :rtype: Generator of :class:`~bulbs.element.Vertex` objects.
-
-        You can turn the generator into a list by doing::
-
-        >>> vertices = g.idxV(name="James")
-        >>> vertices = list(vertices)
-
-        """
-        return self._idx("vertices",**kwds)
-        
-    #def _initialize_results(self,results,raw):
-    #    if raw is True:
-    #        return (result for result in results)
-    #    else:
-    #        return (Vertex(self.resource,result) for result in results)
-        
-    def idxE(self,**kwds):
-        """
-        Looks up a key/value pair in the edge index and 
-        returns a generator containing the edges matching the key and value.
-
-        :keyword pair: The key/value pair to match on.
-        :keyword raw: Boolean. If True, return the raw Response object. 
-                      Defaults to False.
-
-        Example::
-
-        >>> g = Graph()
-        >>> edges = g.idxE(label="knows")
-
-        :rtype: Generator of :class:`~bulbs.element.Edge` objects.
-
-        You can turn the generator into a list by doing::
-
-        >>> edges = g.idxE(label="knows")
-        >>> edges = list(edges)
-
-        """
-        return self._idx("edges",**kwds)
-
-    def _idx(self,index_name,**kwds):
-        """
-        Returns the Rexster Response object of the index look up.
-        
-        :param index_name: The name of the index.
-
-        :param pair: The key/value pair to match on. 
-        :keyword raw: Boolean. If True, return the raw Response object. 
-                      Defaults to False.
-
-        """
-        raw = kwds.pop("raw",False)
-        key, value = kwds.popitem()
-        target = "%s/indices/%s" % (self.resource.db_name,index_name)
-        params = dict(key=key,value=value)
-        resp = self.resource.get(target,params)
-        if raw:
-            return resp
-        if resp.results:
-            class_map = dict(vertices=Vertex,edges=Edge)
-            element_class = class_map[index_name]
-            return (element_class(self.resource,result) for result in resp.results)
 
     def load_graphml(self,url):
         """
@@ -195,16 +84,53 @@ class Graph(object):
            g.clear() will delete all your data!
 
         """
-        target = self.resource.db_name
-        resp = self.resource.delete(target,params=None)
+        resp = self.resource.clear()
         return resp
 
 
-class SailGraph(Graph):
+
+
+class Neo4jGraph(Graph):
+    
+    def __init__(self,root_uri=NEO4J_URI):
+        config = Config(root_uri)
+        resource = Neo4jResource(config)
+        Graph.__init__(self,resource)
+        
+        # Set Indices
+        index_proxy = IndexProxy(resource,Neo4jIndex)
+
+        
+class RexsterGraph(Graph):
+
+    def __init__(self,root_uri=REXSTER_URI):
+        config = Config(root_uri)
+        resource = RexsterResource(config)
+        Graph.__init__(self,resource)
+        self.initialize(resource)
+        
+    def initialize(self,resource):
+        self.gremlin = Gremlin(self.resource)
+        self.indices = IndexProxy(RexsterIndex,resource)
+        
+        self.vertices = VertexProxy(Vertex,resource) 
+        self.vertices.index = self.indices.get("vertices") 
+
+        self.edges = EdgeProxy(Edge,resource)
+        self.edges.index = self.indices.get("edges")
+
+
+class SailGraph(object):
     """ An interface to for SailGraph. """
 
-    def __init__(self,db_url=config.SAIL_URL):
-        Graph.__init__(self,db_url)
+    def __init__(self,root_uri=SAIL_URI):
+        config = Config(root_uri)
+        self.resource = RexsterResource(config)
+
+        self.vertices = self.create_proxy(Vertex,RexsterIndex,"vertices") 
+        self.edges = self.create_proxy(Edge,RexsterIndex,"edges")
+        self.gremlin = Gremlin(self.resource)
+
         
     def add_prefix(self,prefix,namespace):
         params = dict(prefix=prefix,namespace=namespace)
@@ -242,4 +168,3 @@ class SailGraph(Graph):
         "Returns the base target URL path for vertices on Rexster."""
         base_target = "%s/%s" % (self.resource.db_name,"prefixes")
         return base_target
-

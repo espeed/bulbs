@@ -10,50 +10,94 @@ returning a Response object.
 """
 
 import urllib
-import urllib2
 import httplib2
-import simplejson as json
-from urlparse import urlsplit
-from posixpath import split
-import config
+import ujson as json
+from pprint import pprint
 
-DEBUG = config.DEBUG
-MAX_RETRIES = config.MAX_RETRIES
+from resource import Result, Response, Resource
 
-class Resource(object):
+def get_error(http_resp):
+    header, content = http_resp
+    content = json.loads(content)
+    status = header.get('status')
+    message = content.get('message')
+    error = content.get('error')
+    return status, message, error 
+
+def print_error(http_resp):
+    status, message, error = get_error(http_resp)
+    pprint(error)
+
+# HTTP Response Handlers
+def ok(http_resp):
+    return
+
+def created(http_resp):
+    return
+    
+def no_content(http_resp):
+    return
+
+def bad_request(http_resp):
+    raise ValueError(http_resp)
+
+def not_found(http_resp):
+    raise LookupError(http_resp)
+    #return None
+
+def conflict(http_resp):
+    raise SystemError(http_resp)
+
+def server_error(http_resp):
+    raise SystemError(http_resp)
+
+response_handlers = {200:ok,
+                     201:created,
+                     204:no_content,
+                     400:bad_request,
+                     404:not_found,
+                     409:conflict,
+                     500:server_error}
+
+class Request(object):
     """Used for connecting to the Rexster REST server."""
 
-    def __init__(self,db_url):
+    response_class = Response
+
+    def __init__(self,config,content_type):
         """
         Initializes a resource object.
 
-        :param db_url: the base URL of Rexster.
+        :param root_uri: the base URL of Rexster.
 
         """
+        self.config = config
+        self.content_type = content_type
+        self.content_type = self._get_content_type(type_system_map)
+        self.http = httplib2.Http()    
+        self._add_credentials(config.username,config.password)
+        
 
-        #print "DB_URL", db_url
-        # strip off trailing slash
-        self.db_url = db_url.rstrip('/')
-        url_object = urlsplit(self.db_url)
-        root_path, self.db_name = split(url_object.path)
-        self.base_url = "%s://%s%s" % (url_object.scheme, url_object.netloc, root_path)
-        self.http = httplib2.Http()
 
-    def get(self,target,params):
+    def get(self,path,params=None):
         """Convenience method that sends GET requests to the resource.""" 
-        return self.request("GET",target,params)
-       
-    def post(self,target,params):
+        return self.request("GET",path,params)
+
+    def put(self,path,params=None):
+        """Convenience method that sends PUT requests to the resource."""
+        return self.request("PUT",path,params)
+
+    def post(self,path,params=None):
         """Convenience method that sends POST requests to the resource."""
-        return self.request("POST",target,params)
-    
-    def delete(self,target,params):
+        return self.request("POST",path,params)
+
+    def delete(self,path,params=None):
         """Convenience method that sends DELETE requests to the resource."""
-        return self.request("DELETE",target,params)
+        return self.request("DELETE",path,params)
     
-    def request(self, method, target, params):
+    def request(self, method, path, params):
         """
-        Sends requests to the resource.
+        Sends a request to the resource.
 
         :param method: either GET, POST, or DELETE.
         :param target: the URL path relative to the database URL you specified 
@@ -62,132 +106,69 @@ class Resource(object):
         :param params: a dict of query-string parameters to include in the URL 
         """
 
-        assert method in ("GET","POST","DELETE"), \
-            "Only GET, POST, DELETE are allowed."
+        uri, method, body, headers = self._build_request_args(path,method,params)
 
-        headers = {'Accept': 'application/json'}
+        self.config.debug = True
 
-        # httplib2 let's you cache http responses with memcache 
-        # really cool, look into that later
-        # http = httplib2.Http(memcache)
+        if self.config.debug is True:
+            self._display_debug(uri,method,body,headers)
+       
+         # "retry code" moved to _retry_request method for now. - James  
+        http_resp = self.http.request(uri,method,body,headers)
 
-        # the indicies condition is a hack until you implement 
-        # list type for indices keys
-        if params and method is "POST" and "indices" not in target:
-            url = self._build_url(method, target, params=None)
-            body = urllib.urlencode(params)
-            post_headers = {'Content-type': 'application/x-www-form-urlencoded'}
-            headers.update(post_headers)
-        else:
-            url = self._build_url(method, target, params)
-            body = None
+        #print http_resp
+        return self.response_class(http_resp,self.config)
+
+    def _display_debug(self,uri,method,body,headers):
+        print "%s url:  %s  " % (method, uri)
+        print "%s body: %s " % (method, body)        
+
                 
-        if DEBUG:
-            print "REST url:  ", url
-            print "REST body: ", body
+    def _build_request_args(self,path,method,params):
+        headers = {'Accept': 'application/json'}
+        body = None
 
-        attempt = 0
+        uri = "%s/%s" % (self.config.root_uri.rstrip("/"), path.lstrip("/"))
+
+        if params and method is "GET":
+            uri = "%s?%s" % (uri, urllib.urlencode(params))
+        
+        if params and (method is "PUT" or method is "POST" or method is "DELETE"):
+            body = json.dumps(params)
+            post_headers = {'Content-Type': self.content_type}
+            headers.update(post_headers)
+        
+        return uri, method, body, headers 
+
+    def _add_credentials(self,username,password):
+        if username and password:
+            self.http.add_credentials(username, password)
+        
+    def _retry_request(self,uri,method,body,headers):
+        # This retry code was useful to deal with some server bugs, but do we really
+        # need/want it in the release now that the backend issues are fixed - James
         ok = False
-        while not ok and (attempt < MAX_RETRIES):
-            resp = Response(self.http.request(url, method, body, headers))
+        attempt = 0
+        while not ok and (attempt < self.config.max_retries):
             attempt += 1
-            ok = resp.ok            
+            http_resp = self.http.request(uri,method,body,headers)
+            #print http_resp
+            headers, content = http_resp
+            response_handler = response_handlers.get(headers.status)
+            try:
+                response_handler(http_resp)
+                resp = self.response_class(self.config,http_resp)
+                ok = resp.ok            
+            except:
+                continue
+        if ok:
+            return resp
 
-        # TODO: check http_status for 401s
-        #assert resp.ok == True
-
-        # TODO: if resp.http_status == 200, 
-        # else (where to put this?...maybe better at a higher level)
-
-        return resp
-    
-    def _build_url(self, method, target, params):
-        """Used internally to construct the complete URL to the service."""
-        if type(target) == unicode:
-            target = target.encode("utf8")
-        url = "%s/%s" % (self.base_url, urllib2.quote(target)) 
-        if params:            
-            url = "%s?%s" % (url, urllib.urlencode(params))
-        return url
-            
+        response_handler(http_resp)
+        #resp = self.response_class(self.config,http_resp)
+        #ok = resp.ok            
         
-class Response(object):
-    """A container for the Rexster HTTP response."""
+        #raise ValueError(http_resp)
+        #response_handler(http_resp)
 
-    def __init__(self, http_resp):
-        """
-        NOTE: headers is a httplib2 Response object, content is a string
-        see http://httplib2.googlecode.com/hg/doc/html/libhttplib2.html
-        """
-        headers, content = http_resp
-        self._response_handler(headers)
-        if DEBUG:
-            # only set raw if DEBUG=True to save on memory
-            self.raw = http_resp
-        try:
-            self.headers = headers
-            # don't save content on the resp object else you'll bloat it
-            content = json.loads(content)
-            self.ok = True
-
-            # true if he response was returned from the cache
-            self.fromcache = headers.fromcache
-            
-            # version of HTTP that the server supports. A value of 11 means 1.1
-            self.http_version = headers.version
-            
-            # numerical HTTP status code returned in the response
-            self.http_status = headers.status
-            
-            # human readable component of the HTTP response status code
-            self.http_reason = headers.reason
-
-            # previous response object if redirects are followed
-            self.http_previous = headers.previous
-        
-            #
-            # header values not set in resp object but stored in the dict
-            #
-            # URI that was ultimately requested
-            self.content_location = self.headers.get('content-location')
-            self.tansfer_encoding = self.headers.get('transfer-encoding')
-            self.server = self.headers.get('server')
-            self.date = self.headers.get('date')
-            self.allow_origin = self.headers.get('access-control-allow-origin')
-            self.content_type = self.headers.get('content-type')
-            
-            #
-            # body values always returned by reXster
-            #            
-            self.rexster_version = content.get('version')
-            self.query_time = content.get('queryTime')
-            if self.query_time:
-                self.query_time = float(self.query_time)
- 
-            #
-            # body values sometimes returned, depending on resource requested
-            #
-            # if results is returned, it's a list of dicts, and
-            # the dicts can contain any number of key/value pairs depending on 
-            # what is stored in each item -- items can be a node,edge...
-            self.success = bool(content.get('success'))
-            if "results" in content and type(content['results']) == list:
-                self.results = iter(content['results'])
-            else:
-                self.results = content.get('results')
-            self.index_name = content.get('name')
-            self.index_class = content.get('class')
-            self.index_type = content.get('type')            
-            self.total_size = content.get('totalSize')
-
-        except ValueError:
-            # looks like this isn't json, data is None
-            self.ok = False
-
-    def _response_handler(self,headers):
-        """TODO: handle response errors.""" 
-        # Is there a list of error codes Rexster sends?
-        # Putting this in element won't work b/c element doesn't get the full 
-        # resp anymore, just results. Prob relegate to an resp/error helper
-        pass
 

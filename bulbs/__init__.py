@@ -15,6 +15,11 @@
     Copyright (c) 2011, James Thornton (http://jamesthornton.com)
     License: BSD (see LICENSE for details)
 """
-__version__ = '0.2.2'
+__version__ = '0.3'
 __author__ = 'James Thornton'
 __license__ = 'BSD'
+
+
+
+
+

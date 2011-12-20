@@ -7,513 +7,256 @@
 Base classes for modeling domain objects that wrap vertices and edges.
 
 """
+from bulbs.property import Property
+from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
+from bulbs.utils import initialize_element, get_only_result
 
-import config
-from rest import Resource
-from index import IndexProxy
-from element import Vertex, VertexProxy, Edge, EdgeProxy
-from typesystem import TypeSystem, ClassProperty
-
-class Model(TypeSystem):
-    """
-    Abstract base class for Node and Relationship.
-
-    It's a sublcass of TypeSystem, which provides a mechanism for type-checking
-    database properties before they're saved in the database.
-
-    To create a type-checked database property, use the Property class and
-    datatype classes, which are located in the property module. Example::
-
-        name = Property(String, nullable=False)
-        age = Property(Integer)
-
-    """
-
-    # You can override this default resource.
-    resource = Resource(config.DATABASE_URL)
-
-    @property
-    def eid(self):
-        """Return the element ID. Override this to change it from eid."""
-        return self._id
- 
-    #@property
-    #def element_type(self):
-    #    """Return the element type."""
-    #    return self._data.get(config.TYPE_VAR,None)
-        #return self._data[TYPE_VAR]
+# utility function used by NodeProxy and RelationshipProxy
+def instantiate_model(element_class,resource,kwds):
+    model = element_class(resource)
+    model._set_keyword_attributes(kwds)
+    return model
 
 
-    @classmethod
-    def get(self,_id):
-        """
-        Returns the element for the specified ID.
+class ModelMeta(type):
+    """Model's metaclass used to set database Property definitions."""
 
-        ::param _id: The element's ID.
+    def __init__(cls, name, base, namespace):
+        # store the Property definitions on the class as a dictionary mapping
+        # the Property name to the Property instance
+        cls._properties = {}
+        for key, value in namespace.items():
+            # loop through the class namespace looking for Property instances
+            # e.g. age = Property(Integer,default=None)
+            # key: age, value: Property(Integer,default=None)
+            if isinstance(value, Property):
+                property_instance = value     # (for clarity)
+                cls._register_property(key,property_instance)
+                cls._set_property_default(key,property_instance)
 
-        """
-        return self._element_proxy.get(_id)
+    def _register_property(cls,key,property_instance):
+        # Property name will be none unless explicitly set via kwd param
+        if property_instance.name is None:
+            property_instance.name = key
+        cls._properties[key] = property_instance
 
-    @classmethod
-    def get_all(self):
-        """Returns all the elements for the model type."""
-        index_name = self._element_proxy._path()
-        target = "%s/indices/%s" % (self.resource.db_name,index_name)
-        params = dict(key="element_type",value=self.element_type)
-        resp = self.resource.get(target,params)
-        for result in resp.results:
-            yield self(self.resource,result)
-
-    @classmethod 
-    def remove(self,_id,params):
-        """
-        Removes a property from the element for the specified ID.
-
-        ::param _id: The element's ID.
-
-        ::param params: The element's property to remove.
-
-        """
-        return self._element_proxy.remove(_id,params)
-
-    @classmethod
-    def create_index(self,index_keys=None,index_type="automatic"):
-        """
-        Creates an index for the model.
-
-        ::param index_keys: The specific keys to index. If set to None,
-                            any key can be indexed. Defaults to None.
-
-        ::param index_type: The type of index to create. Either manual
-                            or automatic. Defaults to automatic. See
-                            Rexster docs for definitions.
-        """
-        index_name = self._get_index_name()
-        index_class = self._get_index_class()
-        index_attributes = (index_name,index_class,index_type,index_keys)
-        return self.index_proxy.create(*index_attributes)
-
-    @classmethod
-    def delete_index(self):
-        """Deletes the model's index."""
-        index_name = self._get_element_key()
-        return self.index_proxy.delete(index_name)
-
-    @classmethod 
-    def _get_element_proxy(self):
-        """
-        Returns the element's proxy class. The Node and Relationship classes
-        override this.
-
-        """
-        raise NotImplementedError
-
-    @classmethod 
-    def _get_index_proxy(self):
-        """Returns the index's proxy class."""
-        return IndexProxy(self.resource,self)
-
-
-    @classmethod
-    def _get_index_name(self):
-        """Returns the model's index name."""
-        return self._get_element_key()
-
-    @classmethod
-    def _get_index(self):
-        """Returns the model's index."""
-        index_name = self._get_index_name()
-        return self.index_proxy.get(index_name)
-
-    index = ClassProperty(_get_index)
-    index_proxy = ClassProperty(_get_index_proxy)
-
-
-    #def element_type_sanity_check(self,results):
-    #    element_type = self.get_element_type(results)
-    #    if element_type is not None:
-    #        if element_type != getattr(self,TYPE_VAR):
-    #            raise("DB element type (%) doesn't match class element type (%s)" % \
-    #                      (element_type, getattr(self,TYPE_VAR)))
-
-    #def get_arg(self,name,default=None):
-    #    return self._kwds.get(name,default)
-
-    def get_data(self):
-        self._validate_property_data()
-        data = self._get_property_data()
-        if isinstance(self,Relationship):
-            relationship_data = dict(_outV=self._outV,_label=self.label,_inV=self._inV)
-            data.update(relationship_data)
-        return data
-        
-    def _create(self,*args,**kwds):
-        """
-        Create a new element in the database.
-        
-        ::param *args: Optional dict of name/value pairs of database properties.
-        ::param **kwds: name/value pairs of database properties to store.
-        """
-        self._set_keyword_attributes(kwds)
-        self._validate_property_data()
-        data = self._get_property_data()
-        args = list(args)
-        args.append(data)
-        self.before_created()
-        # Using super here b/c Vertex and Edge have different create methods
-        #resp = super(self.__class__,self).create(*args,raw=True)
-        # got a "mismatched input, expecting double star" in Jython so
-        # passing raw as a "double star"
-        kwds = dict(raw=True)
-        resp = self._element_proxy.create(*args,**kwds)
-        self._initialize_element(self.resource,resp.results)
-        #self.set_element_data(resp.results)
-        self.after_created()
-        
-    def _read(self,results):
-        """
-        Read an element's data that was retrieved from the DB and set its model 
-        values.
-
-        ::param results: A list containing the results returned by Rexster.
-
-        """
-        self.before_read()
-        self._initialize_element(self.resource,results)
-        #self.set_element_data(results)
-        self._set_property_data(results)
-        self.after_read()
-
-    def _update(self,eid,kwds):
-        """
-        Updates the element in the database.
-
-        ::param eid: The ID of the element to update.
-        ::param **kwds: name/value pairs of database properties to store.
-
-        """
-        self.eid = eid
-        self._set_keyword_attributes(kwds)
-        self.save()
-
-    def save(self):
-        """
-        Saves/updates the element's data in the database.
-        
-        """
-        self._validate_property_data()
-        data = self._get_property_data()        
-        self.before_updated()
-        #resp = super(self.__class__,self).update(self.eid,data,raw=True)
-        resp = self._element_proxy.update(self.eid,data,raw=True)
-        self._initialize_element(self.resource,resp.results)
-        #self.set_element_data(resp.results)
-        self.after_updated()
-
-    def delete(self):
-        """Deletes an element from the database."""
-        # Should we make this a classmethod instead?
-        # Should we provide an option to set a deleted flag or just override this?
-        self.before_deleted()
-        #resp = super(self.__class__,self).delete(self)
-        resp = self._element_proxy.delete(self)
-        self.after_deleted()
-        return resp
-
+    def _set_property_default(cls,key,property_instance):
+        # now that the property reference is stored away, 
+        # initialize its vars to None, the default vale (TODO), or the fget
+        if property_instance.default:
+            #TODO: Make this work for scalars too
+            fget = getattr(cls,value.default)
+            default_value = property(fget)
+        elif property_instance.fget:
+            # wrapped fset and fdel in str() to make the default None work with getattr
+            fget = getattr(cls,property_instance.fget)
+            fset = getattr(cls,str(property_instance.fset),None)
+            fdel = getattr(cls,str(property_instance.fdel),None)
+            default_value = property(fget,fset,fdel)
+        else:
+            default_value = None
+        setattr(cls,key,default_value)
 
     
+class Model(object):
 
-    def initialize(self,args,kwds):
+    __metaclass__ = ModelMeta
+
+    def __setattr__(self, key, value):
+        if key in self._properties:
+            if value:
+                property_instance = self._properties[key]
+                value = property_instance.coerce_value(key,value)
+        super(Model, self).__setattr__(key, value)
+                
+    def _set_keyword_attributes(self,kwds):
+        for key, value in kwds.iteritems():
+            # Notice that __setattr__ is overloaded
+            setattr(self,key,value)
+
+    def _set_property_from_db(self,property_instance,key,value):
+        try:
+            # Notice that __setattr__ is overloaded
+            python_type = property_instance.datatype.python_type
+            value = self._resource.type_system.to_python(value,python_type)
+            setattr(self,key,value)
+        except:
+            # TODO: log/warn/email regarding type mismatch
+            setattr(self,key,None)        
+
+    def _set_property_data(self,result):
         """
-        Initialize the model.
-
-        If results is passed in, that means data was retrieved from the DB
-        via a get request or gremlin query so we just set the property values
-        based on what is stored in the DB.
-
-        If eid was passed in, that means we're updating the element so we
-        set the model's attributes based on the keyword variables passed in,
-        and we save in the DB any attributes specified as DB Properties.
-
-        If neither results nor eid were passed in, that means we're creating a
-        new element so we set the model's attributes based on the keyword
-        variables that were passed in, and we save in the DB any attributes
-        specified as DB Properties.
-
-        Also, we set self.kwds so the vars are available to the before/after wrappers.
-        
-        ::param *args: Optional dict of name/value pairs of database properties.
-
-        ::param **kwds: name/value pairs of database properties to store.
-
+        Sets Property data when an element is being initialized, after it is
+        retrieved from the DB -- we set it to None if it won't set.        
         """
-        # We're doing a little arg dance instead of keyword mangling.
-        # This avoids problems if a user wants to use the word "results" as a
-        # Property name (actually, no it doesn't, b/c you're using results
-        # elsewhere. Ugh -- I hate keyword mangling.
-        _id = None
-        results = None
-        args = list(args)
+        for key, property_instance in self._properties.items():
+            value = result.data.get(key,None)
+            self._set_property_from_db(property_instance,key,value)
 
-        # save kwds so it's available to before/after wrappers
-        self._kwds = kwds      
+    def _get_property_data(self):
+        """Returns Property data ready to be saved in the DB."""
+        data = dict()
+        type_var = self._resource.config.type_var
+        if hasattr(self,type_var):
+            data[type_var] = getattr(self,type_var)
+        for key, property_instance in self._properties.items():
+            value = getattr(self,key)
+            property_instance.validate(key,value)
+            data[key] = self._resource.type_system.to_db(value)
+        return data
 
-        # in case someone wants to pass in a dict of data instead of by keywords
-        _data = kwds.pop("_data",{})
-        save = kwds.pop("save",True)
+    #def _get_element_key(self):
+    #    if issubclass(self,Vertex):
+    #        element_key = getattr(self,self._resource.config.type_var)
+    #    elif issubclass(self,Edge):
+    #        element_key = getattr(self,self._resource.config.label_var)
+    #    else:
+    #        raise TypeError("Not an Element class.")
+    #    return element_key
 
-        # in case someone passed in a dict of data plus some data by keywords
-        _data.update(**kwds)
-      
-        if args and isinstance(args[0],Resource):
-            self.resource = args.pop(0)            
-        if args and isinstance(args[0],dict):
-            results = args.pop(0)            
-        if args and isinstance(args[0],int):
-            _id = args.pop(0)            
-
-        #print "RESULTS:", results
-
-        self.before_initialized()
-        if save is False:
-            Model._set_keyword_attributes(self,kwds)
-        elif results is not None:
-            # must have been a get or gremlin request
-            Model._read(self,results)
-        elif _id is not None:
-            # calling Model explicitly b/c Vertex/Edge have an update method too
-            Model._update(self,_id,_data)    
-        elif args or kwds:
-            # calling Model explicitly b/c Vertex/Edge have a create method too
-            Model._create(self,*args,**_data)
-        else:
-            # create an empty Node (can't have an empty Relationship b/c must have label)
-            Model._create(self,{})
-        self.after_initialized()
-
-
-    def before_initialized(self):
-        """Virtual method run before the model is initialized."""
-        pass
-
-    def after_initialized(self):
-        """Virtual method run after the model is initialized."""
-        pass
-
-    def before_created(self):
-        """Virtual method run before an element is created in the DB."""
-        pass
-
-    def after_created(self):
-        """Virtual method run after an element is created in the DB."""
-        pass
-
-    def before_read(self):
-        """Virtual method run before element data is read from the DB."""
-        pass
-
-    def after_read(self):
-        """Virtual method run after element data is read from the DB."""
-        pass
-
-    def before_updated(self):
-        """Virtual method run before an element is updated in the DB."""
-        pass
-
-    def after_updated(self):
-        """Virtual method run after an element is updated in the DB."""
-        pass
-
-    def before_deleted(self):
-        """Virtual method run before an element is deleted from the DB."""
-        pass
-
-    def after_deleted(self):
-        """Virtual method run after an element is deleted from the DB."""
-        pass
- 
+    def _get_index(self,index_name):
+        try:
+            index = self._resource.registry.get_index(index_name)
+        except KeyError:
+            index = None
+        return index
 
 class Node(Vertex,Model):
-    """ 
-    An abstract base class used to create classes that model domain objects. It is
-    not meant to be used directly
 
-    To use this, create a subclass specific to the type of data you are 
-    storing. 
+    #
+    # Override _create and _update methods to cusomize behavior.
+    #
 
-    Example model declaration::
 
-        from bulbs.model import Node
-        from bulbs.property import Property, String, Integer
+    def _initialize(self,result):
+        # this is called by initialize_element; 
+        # putting it here to ensure method resolution order
+        Vertex._initialize(self,result)
+        element_type = self._get_element_type()
+        self._set_property_data(result)
+        self._index = self._get_index(element_type)
 
-        class Person(Node):
-            element_type = "person"
+    def _get_element_type(self):
+        element_type = getattr(self,self._resource.config.type_var)
+        return element_type
 
-            name = Property(String, nullable=False)
-            age = Property(Integer)
+    def _create(self,data,index):
+        # Override this to use a custom script.
+        # Make sure the gremlin script returns the created vertex and nothing else.
+        # Moreover, make sure gremlin returns 1 element, not a multi-element list.
+        # If you aren't indexing the node, uncomment the create_vertex method.
+        # return self._resource.create_vertex(data)
+        return self._resource.create_indexed_vertex(data,index.index_name)
 
-            def after_created():
-                # include code to create relationships and to index the node
-                pass
+    def _update(self,_id,data,index):
+        # Override this to use a custom script.
+        # If you aren't indexing the node, uncomment the update_vertex method.
+        # return self._resource.update_vertex(_id,data)
+        return self._resource.update_indexed_vertex(_id,data,index.index_name)
 
-   Example usage::
-
-        # Create a node in the DB:
-        >>> james = Person(name="James Thornton")
-        >>> james.eid
-        3
-        >>> james.name
-        'James Thornton'
-
-        # Get a node from the DB:
-        >>> james = Person.get(3)
-
-        # Update the node in the DB:
-        >>> james.age = 34
-        >>> james.save()
-
-   """
-
-    # IMPORTANT:
-    # Can't do the metamagic unless object has been created so we can't use 
-    # __new__ because all the initialzed vars would be on the class and not the
-    # object. Don't worry about setting the object attributes for the kwds data
-    # because the initialize sets them and the grandancestor Element provides 
-    # DB data to you by overriding __getattr__.
-
-    #element_type = "node"
-
-    def __init__(self,*args,**kwds):
-        """
-        Initialize the node.
-
-        ::param *args: Optional dict of name/value pairs of database properties.
-        ::param **kwds: name/value pairs of database properties to store.
-
-        """
-        # pass results as the first (and only) arg to init values from gets
-        # pass eid as the first arg if you are updating the element
-        self.initialize(args,kwds)
-
-    @classmethod
-    def _get_element_key(self):
-        """Returns the element's key that's used for stuff like the index name."""
-        element_key = getattr(self,config.TYPE_VAR)
-        return element_key
-
-    @classmethod 
-    def _get_index_class(self):
-        """Returns the element's base class."""
-        return "vertex"
-
-    @classmethod
-    def _get_element_proxy(self):
-        """Returns the element's proxy."""
-        return VertexProxy(self.resource,self)
-
-    _element_proxy = ClassProperty(_get_element_proxy)
+    def save(self):
+        """Saves/updates the element's data in the database."""
+        data = self._get_property_data()
+        resp = self._update(self._id,data,self._index)
+        # maybe called Vertex._initialize directly b/c Neo4j doesn't return data
+        self._initialize(resp.results)
+        
 
 class Relationship(Edge,Model):
-    """ 
-    An abstract base class used to create classes that model domain objects. It is
-    not meant to be used directly
 
-    To use this, create a subclass specific to the type of data you are 
-    storing. 
+    #
+    # Override _create and _update methods to customize behavior.
+    #
 
-    Example usage for an edge between a blog entry node and its creating user::
+    def _initialize(self,result):
+        # this is called by initialize_element; 
+        # putting it here to ensure method resolution order
+        Edge._initialize(self,result)
+        label = self._get_label()
+        self._set_property_data(result)
+        self._index = self._get_index(label)
 
-        class CreatedBy(Relationship):
-            label = "created_by"
+    def _get_label(self):
+        label = getattr(self,self._resource.config.label_var)
+        return label
 
-            timestamp = Property(Float, default="current_timestamp", nullable=False)
-
-            @property
-            def entry(self):
-                return Entry.get(self.outV)
-
-            @property
-            def user(self):
-                return User.get(self.inV)
+    def _create(self,outV,label,inV,data):
+        return self._resource.create_edge(outV,label,inV,data)
         
-            def current_timestamp(self):
-                return time.time()
+    def _update(self,_id,data):
+        return self._resource.update_edge(_id,data)
 
-          >>> entry = Entry(text="example blog entry")
-          >>> james = Person(name="James")
-          >>> CreatedBy(entry,james)
-      
-          # Or if you just want to create a basic relationship between two nodes, do::
-          >>> Relationship.create(entry,"created_by",james)
+    def save(self):
+        """Saves/updates the element's data in the database."""
+        data = self._get_property_data()      
+        resp = self._update(self._id,data)
+        #self.initialize(resp.results)
 
-    """
+class NodeProxy(VertexProxy):
 
-    def __init__(self,*args,**kwds):
+    def create(self,*args,**kwds):
+        node = instantiate_model(self.element_class,self.resource,kwds)
+        data = node._get_property_data()
+        resp = node._create(data,self.index)
+        # see comments in utils.get_only_result for why we're using this
+        result = get_only_result(resp)  
+        # doing it this way you're losing any extra kwds that may have been set
+        return initialize_element(self.resource,result)
+        
+    def update(self,_id,*args,**kwds):
+        node = instantiate_model(self.element_class,self.resource,kwds)
+        data = node._get_property_data()
+        resp = node._update(_id,data,self.index)
+        result = get_only_result(resp)
+        # TODO: make this work for neo4j b/c neo4j doesn't return data
+        return initialize_element(self.resource,result)
+
+    def get_all(self):
+        """Returns all the elements for the model type."""
+        key = self.resource.config.type_var
+        value = getattr(self.element_class,self.resource.config.type_var)
+        return self.index.get(key,value)
+
+
+class RelationshipProxy(EdgeProxy):
+
+    def create(self,*args,**kwds):
+        relationship = instantiate_model(self.element_class,self.resource,kwds)
+        outV, label, inV = self._parse_args(relationship,args)
+        data = relationship._get_property_data()
+        print "DATAAAA", data
+        resp = relationship._create(outV,label,inV,data)
+        print resp.raw
+        result = get_only_result(resp)
+        return initialize_element(self.resource,result)
+
+    def update(self,_id,*args,**kwds):
+        relationship = instantiate_model(self.element_class,self.resource,kwds)
+        data = relationship._get_property_data()
+        resp = relationship._update(_id,data)
+        result = get_only_result(resp)
+        return initialize_element(self.resource,result)
+
+    def get_all(self):
+        """Returns all the elements for the model type."""
+        key = self.resource.config.label_var
+        value = getattr(self.element_class,self.resource.config.label_var)
+        return self.index.get(key,value)
+
+    def _parse_args(self,relationship,args):
+        # Two different args options:
+        # 1. generic relationship args: (outV, label, inV)
+        # 2. subclassed relationship args: (outV, inV) 
         args = list(args)
         if args and isinstance(args[1],Vertex):
-            # 2nd arg is a Vertex so they're in form of CreatedBy(entry,james)
-            # TODO: clean up this arg thing -- this is a quick hack to fix a bug
+            # no label, so this is the subclassed format;
+            # the label is defined on the relationship class
             outV = args.pop(0)
             inV = args.pop(0) 
-            args = (outV,self.label,inV)
-        self.initialize(args,kwds)
-
-    #def _set_edge_property(self,name,value):
-    #    _outV = EdgeProxy(self.resource)._coerce_vertex_id(value)
-    #    super(Edge, self).__setattr__(self,"_outV", _outV)
-
-
-
-    @classmethod
-    def create(self,outV,label,inV,**kwds):
-        """
-        Create a generic relationship between two nodes.
-
-        ::param outV: the outgoing vertex.
-        ::param label: the edge's label.
-        ::param inV: the incoming vertex.
-        ::param **kwds: Optional keyword arguments. Name/value pairs of properties to store.
-        """
-        relationship = Relationship(outV,label,inV,**kwds)
-        if kwds.get('save') is False:
-            # make _outV, label, and _inV available to get_data() because 
-            # these parmas are are normally passed straight through to edges.create() and 
-            # not set until after creation
-            #element_proxy = self._get_element_proxy()
-            outV = EdgeProxy(self.resource)._coerce_vertex_id(outV)
-            inV = EdgeProxy(self.resource)._coerce_vertex_id(inV)
-            #relationship._set_edge_property("_outV",outV)
-            #relationship._set_edge_property("_inV",inV)
-            #print outV, label, inV
-            #relationship._outV = outV
-            #relationship._inV = inV
-            #relationship.label = label
-            relationship._data = {}
-            relationship._data['_outV'] = outV
-            relationship._data['_inV'] = inV
-            relationship._data['_label'] = label
-        return relationship
-
-
-
-
-    @classmethod
-    def _get_element_key(self):
-        """Returns the element's key that's used for stuff like the index name."""
-        return self.label
-
-    @classmethod 
-    def _get_index_class(self):
-        """Returns the element's base class."""
-        return "edge"
-
-    @classmethod
-    def _get_element_proxy(self):
-        """Returns the element's proxy."""
-        return EdgeProxy(self.resource,self)
-
-    _element_proxy = ClassProperty(_get_element_proxy)
-
+            outV = self._coerce_vertex_id(outV)
+            inV = self._coerce_vertex_id(inV)
+            args = (outV,relationship.label,inV)
+        return args
 
 
 

@@ -1,0 +1,3 @@
+
+class Batch(object):
+    pass

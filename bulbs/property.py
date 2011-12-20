@@ -12,19 +12,6 @@ Graph, Vertex, Edge, Index, Query
 #import array
 
 
-def convert_to_python(data):
-    datatype = data['type']
-    value = data['value']
-    klass = type_map[datatype]
-    return klass.to_python(value)
-
-def convert_to_rexster(data):
-    datatype = type(data)
-    value = data
-    klass = type_map[datatype]
-    return klass.to_rexster(value)
-
-
 # NOTE 1: "Property" refers to a graph-database property (i.e. the DB data)
 class Property(object):
 
@@ -33,15 +20,6 @@ class Property(object):
                      nullable=True, unique=False, index=False):
 
         # TODO: unique creates an index
-
-        #args = list(args)
-        #name = args.pop(0)
-        #proptype = args.pop(0)
-
-        #self.nullable = kwargs.pop('nullable', not self.primary_key)
-        #self.default = kwargs.pop('default', None)
-        #self.index = kwargs.pop('index', None)
-        #self.unique = kwargs.pop('unique', None)
         self.datatype = datatype
         self.fget = fget
         self.fset = fset
@@ -56,134 +34,130 @@ class Property(object):
         self.unique = unique
         self.index = index
 
-    def is_valid(self, value):
-        return isinstance(value, self.datatype.python_type)
+    def _check_datatype(self,value):
+        isinstance(value, self.datatype.python_type)
+
+    def _check_null(self,key,value):
+        try: 
+            if self.nullable is False:
+                # should this be "assert value is True" to catch empties?
+                assert value is not None
+        except AssertionError:
+            print "Cannot set '%s' to %s: '%s' is a Property with nullable set to False" \
+                % (key, value, key)
+            raise
+
+    def validate(self, key, value):
+        """
+        Validates that Property data is of the right datatype before saving it
+        to the DB and that the Property has a value if nullable is set to False.
+        
+        Call this at the top of each save() method.
+        
+        """
+        self._check_datatype(value)
+        self._check_null(key,value)
+
+    def coerce_value(self,key,value):
+        initial_datatype = type(value)
+        try:
+            python_type = self.datatype.python_type
+            value = python_type(value)
+            return value
+        except ValueError:
+            print "'%s' is not a valid value for %s, must be  %s." \
+                           % (value, key, python_type)
+            raise
+        except AttributeError:
+            print "Can't set attribute '%s' to value '%s with type %s'" \
+                % (key,value,initial_datatype)
+            raise
 
 
 class DataType(object):
-
-    def __init__(self):
-        # TODO: Is this being used or 
-        # are you explicitly setting them at bottom of this module?
-        type_map.update(self.python_type,self.__class__)
-        type_map.update(self.rexter_type,self.__class__)
-
-    @classmethod
-    def convert(self,value,datatype):
-        # TODO: warn or log errors
-        try: return datatype(value)
-        except: return None
-
+    pass
 
 class String(DataType): 
+
     python_type = str
-    rexster_type = "string"
 
     @classmethod
-    def to_rexster(self,value):
-        return '(string,%s)' % (value)
-    
+    def to_db(self,type_system,value):
+        return type_system.string_to_db(value)
+
     @classmethod
-    def to_python(self,value):
-        return self.convert(value,str)
+    def to_python(self,type_system,value):
+        return type_system.convert(value,str)
 
 class Integer(DataType):    
+
     python_type = int
-    rexter_type = "integer"
+
+    @classmethod
+    def to_db(self,type_system,value):
+        return type_system.integer_to_db(value)
     
     @classmethod
-    def to_rexster(self,value):
-        return '(integer,%d)' % (value)
-    
-    @classmethod
-    def to_python(self,value):
-        return self.convert(value,int)
+    def to_python(self,type_system,value):
+        return type_system.convert(value,int)
 
 class Long(DataType):
+
     python_type = long
-    rexster_type = "long"
-    
-    @classmethod
-    def to_rexster(self,value):
-        return '(long,%d)' % (value)
 
     @classmethod
-    def to_python(self,value):
-        return self.convert(value,long)
+    def to_db(self,type_system,value):
+        return type_system.long_to_db(value)
+
+    @classmethod
+    def to_python(self,type_system,value):
+        return type_system.convert(value,long)
 
 class Float(DataType):
+
     python_type = float
-    rexter_type = "float"
+
+    @classmethod
+    def to_db(self,type_system,value):
+        return type_system.float_to_db(value)
     
     @classmethod
-    def to_rexster(self,value):
-        return '(float,%f)' % (value)
-    
-    @classmethod
-    def to_python(self,value):
-        return self.convert(value,float)              
+    def to_python(self,type_system,value):
+        return type_system.convert(value,float)              
 
 class Null(DataType):
+
     python_type = None
-    rexter_type = "string"
 
     @classmethod
-    def to_rexster(self,value):
-        # TODO: we prob don't want to save None values as 
-        # empty strings in Rexter, instead just ignore them
-        return '(string,%s)' % ('')
-    
+    def to_db(self,type_system,value):
+        return type_system.null_to_db(value)
+
     @classmethod
-    def to_python(self,value):
-        return None
+    def to_python(self,type_system,value):
+        type_system.null_to_python(value)
 
 class List(DataType):
+
     python_type = list
-    rexster_type = "list"
 
     @classmethod
-    def to_rexster(self,value):
-        val_list = []
-        for item in value:
-            val_list.append(convert_to_rexster(item))
-        return "(list,(%s))" % (','.join(val_list))    
+    def to_db(self,type_system,value):
+        return type_system.list_to_db(value)
 
     @classmethod
-    def to_python(self,value):
-        val_list = []
-        for item in value:
-            val_list.append(convert_to_python(item))
-        return val_list
+    def to_python(self,type_system,value):
+        type_system.list_to_python(value)
 
 class Dictionary(DataType):
+
     python_type = dict
-    rexster_type = "map"
 
     @classmethod
-    def to_rexster(self,value):
-        pair_list = []
-        for k,v in value.items():
-            pair = "%s=%s" % (k,convert_to_rexster(v))
-            pair_list.append(pair)
-        return "(map,(%s))" % (','.join(pair_list))    
+    def to_db(self,type_system,value):
+        return type_system.dictionary_to_db(value)
 
     @classmethod
-    def to_python(self,value):
-        dict_ = {}
-        for k,v in value.items():
-            dict_.update({k:convert_to_python(v)})
-        return dict_
+    def to_python(self,type_system,value):
+        type_system.dictionary_to_python(value)
 
-type_map = dict()
-type_map[str] = String
-type_map['string'] = String
-type_map[int] = Integer
-type_map['integer'] = Integer
-type_map[float] = Float
-type_map['float'] = Float
-type_map[list] = List
-type_map['list'] = List
-type_map[dict] = Dictionary
-type_map['map'] = Dictionary
-type_map['array'] = List
-type_map[type(None)] = Null

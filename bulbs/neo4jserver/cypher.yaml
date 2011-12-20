@@ -1,0 +1,18 @@
+# 
+# Copyright 2011 James Thornton (http://jamesthornton.com)
+# BSD License (see LICENSE for details)
+#
+# Cypher queries for Neo4j
+#
+# See http://docs.neo4j.org/chunked/milestone/cypher-query-lang.html
+#
+
+example: |
+  START x  = node({_id})
+  MATCH x -[r]-> n
+  RETURN type(r), n.name?, n.age?
+
+root_node: |
+  START n=node(0) RETURN n
+
+
