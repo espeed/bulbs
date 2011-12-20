@@ -1,6 +1,6 @@
 import unittest
-from bulbs.config import Config, NEO4J_URI
-from bulbs.neo4jserver import Neo4jResource
+from bulbs.config import Config
+from bulbs.neo4jserver import Neo4jResource, NEO4J_URI
 from bulbs.tests.resource_tests import ResourceTestCase
 
 import time
