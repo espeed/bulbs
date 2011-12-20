@@ -53,7 +53,7 @@ def run_tests():
 
 setup (
     name = 'bulbs',
-    version = '0.2.2-dev',
+    version = '0.2.2',
     url = 'http://bulbflow.com',
     license = 'BSD',
     author = 'James Thornton',
