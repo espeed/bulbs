@@ -74,16 +74,6 @@ class Model(object):
             # Notice that __setattr__ is overloaded
             setattr(self,key,value)
 
-    def _set_property_from_db(self,property_instance,key,value):
-        try:
-            # Notice that __setattr__ is overloaded
-            python_type = property_instance.datatype.python_type
-            value = self._resource.type_system.to_python(value,python_type)
-            setattr(self,key,value)
-        except:
-            # TODO: log/warn/email regarding type mismatch
-            setattr(self,key,None)        
-
     def _set_property_data(self,result):
         """
         Sets Property data when an element is being initialized, after it is
@@ -92,6 +82,16 @@ class Model(object):
         for key, property_instance in self._properties.items():
             value = result.data.get(key,None)
             self._set_property_from_db(property_instance,key,value)
+
+    def _set_property_from_db(self,property_instance,key,value):
+        try:
+            # Notice that __setattr__ is overloaded
+            value = self._resource.type_system.to_python(property_instance,value)
+            setattr(self,key,value)
+        except:
+            # TODO: log/warn/email regarding type mismatch
+            setattr(self,key,None)        
+
 
     def _get_property_data(self):
         """Returns Property data ready to be saved in the DB."""
@@ -115,7 +115,7 @@ class Model(object):
 class Node(Vertex,Model):
 
     #
-    # Override _create and _update methods to cusomize behavior.
+    # Override the _create and _update methods to cusomize behavior.
     #
 
 
@@ -135,13 +135,13 @@ class Node(Vertex,Model):
         # Override this to use a custom script.
         # Make sure the gremlin script returns the created vertex and nothing else.
         # Moreover, make sure gremlin returns 1 element, not a multi-element list.
-        # If you aren't indexing the node, uncomment the create_vertex method.
+        # If you aren't indexing the node, uncomment and use the create_vertex method.
         # return self._resource.create_vertex(data)
         return self._resource.create_indexed_vertex(data,index.index_name)
 
     def _update(self,_id,data,index):
         # Override this to use a custom script.
-        # If you aren't indexing the node, uncomment the update_vertex method.
+        # If you aren't indexing the node, uncomment and use the update_vertex method.
         # return self._resource.update_vertex(_id,data)
         return self._resource.update_indexed_vertex(_id,data,index.index_name)
 
@@ -156,7 +156,7 @@ class Node(Vertex,Model):
 class Relationship(Edge,Model):
 
     #
-    # Override _create and _update methods to customize behavior.
+    # Override the _create and _update methods to customize behavior.
     #
 
     def _initialize(self,result):

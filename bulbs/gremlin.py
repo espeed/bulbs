@@ -7,7 +7,8 @@
 An interface for executing Gremlin scripts on the resource.
 
 """
-from utils import initialize_elements
+from utils import initialize_elements, get_one_result
+
 
 class Gremlin(object):
     """An interface for executing Gremlin scripts on the resource."""
@@ -15,27 +16,33 @@ class Gremlin(object):
     def __init__(self,resource):
         self.resource = resource
 
-    def query(self,script,params,**kwds):
+    def command(self,script,params):
         """
-        Returns initialized results of an arbitrary Gremlin scripts
-        run on the resource.
-
-        :param script: Gremlin script to send to the resource.
-        :param kwds: Resource-specific keyword params.
-
-        """
-        resp = self.resource.gremlin(script,params,**kwds)
-        return initialize_elements(self.resource,resp)
- 
-    def execute(self,script,params,**kwds):
-        """
-        Returns raw results of an arbitrary Gremlin script.
+        Returns raw results of an arbitrary Gremlin command.
 
         :param script: Gremlin script to send to the resource. 
-        :param kwds: Resource-specific keyword params.
+        :param params: Paramaters to bind to the Gremlin script. 
 
         """
-        resp = self.resource.gremlin(script,params,**kwds)
-        return list(resp.results)
+        resp = self.resource.gremlin(script,params)
+        return get_one_result(resp)
+        
+    def query(self,script,params):
+        """
+        Returns initialized results of an arbitrary Gremlin query.
 
+        :param script: Gremlin script to send to the resource.
+        :param params: Paramaters to bind to the Gremlin script. 
+
+        """
+        resp = self.resource.gremlin(script,params)
+        return initialize_elements(self.resource,resp)
+ 
+    #
+    # NOTE: To get the raw query results, use the lower-level 
+    #       self.resource.gremlin(script,params) method.
+    #       
+    #       Use case: You are returning element IDs and the actual
+    #       elements are cached in Redis or Membase.
+    #
 

@@ -11,9 +11,8 @@ from bulbs.typesystem import JSONTypeSystem
 
 # specific to this resource
 from bulbs.resource import Resource, Registry, Response, Result 
-from bulbs.rest import Request, response_handlers
-from typesystem import RexsterTypeSystem
-from index import RexsterIndex
+from bulbs.rest import RESPONSE_HANDLERS, Request
+from index import ManualIndex
 
 # The default URIs
 REXSTER_URI = "http://localhost:8182/graphs/tinkergraph"
@@ -144,7 +143,7 @@ class RexsterResource(Resource):
         self.registry.add_scripts("gremlin",self.scripts)
         self.type_system, content_type = get_type_system(config)
         self.request = RexsterRequest(config,content_type=content_type)
-        #self.index_class = RexsterIndex
+        #self.index_class = ManualIndex
 
 
     #def convert_to_db(self,data):
@@ -321,6 +320,19 @@ class RexsterResource(Resource):
         return self.gremlin(script,params)
 
 
+    #
+    # Model Proxy - Edge
+    #
+
+    def create_indexed_edge(self,data,index_name,keys=None):
+        params = dict(data=data,index_name=index_name,keys=keys)
+        script = self.scripts.get("create_indexed_edge")
+        return self.gremlin(script,params)
+    
+    def update_indexed_edge(self,_id,data,index_name,keys=None):
+        params = dict(_id=_id,data=data,index_name=index_name,keys=keys)
+        script = self.scripts.get("update_indexed_edge")
+        return self.gremlin(script,params)
 
 
     #

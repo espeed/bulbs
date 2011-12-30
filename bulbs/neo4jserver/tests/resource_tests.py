@@ -54,7 +54,7 @@ class Neo4jIndexTestCase(unittest.TestCase):
 
         # update (update doesn't return data)
         _id = resp.results.get_id()
-        print "IDDDDDD", _id
+        #print "IDDDDDD", _id
         data = dict(name="James Thornton",age=35)
         keys = None
         resp = self.resource.update_indexed_vertex(_id,data,index_name,keys)
@@ -62,7 +62,7 @@ class Neo4jIndexTestCase(unittest.TestCase):
 
         # delete
         resp = self.resource.delete_vertex(_id)
-        print "RAW", resp.raw
+        #print "RAW", resp.raw
         
     # deleting a vertex evidently removes it from its indices as well
     # maybe this is because you're using the Blueprints method
@@ -86,13 +86,13 @@ class TryTestCase(unittest.TestCase):
         query = """START x  = node({_id}) MATCH x -[r]-> n RETURN type(r), n.name?, n.age?"""
         params = dict(_id=1261)
         resp = self.resource.cypher(query,params)
-        print resp.raw
+        #print resp.raw
 
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(Neo4jResourceTestCase))
     suite.addTest(unittest.makeSuite(Neo4jIndexTestCase))
-    suite.addTest(unittest.makeSuite(TryTestCase))
+    #suite.addTest(unittest.makeSuite(TryTestCase))
     return suite
 
 if __name__ == '__main__':

@@ -9,16 +9,17 @@ Bulbs supports pluggable backends. This is the Neo4j Server resource.
 
 """
 import ujson as json
+from urlparse import urlsplit
 
 from bulbs.utils import build_path, get_file_path
 from bulbs.registry import Registry
 
 # specific to this resource
 from bulbs.resource import Resource, Response, Result
-from bulbs.rest import Request, response_handlers
+from bulbs.rest import RESPONSE_HANDLERS, Request
 from bulbs.groovy import GroovyScripts as Scripts
 from bulbs.typesystem import JSONTypeSystem
-from index import Neo4jIndex
+from index import ExactIndex
 import os
 
 # The default URI
@@ -38,9 +39,13 @@ class Neo4jResult(Result):
         #: The raw result.
         self.raw = result
 
+        #javax.script.ScriptException: groovy.lang.MissingPropertyException: No such property: Conclusion for class: Script9
+
         #: The data in the result.
-        self.data = result.get('data')
-        
+        self.data = self._get_data(result)
+
+        self.type_map = dict(node="vertex",relationship="edge")
+
     def get_id(self):
         """Returns the element ID."""
         uri = self.raw.get('self')
@@ -48,10 +53,9 @@ class Neo4jResult(Result):
        
     def get_type(self):
         """Returns the element's base type, either vertex or edge."""
-        type_map = dict(node="vertex",relationship="edge")
         uri = self.get_uri()
         neo4j_type = self._parse_type(uri)
-        return type_map[neo4j_type]
+        return self.type_map[neo4j_type]
         
     def get_uri(self):
         """Returns the element URI."""
@@ -71,9 +75,18 @@ class Neo4jResult(Result):
         """Returns the edge label (relationship type)."""
         return self.raw.get('type')
 
+    def get_index_class(self):
+        uri = self.raw.get('template') 
+        neo4j_type = self._parse_index_class(uri)
+        return self.type_map[neo4j_type]
+
     def get(self,attribute):
         """Returns the value of a resource-specific attribute."""
         return self.raw[attribute]
+
+    def _get_data(self,result):
+        if type(result) is dict:
+            return result.get('data') 
 
     def _parse_id(self,uri):
         """Parses the ID out of a URI."""
@@ -85,7 +98,15 @@ class Neo4jResult(Result):
         """Parses the type ouf of a URI."""
         if uri:
             root_uri = uri.rpartition('/')[0]
+            #print root_uri
             neo4j_type = root_uri.rpartition('/')[-1]
+            return neo4j_type
+    
+    def _parse_index_class(self,uri):
+        if uri:
+            path = urlsplit(uri).path
+            segments = path.split("/")
+            neo4j_type = segments[-4]
             return neo4j_type
 
 
@@ -102,7 +123,7 @@ class Neo4jResponse(Response):
 
     def handle_response(self,response):
         headers, content = response
-        response_handler = response_handlers.get(headers.status)
+        response_handler = RESPONSE_HANDLERS.get(headers.status)
         response_handler(response)
 
     def get_headers(self,response):
@@ -161,9 +182,8 @@ class Neo4jResource(Resource):
         :param root_uri: the base URL of Rexster.
 
         """
-
         self.config = config
-        self.config.debug = True
+        self.config.debug = False
         self.registry = Registry(config)
         self.scripts = Scripts()
         dir_name = os.path.dirname(__file__)
@@ -171,30 +191,26 @@ class Neo4jResource(Resource):
         self.registry.add_scripts("gremlin",self.scripts)
         self.type_system = self._get_type_system()
         self.request = Neo4jRequest(config,self.type_system.content_type)
-        #self.index_class = Neo4jIndex
         
-    #
     # Gremlin
-    #
 
     def gremlin(self,script,params=None): 
         params = dict(script=script,params=params)
         return self.request.post(self.gremlin_path,params)
 
-    #
     # Cypher
-    #
 
     def cypher(self,query,params=None):
         params = dict(query=query,params=params)
         return self.request.post(self.cypher_path,params)
         
-    #
     # Vertex Proxy
-    #
 
     def create_vertex(self,data):
-        # TODO: remove None values
+        data = self._remove_null_values(data)
+        if self.config.autoindex is True:
+            index_name = self.config.vertex_autoindex
+            return self.create_indexed_vertex(data,index_name,keys=None)
         return self.request.post(self.vertex_path,data)
 
     def get_vertex(self,_id):
@@ -202,6 +218,10 @@ class Neo4jResource(Resource):
         return self.request.get(path,params=None)
         
     def update_vertex(self,_id,data):
+        data = self._remove_null_values(data)
+        if self.config.autoindex is True:
+            index_name = self.config.vertex_autoindex
+            return self.update_indexed_vertex(_id,data,index_name,keys=None)
         path = build_path(self.vertex_path,_id,"properties")
         return self.request.put(path,data)
 
@@ -213,12 +233,13 @@ class Neo4jResource(Resource):
         script = self.scripts.get("delete_vertex")
         return self.gremlin(script,params)
         
-    #
     # Edge Proxy
-    #
 
     def create_edge(self,outV,label,inV,data={}): 
-        # TODO: remove None values
+        data = self._remove_null_values(data)
+        if self.config.autoindex is True:
+            index_name = self.config.edge_autoindex
+            return self.create_indexed_edge(outV,label,inV,data,index_name,keys=None)
         path = build_path(self.vertex_path,outV,self.edge_path)
         inV_uri = "%s/node/%s" % (self.config.root_uri.rstrip("/"), inV)
         params = {'to':inV_uri,'type':label, 'data':data}
@@ -228,11 +249,11 @@ class Neo4jResource(Resource):
         path = build_path("relationship",_id)
         return self.request.get(path,params=None)
         
-        #path = build_path(self.edge_path,_id)
-        #script = "g.e(%s)" % _id
-        #return self.gremlin(script)
-
     def update_edge(self,_id,data):
+        data = self._remove_null_values(data)
+        if self.config.autoindex is True:
+            index_name = self.config.edge_autoindex
+            return self.update_indexed_edge(_id,data,index_name,keys=None)
         path = build_path("relationship",_id,"properties")
         return self.request.put(path,data)
 
@@ -241,10 +262,7 @@ class Neo4jResource(Resource):
         path = build_path("relationship",_id)
         return self.request.delete(path,params=None)
 
-
-    #
     # Vertex Container
-    #
 
     def outE(self,_id,label=None):
         """Return the outgoing edges of the vertex."""
@@ -282,9 +300,7 @@ class Neo4jResource(Resource):
         params = dict(_id=_id,label=label)
         return self.gremlin(script,params)
 
-    #
     # Index Proxy - Vertex
-    #
 
     def create_vertex_index(self,index_name,*args,**kwds):
         index_type = kwds.pop("index_type","exact")
@@ -316,9 +332,7 @@ class Neo4jResource(Resource):
         path = build_path(self.index_path,"node",name)
         return self.request.delete(path,params=None)
 
-    #
     # Index Proxy - Edge
-    #
 
     def create_edge_index(self,index_name,*args,**kwds):
         path = build_path(self.index_path,"relationship")
@@ -342,48 +356,60 @@ class Neo4jResource(Resource):
     def delete_edge_index(self,name):
         pass
 
-    #
     # Model Proxy - Vertex
-    #
 
     def create_indexed_vertex(self,data,index_name,keys=None):
+        data = self._remove_null_values(data)
         params = dict(data=data,index_name=index_name,keys=keys)
         script = self.scripts.get("create_indexed_vertex")
         return self.gremlin(script,params)
     
     def update_indexed_vertex(self,_id,data,index_name,keys=None):
+        data = self._remove_null_values(data)
         params = dict(_id=_id,data=data,index_name=index_name,keys=keys)
         script = self.scripts.get("update_indexed_vertex")
         return self.gremlin(script,params)
 
-    #
     # Model Proxy - Edge
-    #
 
-    def create_indexed_edge(self,data,index_name,keys=None):
-        raise NotImplementedError 
+    def create_indexed_edge(self,outV,label,inV,data,index_name,keys=None):
+        data = self._remove_null_values(data)
+        edge_params = dict(outV=outV,label=label,inV=inV)
+        params = dict(data=data,index_name=index_name,keys=keys)
+        params.update(edge_params)
+        script = self.scripts.get("create_indexed_edge")
+        return self.gremlin(script,params)
 
     def update_indexed_edge(self,_id,data,index_name,keys=None):
-        raise NotImplementedError 
+        data = self._remove_null_values(data)
+        params = dict(_id=_id,data=data,index_name=index_name,keys=keys)
+        script = self.scripts.get("update_indexed_edge")
+        return self.gremlin(script,params)
 
-
-    #
     # Utils
-    #
 
     def warm_cache(self):
         script = self.scripts.get('warm_cache')
         return self.gremlin(script,params=None)
+
+    def _remove_null_values(self,data):
+        # You could do this at the Model._get_property_data(), 
+        # but this may not be needed for all databases. 
+        # Moreover, Neo4j Server uses PUTs to overwrite all properties so no need
+        # to worry about deleting props that are being set to null.
+        clean_data = [(k, v) for k, v in data.items() if v is not None]
+        return dict(clean_data)
 
     #
     # Deprecated 
     #
 
     # Indexed vertices
-    def add_vertex_to_index(self,name,key,value,_id):
-        path = build_path(self.index_path,"node",name,key,value)
-        node_uri = "%s/%d" % (self.config.root_uri,_id)
-        return self.request.post(path,params=node_uri)
+    def put_vertex(self,name,key,value,_id):
+        path = build_path(self.index_path,"node",name)
+        uri = "%s/%s/%d" % (self.config.root_uri,"node",_id)
+        params = dict(key=key,value=value,uri=uri)
+        return self.request.post(path,params)
 
     def lookup_vertex(self,name,key,value):
         path = build_path(self.index_path,"node",name,key,value)
@@ -402,6 +428,13 @@ class Neo4jResource(Resource):
         #    path = build_path("node",name,_id)
         path = build_path("node",name,key,value,_id)
         return self.request.delete(path,params=None)
+
+    def put_edge(self,name,key,value,_id):
+        path = build_path(self.index_path,"relationship",name)
+        uri = "%s/%s/%d" % (self.config.root_uri,"relationship",_id)
+        params = dict(key=key,value=value,uri=uri)
+        return self.request.post(path,params)
+
     
     def _get_type_system(self):
         type_system_map = dict(json=JSONTypeSystem)

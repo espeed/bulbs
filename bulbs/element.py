@@ -7,7 +7,6 @@
 Vertex and Edge container classes and proxies.
 
 """
-
 from utils import initialize_element, initialize_elements, coerce_id
 
 def get_base_type(element_class):
@@ -168,6 +167,7 @@ class VertexProxy(object):
         self.element_class = element_class
         self.resource = resource
         self.resource.registry.add_class(element_class)
+        self.index = None
 
     def create(self,data={}):
         """Adds an element to the database and returns it."""
@@ -216,6 +216,7 @@ class EdgeProxy(object):
         self.element_class = element_class
         self.resource = resource
         self.resource.registry.add_class(element_class)
+        self.index = None
 
     def create(self,outV,label,inV,data={}):
         """Adds an edge to the database and returns it.""" 

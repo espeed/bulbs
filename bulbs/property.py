@@ -34,6 +34,17 @@ class Property(object):
         self.unique = unique
         self.index = index
 
+    def validate(self, key, value):
+        """
+        Validates that Property data is of the right datatype before saving it
+        to the DB and that the Property has a value if nullable is set to False.
+        
+        Call this at the top of each save() method.
+        
+        """
+        self._check_datatype(value)
+        self._check_null(key,value)
+
     def _check_datatype(self,value):
         isinstance(value, self.datatype.python_type)
 
@@ -46,17 +57,6 @@ class Property(object):
             print "Cannot set '%s' to %s: '%s' is a Property with nullable set to False" \
                 % (key, value, key)
             raise
-
-    def validate(self, key, value):
-        """
-        Validates that Property data is of the right datatype before saving it
-        to the DB and that the Property has a value if nullable is set to False.
-        
-        Call this at the top of each save() method.
-        
-        """
-        self._check_datatype(value)
-        self._check_null(key,value)
 
     def coerce_value(self,key,value):
         initial_datatype = type(value)
@@ -73,91 +73,91 @@ class Property(object):
                 % (key,value,initial_datatype)
             raise
 
+#
+# Property DataTypes
+#
 
-class DataType(object):
-    pass
-
-class String(DataType): 
+class String(object): 
 
     python_type = str
 
     @classmethod
     def to_db(self,type_system,value):
-        return type_system.string_to_db(value)
+        return type_system.database.to_string(value)
 
     @classmethod
     def to_python(self,type_system,value):
-        return type_system.convert(value,str)
+        return type_system.python.to_string(value)
 
-class Integer(DataType):    
+class Integer(object):    
 
     python_type = int
 
     @classmethod
     def to_db(self,type_system,value):
-        return type_system.integer_to_db(value)
+        return type_system.database.to_integer(value)
     
     @classmethod
     def to_python(self,type_system,value):
-        return type_system.convert(value,int)
+        return type_system.python.to_integer(value)
 
-class Long(DataType):
+class Long(object):
 
     python_type = long
 
     @classmethod
     def to_db(self,type_system,value):
-        return type_system.long_to_db(value)
+        return type_system.database.to_long(value)
 
     @classmethod
     def to_python(self,type_system,value):
-        return type_system.convert(value,long)
+        return type_system.python.to_long(value)
 
-class Float(DataType):
+class Float(object):
 
     python_type = float
 
     @classmethod
     def to_db(self,type_system,value):
-        return type_system.float_to_db(value)
+        return type_system.python.database.to_float(value)
     
     @classmethod
     def to_python(self,type_system,value):
-        return type_system.convert(value,float)              
+        return type_system.python.to_float(value)              
 
-class Null(DataType):
+class Null(object):
 
     python_type = None
 
     @classmethod
     def to_db(self,type_system,value):
-        return type_system.null_to_db(value)
+        return type_system.database.to_null(value)
 
     @classmethod
     def to_python(self,type_system,value):
-        type_system.null_to_python(value)
+        return type_system.python.to_null(value)
 
-class List(DataType):
+class List(object):
 
     python_type = list
 
     @classmethod
     def to_db(self,type_system,value):
-        return type_system.list_to_db(value)
+        return type_system.database.to_list(value)
 
     @classmethod
     def to_python(self,type_system,value):
-        type_system.list_to_python(value)
+        return type_system.python.to_list(value)
 
-class Dictionary(DataType):
+class Dictionary(object):
 
     python_type = dict
 
     @classmethod
     def to_db(self,type_system,value):
-        return type_system.dictionary_to_db(value)
+        return type_system.database.to_dictionary(value)
 
     @classmethod
     def to_python(self,type_system,value):
-        type_system.dictionary_to_python(value)
+        return type_system.python.to_dictionary(value)
 

@@ -12,3 +12,4 @@ if __name__ == '__main__':
     suite = suite()
     suite.addTest(unittest.makeSuite(IndexTestCase))
     unittest.main(defaultTest='suite')
+

@@ -8,9 +8,7 @@ import unittest
 from testcase import BulbsTestCase
 
 from bulbs import config
-from bulbs.graph import Neo4jGraph, RexsterGraph
 from bulbs.element import Vertex, VertexProxy, EdgeProxy, Edge
-
 
 
 class VertexProxyTestCase(BulbsTestCase):

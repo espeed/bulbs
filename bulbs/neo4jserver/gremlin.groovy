@@ -1,18 +1,5 @@
-// Watch out for using Blueprints methods that have internal transactions.
-// You'll get better write performance with only using one transaction.
-// In other words, don't use:
-//  ElementHelper.removeProperties() and ElementHelper.setProperties()
-// Don't use Gremlin methods for writes because all contain transactions.
-// Actually, Neo4j doesn't support nested transactions -- it ignores
-// internal transactions
-// http://wiki.neo4j.org/content/Transactions
-// http://wiki.neo4j.org/content/Flat_nested_transactions
 
-
-//
-// Index Controller Methods
-//
-
+// Index Proxy
 
 def create_vertex_index(index_name) {
   manager = g.index()
@@ -27,49 +14,122 @@ def get_vertex_index(index_name) {
   //Map<String, String> config = manager.getConfiguration(index) 
 }
 
-//
-// Index Container Methods
-//
+// Model Proxy - Vertex
   
 // NOTE: Converting all index values to strings because that's what Neo4j does
 // anyway, and when using the JSON type system, Rexster doesn't have a way to 
 // specify types in the URL for index lookups. This keeps the code consistent.
+
+// TODO: Make this support multiple indices, e.g. an autoindex and a normal index
+
 def create_indexed_vertex(data,index_name,keys) {
   neo4j = g.getRawGraph()
   manager = neo4j.index()
-  index = manager.forNodes(index_name)
-  //g.setMaxBufferSize(0)
-  //g.startTransaction()
-  tx = neo4j.beginTx()
-  vertex = neo4j.createNode()
-  for (entry in data.entrySet()) {
-    if (entry.value == null) continue;
-    vertex.setProperty(entry.key,entry.value)
-    if (keys == null || keys.contains(entry.key))
-      index.add(vertex,entry.key,String.valueOf(entry.value))
+  g.setMaxBufferSize(0)
+  g.startTransaction()
+  try {
+    index = manager.forNodes(index_name)
+    vertex = neo4j.createNode()
+    for (entry in data.entrySet()) {
+      if (entry.value == null) continue;
+      vertex.setProperty(entry.key,entry.value)
+      if (keys == null || keys.contains(entry.key))
+	index.add(vertex,entry.key,String.valueOf(entry.value))
+    }
+    //g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
+    //g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
+    g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
+    return vertex
+  } catch (e) {
+    g.stopTransaction(TransactionalGraph.Conclusion.FAILURE)  
+    return e
   }
-  //g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
-  tx.success()
-  tx.finish()
-  return vertex
 }
+
 
 def update_indexed_vertex(_id, data, index_name, keys) {
   vertex = g.getRawGraph().getNodeById(_id)
   manager = g.getRawGraph().index()
-  index = manager.forNodes(index_name)
   g.setMaxBufferSize(0)
   g.startTransaction()
-  index.remove(vertex)
-  for (String key in vertex.getPropertyKeys())
-    vertex.removeProperty(key)
-  for (entry in data.entrySet()) {
-    if (entry.value == null) continue;
-    vertex.setProperty(entry.key,entry.value)
-    if (keys == null || keys.contains(entry.key))
-      index.add(vertex,entry.key,String.valueOf(entry.value))
+  try {
+    index = manager.forNodes(index_name)
+    index.remove(vertex)
+    for (String key in vertex.getPropertyKeys())
+      vertex.removeProperty(key)
+    for (entry in data.entrySet()) {
+      if (entry.value == null) continue;
+      vertex.setProperty(entry.key,entry.value)
+      if (keys == null || keys.contains(entry.key))
+	index.add(vertex,entry.key,String.valueOf(entry.value))
+    }
+    g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
+    return vertex 
+  } catch (e) {
+    g.stopTransaction(TransactionalGraph.Conclusion.FAILURE)
+    return e
   }
-  g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
-  return vertex 
+}
+
+// Model Proxy - Edge
+
+def create_indexed_edge(outV,label,inV,data,index_name,keys) {
+  import org.neo4j.graphdb.DynamicRelationshipType;
+  neo4j = g.getRawGraph()
+  manager = neo4j.index()
+  vertex = neo4j.getNodeById(outV)
+  relationshipType = DynamicRelationshipType.withName(label)
+  g.setMaxBufferSize(0)
+  g.startTransaction()
+  try {
+    index = manager.forRelationships(index_name)
+    edge = vertex.createRelationshipTo(neo4j.getNodeById(inV),relationshipType)
+    for (entry in data.entrySet()) {
+      if (entry.value == null) continue;
+      edge.setProperty(entry.key,entry.value)
+      if (keys == null || keys.contains(entry.key))
+	index.add(edge,entry.key,String.valueOf(entry.value))
+    }
+    g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
+    return edge
+  } catch (e) {
+    g.stopTransaction(TransactionalGraph.Conclusion.FAILURE)
+    return e
+  }
+}
+
+def update_indexed_edge(_id, data, index_name, keys) {
+  neo4j = g.getRawGraph()
+  manager = neo4j.index()
+  edge = neo4j.getRelationshipById(_id)
+  g.setMaxBufferSize(0)
+  g.startTransaction()
+  try {
+    index = manager.forRelationships(index_name)
+    index.remove(edge)
+    for (String key in edge.getPropertyKeys())
+      edge.removeProperty(key)
+    for (entry in data.entrySet()) {
+      if (entry.value == null) continue;
+      edge.setProperty(entry.key,entry.value)
+      if (keys == null || keys.contains(entry.key))
+	index.add(edge,entry.key,String.valueOf(entry.value))
+    }
+    g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
+    return edge
+  } catch (e) { 
+    g.stopTransaction(TransactionalGraph.Conclusion.FAILURE)
+    return e
+  }
+}
+
+
+
+// Should this be in the global gremlin library?
+// Neo4j requires you delete all adjacent edges first. 
+// Blueprints' removeVertex() method does that; the Neo4jServer DELETE URI does not.
+def delete_vertex(_id) {
+  vertex = g.v(_id)
+  g.removeVertex(vertex)
 }
 

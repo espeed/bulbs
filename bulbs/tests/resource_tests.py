@@ -14,7 +14,7 @@ class ResourceTestCase(unittest.TestCase):
         name, age = "James", 34
         data = dict(name=name,age=age)
         resp = self.resource.create_vertex(data)
-        print resp.raw
+        #print resp.raw
         assert type(resp.results.get_id()) == int
         assert resp.results.get_type() == "vertex"
         assert resp.results.data.get('name') == name

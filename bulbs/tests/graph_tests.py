@@ -1,6 +1,6 @@
 import unittest
 from bulbs import config
-from bulbs.graph import Graph
+
 
 class GraphTestCase(unittest.TestCase):
 

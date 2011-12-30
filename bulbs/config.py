@@ -14,5 +14,7 @@ class Config(object):
         self.type_var = "element_type"
         self.label_var = "label"
         self.type_system = "json" 
-        self.debug = False
-        
+        self.vertex_autoindex = "vertices"
+        self.edge_autoindex = "edges"
+        self.autoindex = True
+        self.debug = False        

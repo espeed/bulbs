@@ -68,14 +68,6 @@ def bothV(_id,label) {
     g.v(_id).bothV(label)
 }
 
-// Neo4j requires you delete all adjacent edges first. 
-// Blueprints' removeVertex() method does that; the Neo4jServer DELETE URI does not.
-def delete_vertex(_id) {
-  vertex = g.v(_id)
-  g.removeVertex(vertex)
-}
-
-
 // Utils
 
 def warm_cache() {
