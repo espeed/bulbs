@@ -17,4 +17,3 @@ class Config(object):
         self.vertex_autoindex = "vertices"
         self.edge_autoindex = "edges"
         self.autoindex = True
-        self.debug = False        

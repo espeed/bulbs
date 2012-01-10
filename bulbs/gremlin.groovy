@@ -49,23 +49,23 @@ def bothE(_id,label) {
 
 def outV(_id,label) {
   if (label == null)
-    g.v(_id).outV()
+    g.v(_id).out()
   else
-    g.v(_id).outV(label)
+    g.v(_id).out(label)
 }
 
 def inV(_id,label) {
   if (label == null)
-    g.v(_id).inV()
+    g.v(_id).in()
   else
-    g.v(_id).inV(label)
+    g.v(_id).in(label)
 }
 
 def bothV(_id,label) { 
   if (label == null)
-    g.v(_id).bothV()
+    g.v(_id).both()
   else
-    g.v(_id).bothV(label)
+    g.v(_id).both(label)
 }
 
 // Utils
