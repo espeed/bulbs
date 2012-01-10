@@ -206,7 +206,7 @@ class NodeProxy(VertexProxy):
         """Returns all the elements for the model type."""
         key = self.resource.config.type_var
         value = getattr(self.element_class,self.resource.config.type_var)
-        return self.index.get(key,value)
+        return self.index.lookup(key,value)
 
 
 class RelationshipProxy(EdgeProxy):
@@ -215,9 +215,7 @@ class RelationshipProxy(EdgeProxy):
         relationship = instantiate_model(self.element_class,self.resource,kwds)
         outV, label, inV = self._parse_args(relationship,args)
         data = relationship._get_property_data()
-        print "DATAAAA", data
         resp = relationship._create(outV,label,inV,data)
-        print resp.raw
         result = get_one_result(resp)
         return initialize_element(self.resource,result)
 
@@ -232,7 +230,7 @@ class RelationshipProxy(EdgeProxy):
         """Returns all the elements for the model type."""
         key = self.resource.config.label_var
         value = getattr(self.element_class,self.resource.config.label_var)
-        return self.index.get(key,value)
+        return self.index.lookup(key,value)
 
     def _parse_args(self,relationship,args):
         # Two different args options:

@@ -7,7 +7,7 @@
 An interface for interacting with indices on Neo4j Server.
 
 """
-from bulbs import utils
+from bulbs.utils import initialize_element, initialize_elements, get_one_result
 
 
 class IndexProxy(object):
@@ -112,8 +112,11 @@ class Index(object):
         print self.results.raw
         return self.results.get_index_class()
 
-    def count(self):
-        pass
+    def count(self,key,value):
+        script = self.resource.scripts.get('index_count')
+        params = dict(index_name=self.index_name,key=key,value=value)
+        resp = self.resource.gremlin(script,params)
+        return get_one_result(resp)
 
     def _parse_args(self,key,value,pair):
         if pair:
@@ -165,14 +168,14 @@ class ExactIndex(Index):
         """Return all the elements with key property equal to value in the index."""
         key, value = self._parse_args(key,value,pair)
         resp = self.resource.lookup_vertex(self.index_name,key,value)
-        return utils.initialize_elements(self.resource,resp)
+        return initialize_elements(self.resource,resp)
 
     def lookup_unique(self,key=None,value=None,**pair):
         """Returns a max of 1 elements matching the key/value pair in the index."""
         key, value = self._parse_args(key,value,pair)
         resp = self.resource.lookup_vertex(self.index_name,key,value)
         result = utils.get_one_result(resp)
-        return utils.initialize_element(self.resource,result)
+        return initialize_element(self.resource,result)
 
 
 
@@ -206,7 +209,7 @@ class FulltextIndex(Index):
 
         """
         resp = self.resource.query_fulltext_index(self.index_name,query_string)
-        return utils.initialize_elements(self.resource,resp)
+        return initialize_elements(self.resource,resp)
 
 class AutomaticIndex(Index):
 
@@ -218,7 +221,7 @@ class AutomaticIndex(Index):
         """Return all the elements with key property equal to value in the index."""
         key, value = self._parse_args(key,value,pair)
         resp = self.resource.lookup_vertex(self.index_name,key,value)
-        return utils.initialize_elements(self.resource,resp)
+        return initialize_elements(self.resource,resp)
 
     def query(self,query_string):
         pass

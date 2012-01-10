@@ -60,7 +60,7 @@ class IndexTestCase(BulbsTestCase):
         #assert 'name' in keys
         #assert 'location' in keys
         i2 = self.indicesV.get(index_name)
-        print "INDEX_NAME", index_name, i1.index_name, i2.index_name
+        #print "INDEX_NAME", index_name, i1.index_name, i2.index_name
         assert self.vertices.index.index_name == i2.index_name
         
         # remove vertex is bugged
@@ -73,7 +73,7 @@ class IndexTestCase(BulbsTestCase):
         #results = i3.rebuild()
         #assert type(results) == list
 
-        self.indicesV.delete(index_name,Vertex)
+        self.indicesV.delete(index_name)
 
         
 def suite():

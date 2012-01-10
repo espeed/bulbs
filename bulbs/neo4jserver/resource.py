@@ -318,14 +318,9 @@ class Neo4jResource(Resource):
         path = build_path(self.index_path,"node")
         return self.request.get(path,params=None)
 
-    def get_vertex_index(self,name):
-        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+    def get_vertex_index(self,index_name):
         resp = self.get_vertex_indices()
-        resp.results = None   # for clarity
-        result = resp.content.get(name)
-        if result:
-            result['name'] = name
-            resp.results = Neo4jResult(result)
+        resp.results = self._get_index_results(index_name,resp)
         return resp
 
     def delete_vertex_index(self,name): 
@@ -343,18 +338,23 @@ class Neo4jResource(Resource):
         path = build_path(self.index_path,"relationship")
         return self.request.get(path,params=None)
 
-    def get_edge_index(self,name):
-        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+    def get_edge_index(self,index_name):
         resp = self.get_edge_indices()
-        resp.results = None   # for clarity
-        result = resp.content.get(name)
-        if result:
-            result['name'] = name
-            resp.results = Neo4jResult(result)
+        resp.results = self._get_index_results(index_name,resp)
         return resp
 
     def delete_edge_index(self,name):
         pass
+
+    def _get_index_results(self,index_name,resp):
+        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+        results = None   # for clarity
+        result = resp.content
+        if index_name in result:
+            result = result[index_name]
+            result['name'] = index_name
+            results = Neo4jResult(result)
+        return results
 
     # Model Proxy - Vertex
 

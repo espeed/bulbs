@@ -72,11 +72,11 @@ class Index(object):
         """Update the element ID for the key and value."""
         raise NotImplementedError
 
-    def get(self,key=None,value=None,**pair):
+    def lookup(self,key=None,value=None,**pair):
         """Return all the elements with key property equal to value in the index."""
         raise NotImplementedError
 
-    def get_unique(self,key=None,value=None,**pair):
+    def lookup_unique(self,key=None,value=None,**pair):
         """Returns a max of 1 elements matching the key/value pair in the index."""
         raise NotImplementedError
 
