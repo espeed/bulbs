@@ -68,26 +68,22 @@ class VertexTestCase(BulbsTestCase):
     def test_get_out_edges(self):
         edges = self.james.outE()
         edges = list(edges)
-        print "ddddddddddddddddddddddddddddEDGES",  edges
         assert len(edges) == 1
 
     def test_get_in_edges(self):
         edges = self.james.inE()
         edges = list(edges)
-        print "ddddddddddddddddddEDGES",  edges
         assert len(edges) == 1
 
     def test_get_both_edges(self):
         # ok
         edges = self.james.bothE()
         edges = list(edges)
-        print "ddddddddddddddddddddddEDGES",  edges
         assert len(edges) == 2
 
     def test_get_both_labeled_edges(self):
         edges = self.james.bothE("test")
         edges = list(edges)
-        print "dddddddddddddddddddddEDGES",  edges
         assert len(edges) == 2
 
 class EdgeProxyTestCase(BulbsTestCase):

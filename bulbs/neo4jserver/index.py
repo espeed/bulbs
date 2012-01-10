@@ -109,7 +109,7 @@ class Index(object):
     @property
     def index_class(self):
         """Returns the index class."""
-        print self.results.raw
+        #print self.results.raw
         return self.results.get_index_class()
 
     def count(self,key,value):

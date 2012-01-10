@@ -42,7 +42,7 @@ class IndexTestCase(BulbsTestCase):
         #i1 = self.indicesV.create(index_name)
         #assert i1.index_name == index_name
         #assert i1.index_type == "automatic"
-        print self.vertices.index.index_type
+        #print self.vertices.index.index_type
         assert self.vertices.index.index_type == "exact"
 
         james = self.vertices.create({'name':'James'})
@@ -50,7 +50,7 @@ class IndexTestCase(BulbsTestCase):
         self.vertices.index.put(james._id,'location','Dallas')
         results = self.vertices.index.lookup('name','James')
         results = list(results)
-        print "RESULTS", results
+        #print "RESULTS", results
         assert len(results) > 1
         assert results[0].name == "James"
         total_size = self.vertices.index.count('name','James')
