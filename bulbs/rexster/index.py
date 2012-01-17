@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
@@ -10,8 +10,18 @@ An interface for interacting with indices on Rexster.
 
 from bulbs.utils import initialize_element, initialize_elements, get_one_result
 
+class IndexProxy(object):
+    """Abstract base class the index proxies."""
 
-class VertexIndexProxy(object):
+    def __init__(self,index_class,resource):        
+        #: The index class for this proxy, e.g. ExactIndex.
+        self.index_class = index_class
+
+        #: The Resource object for the database.
+        self.resource = resource
+    
+
+class VertexIndexProxy(IndexProxy):
     """
     An interface for interacting with indices on Rexster.
 
@@ -19,24 +29,9 @@ class VertexIndexProxy(object):
     :param index_class: The index class for this proxy, e.g. RexsterIndex.
 
     """
-
-    def __init__(self,index_class,resource):
-        self.index_class = index_class
-        self.resource = resource
                         
     def create(self,index_name,*args,**kwds):
-        """ 
-        Adds an index to the database and returns it. 
-
-        index_keys must be a string in this format: '[k1,k2]'
-        Don't pass actual list b/c keys get double quoted.
-
-        :param index_name: The name of the index to create.
-
-        :param index_class: The class of the elements stored in the index. 
-                            Either vertex or edge.
-        
-        """
+        """Creates an an index and returns it."""
         resp = self.resource.create_vertex_index(index_name,*args,**kwds)
         index = self.index_class(self.resource,resp.results)
         self.resource.registry.add_index(index_name,index)
@@ -47,7 +42,7 @@ class VertexIndexProxy(object):
         resp = self.resource.get_vertex_index(index_name)
         if resp.results:
             index = self.index_class(self.resource,resp.results)
-            self.register(index_name,index)
+            self.resource.registry.add_index(index_name,index)
             return index
 
     def get_or_create(self,index_name,*args,**kwds):
@@ -62,7 +57,7 @@ class VertexIndexProxy(object):
         return self.resource.delete_vertex_index(index_name)
 
 
-class EdgeIndexProxy(object):
+class EdgeIndexProxy(IndexProxy):
     """
     An interface for interacting with indices on Rexster.
 
@@ -71,10 +66,6 @@ class EdgeIndexProxy(object):
 
     """
 
-    def __init__(self,index_class,resource):
-        self.index_class = index_class
-        self.resource = resource
-                        
     def create(self,index_name,*args,**kwds):
         """ 
         Adds an index to the database and returns it. 
@@ -98,7 +89,7 @@ class EdgeIndexProxy(object):
         resp = self.resource.get_edge_index(index_name)
         if resp.results:
             index = self.index_class(self.resource,resp.results)
-            self.register(index_name,index)
+            self.resource.registry.add_index(index_name,index)
             return index
 
     def get_or_create(self,index_name,*args,**kwds):
@@ -112,66 +103,30 @@ class EdgeIndexProxy(object):
         """Deletes/drops an index and returns the Rexster Response object."""
         return self.resource.delete_edge_index(index_name)
 
-# Deprecated / Not Fully Implemented
-class IndexProxy(object):
-
-    def __init__(self,index_class,resource):
-        self.index_class = index_class
-        self.resource = resource
-        self.indicesV = VertexIndexProxy(index_class,resource)
-        self.indicesE = EdgeIndexProxy(index_class,resource)
-
-    def create(self,index_name,*args,**kwds):
-        """ 
-        Adds an index to the database and returns it. 
-
-        index_keys must be a string in this format: '[k1,k2]'
-        Don't pass actual list b/c keys get double quoted.
-
-        :param index_name: The name of the index to create.
-
-        :param index_class: The class of the elements stored in the index. 
-                            Either vertex or edge.
-        
-        """
-        return indices.create(index_name,*args,**kwds)
-
-    def get(self,index_name):
-        """Returns the Index object with the specified name or None if not found."""
-        return indices.get(index_name)
-
-    def get_or_create(self,index_name,*args,**kwds):
-        # get it, create if doesn't exist, then register it
-        return indices.get_or_create(index_name,*args,**kwds)
-
-    def delete(self,index_name):
-        """Deletes/drops an index and returns the Rexster Response object."""
-        return indices.delete(index_name)
-
 
 class Index(object):
 
     def __init__(self,resource,results):
         self.resource = resource
-        self._results = results
+        self.results = results
 
     @property
     def index_name(self):
         """Returns the index name."""
-        return self._results.data['name']
+        return self.results.data['name']
 
     @property
     def index_class(self):
         """Returns the index class, which will either be vertex or edge."""
-        return self._results.data['class']
+        return self.results.data['class']
 
     @property
     def index_type(self):
         """Returns the index type, which will either be automatic or manual."""
-        return self._results.data['type']
+        return self.results.data['type']
 
     # TODO: change to lookup?
-    def get(self,key=None,value=None,**pair):
+    def lookup(self,key=None,value=None,**pair):
         """
         Return a generator containing all the elements with key property equal 
         to value in the index.
@@ -341,7 +296,7 @@ class ManualIndex(Index):
         return self.put_unique(_id,key,value,**pair)
 
          
-    def get_unique(self,key=None,value=None,**pair):
+    def lookup_unique(self,key=None,value=None,**pair):
         """
         Returns a max of 1 elements matching the key/value pair in the index.
 

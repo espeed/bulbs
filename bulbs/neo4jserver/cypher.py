@@ -50,20 +50,17 @@ class YamlScripts(object):
 
     def _get_templates(self,file_name):
         templates = dict()
-        print file_name
         f = open(file_name)
         yaml_map = yaml.load(f)    
         for name, template in yaml_map.items():
             #template = ';'.join(lines.split('\n'))
             method_signature = self._get_method_signature(template)
-            print method_signature
             templates[name] = Template(template)
         return templates
 
     def _get_method_signature(self,template):
         lines = template.split('\n')
         first_line = lines[0]
-        print "FIRST LINE", first_line
         pattern = 'def(.*){'
         try:
             method_signature = re.search(pattern,first_line).group(1).strip()

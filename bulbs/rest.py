@@ -98,7 +98,7 @@ class Request(object):
         """
         Sends a request to the resource.
 
-        :param method: either GET, POST, or DELETE.
+        :param method: either GET, PUT, POST, or DELETE.
         :param target: the URL path relative to the database URL you specified 
                        in either config.py or that you passed in as an argument
                        when you instantiated the resource.
@@ -106,8 +106,8 @@ class Request(object):
         """
         uri, method, body, headers = self._build_request_args(path, method, params)
 
-        if self.config.debug is True:
-            self._display_debug(uri, method, body)
+        #if self.config.debug is True:
+        #    self._display_debug(uri, method, body)
        
          # "retry code" moved to _retry_request method for now. - James  
         http_resp = self.http.request(uri, method, body, headers)

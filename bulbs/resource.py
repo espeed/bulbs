@@ -209,7 +209,7 @@ class Resource(object):
         """Adds a vertex to the index with the index_name."""
         raise NotImplementedError 
 
-    def lookup_vertex(self, index_name, key, value):
+    def get_vertex(self, index_name, key, value):
         """Returns the vertices indexed with the key and value."""
         raise NotImplementedError 
 
@@ -226,7 +226,7 @@ class Resource(object):
         """Adds an edge to the index and returns the Response."""
         raise NotImplementedError 
 
-    def lookup_edge(self, index_name, key, value):
+    def get_edge(self, index_name, key, value):
         """Looks up an edge in the index and returns the Response."""
         raise NotImplementedError 
 

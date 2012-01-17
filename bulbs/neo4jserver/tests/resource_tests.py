@@ -16,7 +16,6 @@ class Neo4jIndexTestCase(unittest.TestCase):
     
     def setUp(self):
         config = Config(NEO4J_URI)
-        config.debug = True
         self.resource = Neo4jResource(config)
 
     #
@@ -25,9 +24,9 @@ class Neo4jIndexTestCase(unittest.TestCase):
 
     def test_create_vertex_index(self):
         index_name = "test_idxV"
-        keys = ["name","age"]
+        #keys = ["name","age"]
         self.resource.delete_vertex_index(index_name)
-        resp = self.resource.create_vertex_index(index_name,keys=keys)
+        resp = self.resource.create_vertex_index(index_name)
         #print resp.raw
         # cool...keys of "null" come back as None
         #new_keys = str(resp.results.get("keys"))
@@ -71,11 +70,10 @@ class Neo4jIndexTestCase(unittest.TestCase):
     #    print "RAW", resp.raw
 
 
-class TryTestCase(unittest.TestCase):
+class CypherTestCase(unittest.TestCase):
     
     def setUp(self):
         config = Config(NEO4J_URI)
-        config.debug = True
         self.resource = Neo4jResource(config)
 
     #def test_warm_cache(self):
@@ -92,7 +90,8 @@ def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(Neo4jResourceTestCase))
     suite.addTest(unittest.makeSuite(Neo4jIndexTestCase))
-    #suite.addTest(unittest.makeSuite(TryTestCase))
+    #suite.addTest(unittest.makeSuite(GremlinTestCase))
+    #suite.addTest(unittest.makeSuite(CypherTestCase))
     return suite
 
 if __name__ == '__main__':

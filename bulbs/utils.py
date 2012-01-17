@@ -6,6 +6,16 @@
 import os
 import inspect
 
+class LookupTable(object):
+
+    def __init__(self):
+        self.table = dict()
+    
+    def add(self,key,value):
+        self.table[key] = value
+
+    def get(self,key):
+        return self.table[key]
 
 def initialize_element(resource,result):
     # result should be a single Result object, not a list or generator

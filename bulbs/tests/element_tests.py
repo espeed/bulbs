@@ -5,11 +5,11 @@
 #
 
 import unittest
-from testcase import BulbsTestCase
 
 from bulbs import config
 from bulbs.element import Vertex, VertexProxy, EdgeProxy, Edge
 
+from testcase import BulbsTestCase
 
 class VertexProxyTestCase(BulbsTestCase):
 

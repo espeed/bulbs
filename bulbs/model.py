@@ -11,6 +11,9 @@ from bulbs.property import Property
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
 from bulbs.utils import initialize_element, get_one_result
 
+import logging
+log = logging.getLogger(__name__)
+
 # utility function used by NodeProxy and RelationshipProxy
 def instantiate_model(element_class,resource,kwds):
     model = element_class(resource)
@@ -88,8 +91,9 @@ class Model(object):
             # Notice that __setattr__ is overloaded
             value = self._resource.type_system.to_python(property_instance,value)
             setattr(self,key,value)
-        except:
+        except Exception as e:
             # TODO: log/warn/email regarding type mismatch
+            log.error("Property Type Mismatch: '%s' with value '%s': %s", key, value, ex)
             setattr(self,key,None)        
 
 
@@ -206,7 +210,7 @@ class NodeProxy(VertexProxy):
         """Returns all the elements for the model type."""
         key = self.resource.config.type_var
         value = getattr(self.element_class,self.resource.config.type_var)
-        return self.index.lookup(key,value)
+        return self.index.get(key,value)
 
 
 class RelationshipProxy(EdgeProxy):
@@ -230,7 +234,7 @@ class RelationshipProxy(EdgeProxy):
         """Returns all the elements for the model type."""
         key = self.resource.config.label_var
         value = getattr(self.element_class,self.resource.config.label_var)
-        return self.index.lookup(key,value)
+        return self.index.get(key,value)
 
     def _parse_args(self,relationship,args):
         # Two different args options:

@@ -7,7 +7,8 @@
 An interface for interacting with indices on Neo4j Server.
 
 """
-from bulbs.utils import initialize_element, initialize_elements, get_one_result
+from bulbs.utils import initialize_element, initialize_elements, \
+    get_one_result, LookupTable
 
 
 class IndexProxy(object):
@@ -109,16 +110,19 @@ class Index(object):
     @property
     def index_class(self):
         """Returns the index class."""
-        #print self.results.raw
+    #    #print self.results.raw
         return self.results.get_index_class()
 
-    def count(self,key,value):
+    def count(self,key=None,value=None,**pair):
+        key, value = self._get_key_value(key,value,pair)
         script = self.resource.scripts.get('index_count')
         params = dict(index_name=self.index_name,key=key,value=value)
         resp = self.resource.gremlin(script,params)
-        return get_one_result(resp)
+        total_size = int(resp.content)
+        return total_size
 
-    def _parse_args(self,key,value,pair):
+
+    def _get_key_value(self,key,value,pair):
         if pair:
             key, value = pair.popitem()
         return key, value
@@ -133,7 +137,7 @@ class ExactIndex(Index):
     def put(self,_id,key=None,value=None,**pair):
         """Put an element into the index at key/value and return the response."""
         # NOTE: if you ever change the _id arg to element, change remove() too
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key,value,pair)
         method_map = dict(vertex=self.resource.put_vertex,
                           edge=self.resource.put_edge)
         put_method = method_map.get(self.index_class)
@@ -154,7 +158,7 @@ class ExactIndex(Index):
 
         # This should be a Gremlin method
 
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key,value,pair)
         method_map = dict(vertex=self.resource.remove_vertex,
                           edge=self.resource.remove_edge)
         remove_method = method_map.get(self.index_type)
@@ -164,29 +168,25 @@ class ExactIndex(Index):
         return resp
 
 
-    def lookup(self,key=None,value=None,**pair):
+    def get(self,key=None,value=None,**pair):
         """Return all the elements with key property equal to value in the index."""
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key,value,pair)
         resp = self.resource.lookup_vertex(self.index_name,key,value)
         return initialize_elements(self.resource,resp)
 
-    def lookup_unique(self,key=None,value=None,**pair):
+    def get_unique(self,key=None,value=None,**pair):
         """Returns a max of 1 elements matching the key/value pair in the index."""
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key,value,pair)
         resp = self.resource.lookup_vertex(self.index_name,key,value)
         result = utils.get_one_result(resp)
         return initialize_element(self.resource,result)
-
-
-
          
     def query(self,query_string):
         pass
 
-
     def remove(self,_id,key=None,value=None,**pair):
         """Remove the element from the index located by key/value."""
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key,value,pair)
         method_map = dict(vertex=self.resource.remove_vertex,
                           edge=self.resource.remove_edge)
         remove_method = method_map.get(self.index_class)
@@ -219,7 +219,7 @@ class AutomaticIndex(Index):
 
     def get(self,key=None,value=None,**pair):
         """Return all the elements with key property equal to value in the index."""
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key,value,pair)
         resp = self.resource.lookup_vertex(self.index_name,key,value)
         return initialize_elements(self.resource,resp)
 

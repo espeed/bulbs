@@ -1,51 +1,137 @@
-//
-// NOTE: Using groovy scripts like this won't work until Rexster
-//       implements the "params" bindings. Until then we'll have
-//       to use gremlin.yaml templates and do variable substitution. 
-//
-//       Gremlin scripts are in gremlin.yaml.
-//
-//       See https://github.com/tinkerpop/rexster/issues/143 and
-//           https://github.com/tinkerpop/rexster/issues/146 
-//           
+// NOTE: Converting all index values to strings because that's what Neo4j does
+// anyway, and when using the JSON type system, Rexster doesn't have a way to 
+// specify types in the URL for index lookups. This keeps the code consistent.
+
+// using closures for clarity
+
+// TODO: Make this support multiple indices, e.g. an autoindex and a normal index
 
 
+// Model Proxy - Vertex
 
-//
-// Examples from Neo4j's gremlin.groovy
-//
 def create_indexed_vertex(data,index_name,keys) {
-  manager = g.getRawGraph().index()
-  index = manager.forNodes(index_name)
-  g.setMaxBufferSize(0)
-  g.startTransaction()
-  vertex = g.getRawGraph().createNode()
-  for (entry in data.entrySet()) {
-    if (entry.value == null) continue;
+  def createIndexedVertex {
+    vertex = g.addVertex()
+    index = g.idx(index_name)
+    for (entry in data.entrySet()) {
+      if (entry.value == null) continue;
       vertex.setProperty(entry.key,entry.value)
-    if (keys == null || keys.contains(entry.key))
-      index.add(vertex,entry.key,entry.value)
+      if (keys == null || keys.contains(entry.key))
+	index.put(entry.key,String.valueOf(entry.value),vertex)
+    }
+    return vertex
   }
-  g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
-  return vertex
+  def transaction = { final Closure closure ->
+    g.setMaxBufferSize(0);
+    g.startTransaction();
+    try {
+      results = closure();
+      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      return results; 
+    } catch (e) {
+      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      return e;
+    }
+  }
+  return transaction(createIndexedVertex);
 }
+
 
 def update_indexed_vertex(_id, data, index_name, keys) {
-  vertex = g.getRawGraph().getNodeById(_id)
-  manager = g.getRawGraph().index()
-  index = manager.forNodes(index_name)
-  g.setMaxBufferSize(0)
-  g.startTransaction()
-  index.remove(vertex)
-  for (String key in vertex.getPropertyKeys())
-    vertex.removeProperty(key)
-  for (entry in data.entrySet()) {
-    if (entry.value == null) continue;
-    vertex.setProperty(entry.key,entry.value)
-    if (keys == null || keys.contains(entry.key))
-        index.add(vertex,entry.key,entry.value)
+  def updateIndexedVertex = { 
+    vertex = g.v(_id);
+    index = g.idx(index_name);
+    // remove vertex from index
+    for (String key in vertex.getPropertyKeys()) {
+      if (keys == null || keys.contains(key)) {
+	value = vertex.getProperty(key);
+	index.remove(key, String.valueOf(value), vertex);
+      }
+    }
+    ElementHelper.removeProperties([vertex]);
+    ElementHelper.setProperties(vertex,data);
+    // add vertex to index
+    for (entry in data.entrySet()) {
+      if (entry.value == null) continue;
+      if (keys == null || keys.contains(entry.key))
+	index.put(entry.key,String.valueOf(entry.value),vertex);
+    }    
+    return vertex;
   }
-  g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
-  return vertex
+  def transaction = { final Closure closure ->
+    g.setMaxBufferSize(0);
+    g.startTransaction();
+    try {
+      results = closure();
+      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      return results; 
+    } catch (e) {
+      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      return e;
+    }
+  }
+  return transaction(updateIndexedVertex);
 }
 
+
+// Model Proxy - Edge
+
+def create_indexed_edge(outV,label,inV,data,index_name,keys) {
+  def createIndexedEdge = {
+    index = g.idx(index_name)
+    edge = g.addEdge(g.v(outV),g.v(inV),label)
+    for (entry in data.entrySet()) {
+      if (entry.value == null) continue;
+      edge.setProperty(entry.key,entry.value)
+      if (keys == null || keys.contains(entry.key))
+	index.put(entry.key,String.valueOf(entry.value),edge)
+    }
+    return edge
+  }
+  def transaction = { final Closure closure ->
+    g.setMaxBufferSize(0);
+    g.startTransaction();
+    try {
+      results = closure();
+      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      return results; 
+    } catch (e) {
+      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      return e;
+    }
+  }
+  return transaction(createIndexedEdge);
+}
+
+def update_indexed_edge(_id, data, index_name, keys) {
+  def updateIndexedEdge = {
+    edge = g.e(_id);
+    index = g.idx(index_name);
+    for (String key in edge.getPropertyKeys()) {
+      if (keys == null || keys.contains(key)) {
+	value = edge.getProperty(key)
+	index.remove(key, String.valueOf(value), edge);
+      }
+    }
+    ElementHelper.removeProperties([edge]);
+    ElementHelper.setProperties(edge,data);
+    for (entry in data.entrySet()) {
+      if (entry.value == null) continue;
+      if (keys == null || keys.contains(entry.key))
+	index.put(entry.key,String.valueOf(entry.value),edge)
+    return edge;
+  }
+  def transaction = { final Closure closure ->
+    g.setMaxBufferSize(0);
+    g.startTransaction();
+    try {
+      results = closure();
+      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      return results; 
+    } catch (e) {
+      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      return e;
+    }
+  }
+  return transaction(updateIndexedEdge);
+}

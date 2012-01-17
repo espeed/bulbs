@@ -120,21 +120,3 @@ def update_indexed_edge(_id, data, index_name, keys) {
     return e
   }
 }
-
-def index_count(index_name, key, value) {
-  index = g.idx(index_name);
-  return index.count(key,value);
-}
-
-
-
-}
-
-// Should this be in the global gremlin library?
-// Neo4j requires you delete all adjacent edges first. 
-// Blueprints' removeVertex() method does that; the Neo4jServer DELETE URI does not.
-def delete_vertex(_id) {
-  vertex = g.v(_id)
-  g.removeVertex(vertex)
-}
-

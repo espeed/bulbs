@@ -104,11 +104,4 @@ class ResourceTestCase(unittest.TestCase):
         assert resp.total_size > 5
 
 
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(ResourceTestCase))
-    return suite
-
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
 

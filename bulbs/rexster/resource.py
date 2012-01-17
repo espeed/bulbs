@@ -1,12 +1,22 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright 2012 James Thornton (http://jamesthornton.com)
+# BSD License (see LICENSE for details)
+#
+"""
+Bulbs supports pluggable resources. This is the Rexster resource.
+
+"""
+
 import os
 import ujson as json
 
 #from bulbs import config
 from bulbs.utils import build_path, get_file_path
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
-from bulbs.index import IndexProxy
+#from bulbs.index import IndexProxy
 from bulbs.gremlin import Gremlin
-from bulbs.yaml import Yaml as Scripts
+from bulbs.groovy import GroovyScripts as Scripts
 from bulbs.typesystem import JSONTypeSystem
 
 # specific to this resource
@@ -30,8 +40,7 @@ def build_url_list(items):
 
 def get_type_system(config):
     
-    type_system_map = dict(json=(JSONTypeSystem,"application/json"),
-                           rexster=(RexsterTypeSystem,"application/vnd.rexster-typed+json"))
+    type_system_map = dict(json=(JSONTypeSystem,"application/json"))
 
     type_system, content_type = type_system_map[config.type_system]
     return type_system(), content_type
@@ -74,16 +83,16 @@ class RexsterResponse(Response):
     
     result_class = RexsterResult
 
-    def __init__(self, response, config):
+    def __init__(self, response):
         self.handle_response(response)
         self.headers = self.get_headers(response)
         self.content = self.get_content(response)
         self.results, self.total_size = self.get_results()
-        self.raw = self.response
+        self.raw = response
 
     def handle_response(self,http_resp):
         headers, content = http_resp
-        response_handler = response_handlers.get(headers.status)
+        response_handler = RESPONSE_HANDLERS.get(headers.status)
         response_handler(http_resp)
 
     def get_headers(self,response):
@@ -135,11 +144,9 @@ class RexsterResource(Resource):
 
         """
         self.config = config
-        self.config.debug = True
         self.registry = Registry(config)
         self.scripts = Scripts() 
-        dir_name = os.path.dirname(__file__)
-        self.scripts.override(get_file_path(dir_name,"gremlin.groovy"))
+        self.scripts.update(self._get_scripts_file("gremlin.groovy"))
         self.registry.add_scripts("gremlin",self.scripts)
         self.type_system, content_type = get_type_system(config)
         self.request = RexsterRequest(config,content_type=content_type)
@@ -155,8 +162,8 @@ class RexsterResource(Resource):
     #
     # Gremlin
     #
-    def gremlin(self,script): 
-        params = dict(script=script)
+    def gremlin(self,script,params=None): 
+        params = dict(script=script,params=params)
         return self.request.post(self.gremlin_path,params)
 
     #
@@ -201,25 +208,52 @@ class RexsterResource(Resource):
         path = build_path(self.edge_path,_id)
         return self.request.delete(path,params=None)
 
-    #
-    # Vertex Index
-    #
+    # Vertex Container
 
-    def create_automatic_vertex_index(self,index_name,element_class,keys=None):
-        keys = json.dumps(keys) if keys else "null"
-        params = dict(index_name=index_name,element_class=element_class,keys=keys)
-        script = self.scripts.get('create_automatic_vertex_index',params)
-        return self.gremlin(script)
+    def outE(self,_id,label=None):
+        """Return the outgoing edges of the vertex."""
+        script = self.scripts.get('outE')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
+
+    def inE(self,_id,label=None):
+        """Return the incoming edges of the vertex."""
+        script = self.scripts.get('inE')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
+
+    def bothE(self,_id,label=None):
+        """Return all incoming and outgoing edges of the vertex."""
+        script = self.scripts.get('bothE')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
+
+    def outV(self,_id,label=None):
+        """Return the out-adjacent vertices to the vertex."""
+        script = self.scripts.get('outV')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
         
-    def create_indexed_vertex_automatic(self,data,index_name):
-        data = json.dumps(data)
-        params = dict(data=data,index_name=index_name)
-        script = self.scripts.get('create_automatic_indexed_vertex',params)
-        return self.gremlin(script)
+    def inV(self,_id,label=None):
+        """Return the in-adjacent vertices of the vertex."""
+        script = self.scripts.get('inV')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
+        
+    def bothV(self,_id,label=None):
+        """Return all incoming- and outgoing-adjacent vertices of vertex."""
+        script = self.scripts.get('bothV')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
 
-    def create_vertex_index(self,name,*args,**kwds):
-        path = build_path(self.index_path,name)
-        index_type = kwds.get('index_type','automatic')
+
+    #
+    # Index Proxy - Vertex
+    #
+
+    def create_vertex_index(self,index_name,*args,**kwds):
+        path = build_path(self.index_path,index_name)
+        index_type = kwds.get('index_type','manual')
         index_keys = kwds.get('index_keys',None)                              
         params = {'class':'vertex','type':index_type}
         if index_keys: 
@@ -228,13 +262,25 @@ class RexsterResource(Resource):
 
     def create_edge_index(self,name,*args,**kwds):
         path = build_path(self.index_path,name)
-        index_type = kwds.get('index_type','automatic')
+        index_type = kwds.get('index_type','manual')
         index_keys = kwds.get('index_keys',None)                              
         params = {'class':'edge','type':index_type}
         if index_keys: 
             params.update({'keys':index_keys})
         return self.request.post(path,params)
         
+    #def create_automatic_vertex_index(self,index_name,element_class,keys=None):
+    #    keys = json.dumps(keys) if keys else "null"
+    #    params = dict(index_name=index_name,element_class=element_class,keys=keys)
+    #    script = self.scripts.get('create_automatic_vertex_index',params)
+    #    return self.gremlin(script)
+        
+    #def create_indexed_vertex_automatic(self,data,index_name):
+    #    data = json.dumps(data)
+    #    params = dict(data=data,index_name=index_name)
+    #    script = self.scripts.get('create_automatic_indexed_vertex',params)
+    #    return self.gremlin(script)
+
     def get_index(self,name):
         path = build_path(self.index_path,name)
         return self.request.get(path,params=None)
@@ -249,8 +295,12 @@ class RexsterResource(Resource):
         return self.request.get(self.index_path,params=None)
         
     def delete_index(self,name): 
-        path = build_path(self.index_path,name)
-        return self.request.delete(path,params=None)
+        try:
+            path = build_path(self.index_path,name)
+            return self.request.delete(path,params=None)
+        except LookupError:
+            return None
+            
 
     def delete_vertex_index(self,name):
         self.delete_index(name)
@@ -258,44 +308,46 @@ class RexsterResource(Resource):
     def delete_edge_index(self,name):
         self.delete_index(name)
 
+
+
     # Indexed vertices
-    def put_vertex(self,name,key,value,_id):
+    def put_vertex(self,index_name,key,value,_id):
         # Rexster's API only supports string lookups so convert value to a string 
-        path = build_path(self.index_path,name)
-        params = {'key':key,'value':str(value),'class':'vertex','id':_id}
-        return self.request.post(path,params)
-
-    def put_edge(self,name,key,value,_id):
-        # Rexster's API only supports string lookups so convert value to a string 
-        path = build_path(self.index_path,name)
-        params = {'key':key,'value':str(value),'class':'edge','id':_id}
-        return self.request.post(path,params)
-
-    def lookup_vertex(self,index_name,key,value):
         path = build_path(self.index_path,index_name)
+        params = {'key':key,'value':str(value),'class':'vertex','id':_id}
+        return self.request.put(path,params)
+
+    def put_edge(self,index_name,key,value,_id):
+        # Rexster's API only supports string lookups so convert value to a string 
+        path = build_path(self.index_path,index_name)
+        params = {'key':key,'value':str(value),'class':'edge','id':_id}
+        return self.request.put(path,params)
+
+    def lookup_vertex(self,index_index_name,key,value):
+        path = build_path(self.index_path,index_index_name)
         params = dict(key=key,value=value)
         return self.request.get(path,params)
 
-    def remove_vertex(self,name,_id,key=None,value=None):
+    def remove_vertex(self,index_name,_id,key=None,value=None):
         # Can Rexster have None for key and value?
-        path = build_path(self.index_path,name)
+        path = build_path(self.index_path,index_name)
         params = {'key':key,'value':value,'class':'vertex','id':_id}
         return self.request.delete(path,params)
 
-    def remove_edge(self,name,_id,key=None,value=None):
+    def remove_edge(self,index_name,_id,key=None,value=None):
         # Can Rexster have None for key and value?
-        path = build_path(self.index_path,name)
+        path = build_path(self.index_path,index_name)
         params = {'key':key,'value':value,'class':'edge','id':_id}
         return self.request.delete(path,params)
     
     # Rexster-specific index mehthods
-    def index_count(self,name,key,value):
-        path = build_path(self.index_path,name,"count")
+    def index_count(self,index_name,key,value):
+        path = build_path(self.index_path,index_name,"count")
         params = dict(key=key,value=value)
         return self.request.get(path,params)
 
-    def index_keys(self,name):
-        path = build_path(self.index_path,name,"keys")
+    def index_keys(self,index_name):
+        path = build_path(self.index_path,index_name,"keys")
         return self.request.get(path,params=None)
 
 
@@ -367,5 +419,8 @@ class RexsterResource(Resource):
         params = dict(tx=transaction.actions)
         return self.request.post(self.transction_path,params)
 
-
+    def _get_scripts_file(self,file_name):
+        dir_name = os.path.dirname(__file__)
+        file_path = get_file_path(dir_name,file_name)
+        return file_path
 

@@ -15,6 +15,72 @@ import utils
 # TODO: Simply this. You don't need group pattern detection.
 
 
+class GroovyScripts(object):
+    """Load Gremlin scripts from a Groovy source file."""
+
+    default_file = "gremlin.groovy"
+
+    def __init__(self):
+        self.source_files = list()  # an ordered set might be better
+
+        #: methods format: methods[method_name] = method_body
+        self.methods = dict()
+
+        file_path = self._get_default_file()
+        self.update(file_path)
+
+    def get(self,name):
+        """Return the Gremlin script's body."""
+        return self.methods[name]
+        #script = self._build_script(method_definition, method_signature)
+        #return script
+
+    def update(self,file_path):
+        methods = self._get_methods(file_path)
+        self._add_source_file(file_path)
+        self.methods.update(methods)
+
+    def refresh(self):
+        """Refresh the stored templates from the YAML source."""
+        # methods format: methods[name] = (method_definition, method_signature)
+        for file_path in self.source_files:
+            methods = self._get_methods(file_path)
+            self.methods.update(methods)
+
+    def _add_source_file(self,file_path):
+        # order matters (last in takes precedence)
+        self.source_files.append(file_path)
+
+    def _get_methods(self,file_path):
+        return Parser(file_path).get_methods()
+
+    def _get_default_file(self):
+        dir_name = os.path.dirname(__file__)
+        file_path = utils.get_file_path(dir_name,self.default_file)
+        return file_path
+
+    def _build_script(definition, signature): 
+        script = """
+        try {
+          current_sha1 = methods[name]
+        } catch(e) {
+          current_sha1 = null
+          methods = [:]
+          methods[name] = sha1
+        }
+        if (current_sha1 == sha1) 
+          %s
+
+        try { 
+          return %s
+        } catch(e) {
+
+          return %s 
+        }""" % (signature, definition, signature)
+        return script
+
+
+
 class Scanner:
     def __init__(self, lexicon, flags=0):
         self.lexicon = lexicon
@@ -68,8 +134,8 @@ class Scanner:
         else:
             callback(self,match.group(1))
 
-    def scan(self,file_name):
-        fin = open(file_name, 'r')    
+    def scan(self,file_path):
+        fin = open(file_path, 'r')    
         for line in fin:
             self.get_item(fin,line)
 
@@ -120,60 +186,6 @@ class Parser(object):
         sha1.update(method_definition)
         return sha1.hexdigest()
 
-
-class GroovyScripts(object):
-    """Load Gremlin scripts from a Groovy source file."""
-
-    default_file = "gremlin.groovy"
-
-    def __init__(self,file_name=None):
-        self.file_name = self._get_file_name(file_name)
-        # methods format: methods[name] = (method_definition, method_signature)
-        self.methods = self._get_methods(self.file_name)
-
-    def get(self,name):
-        """Return a Gremlin script, generated from the params."""
-        return self.methods[name]
-        #script = self._build_script(method_definition, method_signature)
-        #return script
-
-    def refresh(self):
-        """Refresh the stored templates from the YAML source."""
-        self.methods = self._get_methods(self.file_name)
-
-    def override(self,file_name):
-        new_methods = self._get_methods(file_name)
-        self.methods.update(new_methods)
-
-    def _get_file_name(self,file_name):
-        if file_name is None:
-            dir_name = os.path.dirname(__file__)
-            file_name = utils.get_file_path(dir_name,self.default_file)
-        return file_name
-
-    def _get_methods(self,file_name):
-        # methods format: methods[name] = (method_definition, method_signature)
-        return Parser(file_name).get_methods()
-
-    def _build_script(definition, signature): 
-        script = """
-        try {
-          current_sha1 = methods[name]
-        } catch(e) {
-          current_sha1 = null
-          methods = [:]
-          methods[name] = sha1
-        }
-        if (current_sha1 == sha1) 
-          %s
-
-        try { 
-          return %s
-        } catch(e) {
-
-          return %s 
-        }""" % (signature, definition, signature)
-        return script
 
 
 

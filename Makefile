@@ -20,6 +20,7 @@ clean:
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
 	find . -name '#*' -exec rm -f {} +
+	find . -name '.#*' -exec rm -f {} +
 
 
 docs:
