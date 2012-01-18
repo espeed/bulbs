@@ -16,17 +16,17 @@ log = logging.getLogger(__name__)
 
 
 class ModelMeta(type):
-    """Model's metaclass used to set database Property definitions."""
+    """Metaclass used to set database Property definitions on Models"""
 
     def __init__(cls, name, base, namespace):
-        # store the Property definitions on the class as a dictionary mapping
-        # the Property key to the Property instance
+        # store the Property definitions on the class as a dictionary 
+        # mapping the Property key to the Property instance
         cls._properties = dict()
         cls._register_properties(namespace)
 
     def _register_properties(cls,namespace):
         # loop through the class namespace looking for Property instances
-        # e.g. age = Integer(), key: age, value: Integer()
+        # e.g. age = Integer(), key: age, property_instance: Integer()
         for key, value in namespace.items():
             if isinstance(value, Property):
                 property_instance = value  # for clarity
@@ -85,6 +85,7 @@ class Model(object):
         for key, property_instance in self._properties.items():
             value = result.data.get(key,None)
             value = property_instance.coerce_from_db_to_python(type_system,value)
+            # Notice that __setattr__ is overloaded so bypassing it and using parent's
             super(Model, self).__setattr__(key, value)
         
     def _get_property_data(self):

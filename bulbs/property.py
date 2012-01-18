@@ -14,8 +14,6 @@ log = logging.getLogger(__name__)
 # NOTE: "Property" refers to a graph-database property (i.e. the DB data)
 class Property(object):
 
-    #python_type = None
-
     def __init__(self, name=None, fget=None, fset=None, fdel=None, \
                      default=None, onupdate=None, constraint=None, \
                      nullable=True, unique=False, index=False):
