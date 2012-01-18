@@ -20,13 +20,14 @@ class GroovyScripts(object):
 
     default_file = "gremlin.groovy"
 
-    def __init__(self):
+    def __init__(self,file_path=None):
         self.source_files = list()  # an ordered set might be better
 
         #: methods format: methods[method_name] = method_body
         self.methods = dict()
 
-        file_path = self._get_default_file()
+        if file_path is None:
+            file_path = self._get_default_file()
         self.update(file_path)
 
     def get(self,name):
@@ -42,13 +43,12 @@ class GroovyScripts(object):
 
     def refresh(self):
         """Refresh the stored templates from the YAML source."""
-        # methods format: methods[name] = (method_definition, method_signature)
         for file_path in self.source_files:
             methods = self._get_methods(file_path)
             self.methods.update(methods)
 
     def _add_source_file(self,file_path):
-        # order matters (last in takes precedence)
+        # order matters (last in takes precedence if it overrides a method)
         self.source_files.append(file_path)
 
     def _get_methods(self,file_path):
@@ -60,6 +60,7 @@ class GroovyScripts(object):
         return file_path
 
     def _build_script(definition, signature): 
+        # This method isn't be used right now...
         script = """
         try {
           current_sha1 = methods[name]

@@ -7,8 +7,7 @@
 An interface for interacting with indices on Neo4j Server.
 
 """
-from bulbs.utils import initialize_element, initialize_elements, \
-    get_one_result, LookupTable
+from bulbs.utils import initialize_element, initialize_elements, get_one_result
 
 
 class IndexProxy(object):

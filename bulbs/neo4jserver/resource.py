@@ -17,8 +17,8 @@ from bulbs.registry import Registry
 # specific to this resource
 from bulbs.resource import Resource, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS
-from bulbs.groovy import GroovyScripts
 from bulbs.typesystem import JSONTypeSystem
+from bulbs.groovy import GroovyScripts
 import os
 
 # The default URI
@@ -144,11 +144,9 @@ class Neo4jResponse(Response):
             results = (self.result_class(result) for result in self.content)
             total_size = len(self.content)
         elif self.content and self.content != "null":
-            # checking for self.content.get('data') won't work b/c the data value
-            # isn't returned for edges with no properties
-            # The get data thing may be a hack, or it may be what's needed. Don't know yet.
-            # and self.content != "null":
-            # Yep, the null thing is sort of a hack. 
+            # Checking for self.content.get('data') won't work b/c the data value
+            # isn't returned for edges with no properties;
+            # and self.content != "null": Yep, the null thing is sort of a hack. 
             # Neo4j returns "null" if Gremlin scripts don't return anything.
             results = self.result_class(self.content)
             total_size = 1
@@ -166,7 +164,7 @@ class Neo4jRequest(Request):
 class Neo4jResource(Resource):
 
     vertex_path = "node"
-    edge_path = "relationships"
+    edge_path = "relationship"
     index_path = "index"
     gremlin_path = "ext/GremlinPlugin/graphdb/execute_script"
     cypher_path = "ext/CypherPlugin/graphdb/execute_query"
@@ -202,10 +200,10 @@ class Neo4jResource(Resource):
     # Vertex Proxy
 
     def create_vertex(self,data):
-        data = self._remove_null_values(data)
         if self.config.autoindex is True:
             index_name = self.config.vertex_autoindex
             return self.create_indexed_vertex(data,index_name,keys=None)
+        data = self._remove_null_values(data)
         return self.request.post(self.vertex_path,data)
 
     def get_vertex(self,_id):
@@ -213,10 +211,10 @@ class Neo4jResource(Resource):
         return self.request.get(path,params=None)
         
     def update_vertex(self,_id,data):
-        data = self._remove_null_values(data)
         if self.config.autoindex is True:
             index_name = self.config.vertex_autoindex
             return self.update_indexed_vertex(_id,data,index_name,keys=None)
+        data = self._remove_null_values(data)
         path = build_path(self.vertex_path,_id,"properties")
         return self.request.put(path,data)
 
@@ -224,37 +222,36 @@ class Neo4jResource(Resource):
         # Neo4j requires you delete all adjacent edges first. 
         # But the Neo4jServer DELETE URI doesn't do this so 
         # I created a Gremlin method for it. - James
-        params = dict(_id=_id)
         script = self.scripts.get("delete_vertex")
+        params = dict(_id=_id)
         return self.gremlin(script,params)
         
     # Edge Proxy
 
     def create_edge(self,outV,label,inV,data={}): 
-        data = self._remove_null_values(data)
         if self.config.autoindex is True:
             index_name = self.config.edge_autoindex
             return self.create_indexed_edge(outV,label,inV,data,index_name,keys=None)
-        path = build_path(self.vertex_path,outV,self.edge_path)
+        data = self._remove_null_values(data)
+        path = build_path(self.vertex_path,outV,"relationships")
         inV_uri = "%s/node/%s" % (self.config.root_uri.rstrip("/"), inV)
         params = {'to':inV_uri,'type':label, 'data':data}
         return self.request.post(path,params)
         
     def get_edge(self,_id):
-        path = build_path("relationship",_id)
+        path = build_path(self.edge_path,_id)
         return self.request.get(path,params=None)
         
     def update_edge(self,_id,data):
-        data = self._remove_null_values(data)
         if self.config.autoindex is True:
             index_name = self.config.edge_autoindex
             return self.update_indexed_edge(_id,data,index_name,keys=None)
-        path = build_path("relationship",_id,"properties")
+        data = self._remove_null_values(data)
+        path = build_path(self.edge_path,_id,"properties")
         return self.request.put(path,data)
 
     def delete_edge(self,_id):
-        # note relationship path is singular, not plural
-        path = build_path("relationship",_id)
+        path = build_path(self.edge_path,_id)
         return self.request.delete(path,params=None)
 
     # Vertex Container
@@ -301,13 +298,11 @@ class Neo4jResource(Resource):
         index_type = kwds.pop("index_type","exact")
         provider = kwds.pop("provider","lucene")
         #keys = kwds.pop("keys",None)
-        #keys = json.dumps(keys) if keys else "null"
         #config = {'type':index_type,'provider':provider,'keys':str(keys)}
         config = {'type':index_type,'provider':provider}
         path = build_path(self.index_path,"node")
         params = dict(name=index_name,config=config)
         resp = self.request.post(path,params)
-        #print "RAW", resp.raw
         resp = self._add_index_name(index_name,resp)
         return resp
 
@@ -330,14 +325,14 @@ class Neo4jResource(Resource):
     # Index Proxy - Edge
 
     def create_edge_index(self,index_name,*args,**kwds):
-        path = build_path(self.index_path,"relationship")
+        path = build_path(self.index_path,self.edge_path)
         params = dict(name=index_name)
         resp = self.request.post(path,params)
         resp = self._add_index_name(index_name,resp)
         return resp
 
     def get_edge_indices(self):
-        path = build_path(self.index_path,"relationship")
+        path = build_path(self.index_path,self.edge_path)
         return self.request.get(path,params=None)
 
     def get_edge_index(self,index_name):
@@ -348,18 +343,8 @@ class Neo4jResource(Resource):
         return resp
 
     def delete_edge_index(self,name):
-        path = build_path(self.index_path,"relationship",name)
+        path = build_path(self.index_path,self.edge_path,name)
         return self.request.delete(path,params=None)
-
-    def _get_index_results(self,index_name,resp):
-        # this is pretty much a hack becuase the way neo4j does this is inconsistent
-        if resp.content and index_name in resp.content:
-            result = resp.content[index_name]
-            return Neo4jResult(result)
-
-    def _add_index_name(self,index_name,resp):
-        resp.results.raw['name'] = index_name
-        return resp
 
 
     # Index Container - Vertex
@@ -378,7 +363,7 @@ class Neo4jResource(Resource):
         path = build_path(self.index_path,"node",name)
         return self.request.get(path,params)
 
-    def remove_vertex_from_index(self,name,_id,key=None,value=None):
+    def remove_vertex(self,name,_id,key=None,value=None):
         #if key is not None and value is not None:
         #    path = build_path("node",name,key,value,_id)
         #elif key is not None:
@@ -391,10 +376,29 @@ class Neo4jResource(Resource):
     # Index Container - Edge
 
     def put_edge(self,name,key,value,_id):
-        path = build_path(self.index_path,"relationship",name)
-        uri = "%s/%s/%d" % (self.config.root_uri,"relationship",_id)
+        path = build_path(self.index_path,self.edge_path,name)
+        uri = "%s/%s/%d" % (self.config.root_uri,self.edge_path,_id)
         params = dict(key=key,value=value,uri=uri)
         return self.request.post(path,params)
+
+    def lookup_edge(self,name,key,value):
+        path = build_path(self.index_path,self.edge_path,name,key,value)
+        return self.request.get(path,params=None)
+
+    def query_edge(self,name,params):
+        path = build_path(self.index_path,self.edge_path,name)
+        return self.request.get(path,params)
+
+    def remove_edge(self,name,_id,key=None,value=None):
+        #if key is not None and value is not None:
+        #    path = build_path("node",name,key,value,_id)
+        #elif key is not None:
+        #    path = build_path("node",name,key,_id)
+        #else:
+        #    path = build_path("node",name,_id)
+        path = build_path(self.edge_path,name,key,value,_id)
+        return self.request.delete(path,params=None)
+
 
     # Model Proxy - Vertex
 
@@ -432,6 +436,13 @@ class Neo4jResource(Resource):
         script = self.scripts.get('warm_cache')
         return self.gremlin(script,params=None)
 
+    # Private 
+
+    def _get_scripts_file(self,file_name):
+        dir_name = os.path.dirname(__file__)
+        file_path = get_file_path(dir_name,file_name)
+        return file_path
+
     def _remove_null_values(self,data):
         # You could do this at the Model._get_property_data(), 
         # but this may not be needed for all databases. 
@@ -440,9 +451,13 @@ class Neo4jResource(Resource):
         clean_data = [(k, v) for k, v in data.items() if v is not None]
         return dict(clean_data)
 
-    def _get_scripts_file(self,file_name):
-        dir_name = os.path.dirname(__file__)
-        file_path = get_file_path(dir_name,file_name)
-        return file_path
+    def _get_index_results(self,index_name,resp):
+        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+        if resp.content and index_name in resp.content:
+            result = resp.content[index_name]
+            return Neo4jResult(result)
 
+    def _add_index_name(self,index_name,resp):
+        resp.results.raw['name'] = index_name
+        return resp
     

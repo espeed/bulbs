@@ -7,7 +7,7 @@
 Vertex and Edge container classes and proxies.
 
 """
-from utils import initialize_element, initialize_elements, coerce_id
+from utils import initialize_element, initialize_elements
 
 def get_base_type(element_class):
     if issubclass(element_class,Vertex):
@@ -261,7 +261,13 @@ class EdgeProxy(object):
             vertex_id = v._id
         else:
             # using corece_id to support linked-data URI IDs
-            vertex_id = coerce_id(v)
+            vertex_id = self._coerce_id(v)
         return vertex_id
 
-
+    def _coerce_id(_id):
+        # try to coerce the element ID string to an int.
+        # ORIENTDB USES STRINGS SO THIS WON'T WORK FOR IT
+        try:
+            return int(_id)
+        except:
+            return _id

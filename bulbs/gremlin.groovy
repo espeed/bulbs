@@ -30,43 +30,46 @@ def get_edges() {
 // These edge-label conditionals are a messy hack until Gremin allows null labels. 
 // See https://github.com/tinkerpop/gremlin/issues/267
 
+// the || label == "null" is a hack until Rexster fixes its null label bug.
+// See https://github.com/tinkerpop/rexster/issues/197
+
 def outE(_id, label) {
-  if (label == null)
+  if (label == null || label == "null")
     g.v(_id).outE()
   else
     g.v(_id).outE(label)
 }
 
 def inE(_id, label) {
-  if (label == null)
+  if (label == null || label == "null")
     g.v(_id).inE()
   else
     g.v(_id).inE(label)
 }
 
 def bothE(_id, label) { 
-  if (label == null)
+  if (label == null || label == "null")
     g.v(_id).bothE()
   else
     g.v(_id).bothE(label)
 }
 
 def outV(_id, label) {
-  if (label == null)
+  if (label == null || label == "null")
     g.v(_id).out()
   else
     g.v(_id).out(label)
 }
 
 def inV(_id, label) {
-  if (label == null)
+  if (label == null || label == "null")
     g.v(_id).in()
   else
     g.v(_id).in(label)
 }
 
 def bothV(_id, label) { 
-  if (label == null)
+  if (label == null  || label == "null")
     g.v(_id).both()
   else
     g.v(_id).both(label)
