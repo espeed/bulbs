@@ -90,7 +90,8 @@ class Model(object):
     def _set_property_from_db(self,property_instance,key,value):
         try:
             # Notice that __setattr__ is overloaded
-            value = self._resource.type_system.to_python(property_instance,value)
+            type_system = self._resource.type_system
+            value = property_instance.to_python(type_system,value)
             setattr(self,key,value)
         except Exception as e:
             # TODO: log/warn/email regarding type mismatch
@@ -101,12 +102,13 @@ class Model(object):
         """Returns validated Property data, ready to be saved in the DB."""
         data = dict()
         type_var = self._resource.config.type_var
+        type_system = self._resource.type_system
         if hasattr(self,type_var):
             data[type_var] = getattr(self,type_var)
         for key, property_instance in self._properties.items():
             value = getattr(self,key)
             property_instance.validate(key,value)
-            data[key] = self._resource.type_system.to_db(property_instance,value)
+            data[key] = property_instance.to_db(type_system,value)
         return data
 
     def _get_index(self,index_name):

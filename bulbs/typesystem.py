@@ -20,16 +20,14 @@ class TypeSystem(object):
     #: Converter object used to covert database values to Python values.
     python = None
 
-    def to_db(self,property_instance,value):
-        """Returns a database-property value coerced to its database type."""
-        datatype_class = property_instance.datatype
-        return datatype_class.to_db(self,value)
+    #def to_db(self,property_instance,value):
+    #    """Returns a database-property value coerced to its database type."""
+    #    return property_instance.to_db(self,value)
 
-    def to_python(self,property_instance,value):
-        """Returns a database-property value coerced to its Python type."""
-        # TODO: warn or log errors
-        datatype_class = property_instance.datatype
-        return datatype_class.to_python(self,value)
+    #def to_python(self,property_instance,value):
+    #    """Returns a database-property value coerced to its Python type."""
+    #    # TODO: warn or log errors
+    #    return property_instance.to_python(self,value)
 
 
 class Converter(object):

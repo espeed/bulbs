@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2013 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
@@ -14,11 +14,11 @@ log = logging.getLogger(__name__)
 # NOTE: "Property" refers to a graph-database property (i.e. the DB data)
 class Property(object):
 
-    def __init__(self, datatype, fget=None, fset=None, fdel=None, \
-                     name=None, default=None, onupdate=None, constraint=None, \
+    def __init__(self, name=None, fget=None, fset=None, fdel=None, \
+                     default=None, onupdate=None, constraint=None, \
                      nullable=True, unique=False, index=False):
 
-        self.datatype = datatype
+        #self.datatype = datatype
         self.fget = fget
         self.fset = fset
         self.fdel = fdel
@@ -46,7 +46,7 @@ class Property(object):
         self._check_null(key,value)
 
     def _check_datatype(self,value):
-        isinstance(value, self.datatype.python_type)
+        isinstance(value, self.python_type)
 
     def _check_null(self,key,value):
         try: 
@@ -61,102 +61,84 @@ class Property(object):
     def coerce_value(self,key,value):
         initial_datatype = type(value)
         try:
-            value = self.datatype.python_type(value)
+            value = self.python_type(value)
             return value
         except ValueError:
             print "'%s' is not a valid value for %s, must be  %s." \
-                           % (value, key, self.datatype.python_type)
+                           % (value, key, self.python_type)
             raise
         except AttributeError:
             print "Can't set attribute '%s' to value '%s with type %s'" \
                 % (key,value,initial_datatype)
             raise
 
-#
-# Property DataTypes
-#
-
-class String(object): 
+class String(Property): 
 
     python_type = str
 
-    @classmethod
     def to_db(self,type_system,value):
         return type_system.database.to_string(value)
 
-    @classmethod
     def to_python(self,type_system,value):
-        return type_system.python.to_string(value)
+        return type_system.python.to_string(value)    
 
-class Integer(object):    
+class Integer(Property):    
 
     python_type = int
 
-    @classmethod
     def to_db(self,type_system,value):
         return type_system.database.to_integer(value)
     
-    @classmethod
     def to_python(self,type_system,value):
         return type_system.python.to_integer(value)
 
-class Long(object):
+class Long(Property):
 
     python_type = long
 
-    @classmethod
     def to_db(self,type_system,value):
         return type_system.database.to_long(value)
 
-    @classmethod
     def to_python(self,type_system,value):
         return type_system.python.to_long(value)
 
-class Float(object):
+class Float(Property):
 
     python_type = float
 
-    @classmethod
     def to_db(self,type_system,value):
         return type_system.database.to_float(value)
     
-    @classmethod
     def to_python(self,type_system,value):
         return type_system.python.to_float(value)              
 
-class Null(object):
+class Null(Property):
 
     python_type = None
 
-    @classmethod
     def to_db(self,type_system,value):
         return type_system.database.to_null(value)
 
-    @classmethod
     def to_python(self,type_system,value):
         return type_system.python.to_null(value)
 
-class List(object):
+class List(Property):
 
     python_type = list
 
-    @classmethod
     def to_db(self,type_system,value):
         return type_system.database.to_list(value)
 
-    @classmethod
     def to_python(self,type_system,value):
         return type_system.python.to_list(value)
 
-class Dictionary(object):
+class Dictionary(Property):
 
     python_type = dict
 
-    @classmethod
     def to_db(self,type_system,value):
         return type_system.database.to_dictionary(value)
 
-    @classmethod
     def to_python(self,type_system,value):
         return type_system.python.to_dictionary(value)
 
