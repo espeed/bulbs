@@ -59,6 +59,10 @@ class RexsterResult(Result):
     def get_type(self):
         return self.data['_type']
         
+    def get_map(self):
+        # TODO: omit _vars
+        return self.data
+
     def get_uri(self):
         # TODO: we need the root_uri
         return "http://localhost:8182/graphs/...."

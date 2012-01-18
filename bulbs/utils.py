@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 import os
@@ -42,7 +42,7 @@ def get_one_result(resp):
     # If you're using this utility, that means the results attribute in the 
     # Response object should always contain a single result object,
     # not multiple items. But gremlin returns all results as a list
-    # even if the list contains only one element. And the Response object
+    # even if the list contains only one element. And the Response class
     # converts all lists to a generator of Result objects. Thus in that case,
     # we need to grab the single Result object out of the list/generator.
     if resp.total_size > 1:

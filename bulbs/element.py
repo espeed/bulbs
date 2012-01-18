@@ -9,32 +9,17 @@ Vertex and Edge container classes and proxies.
 """
 from utils import initialize_element, initialize_elements
 
-def get_base_type(element_class):
-    if issubclass(element_class,Vertex):
-        base_type = "vertex"
-    elif issubclass(element_class,Edge):
-        base_type = "edge"
-    else:
-        raise TypeError("%s is not an Element class" % element_class)
-    return base_type
-
-
 class Element(object):
     """This is an abstract base class for Vertex and Edge"""
     
     def __init__(self,resource):
-        # NOTE: Put all the init stuff in initialize_element() because 
-        # Model() calls it explicitly instead of super().__init__()
-        #self._initialize_element(resource,result)
         self._resource = resource
 
     def _initialize(self,result):
-        # Reource object and Result object
         self._result = result
         self._set_pretty_vars(self._resource)
         self._vertices = VertexProxy(Vertex,self._resource)
         self._edges = EdgeProxy(Edge,self._resource)
-        #print "TTTTT", type(self._resource)
  
     @property
     def _id(self):
@@ -43,11 +28,6 @@ class Element(object):
     @property 
     def _type(self):
         return self._result.get_type()
-
-    #
-    # First Thing: Fix this self.__class__ should be self but it breaks stuff
-    # property must be set on the class, not the object
-    #
 
     def _set_pretty_vars(self,resource):
         self._set_python_property(resource.config.id_var,"_id")
@@ -77,8 +57,7 @@ class Element(object):
                 hasattr(self, "_result") and 
                 hasattr(obj, "_result") and
                 self._result.get_id() == obj._result.get_id() and
-                self._result.data == obj._result.data
-                )
+                self._result.data == obj._result.data)
 
     def __ne__(self, obj):
         return not self.__eq__(obj)
@@ -94,7 +73,7 @@ class Element(object):
 
     def map(self):
         """Returns a dict of the element's data that's stored in the DB."""
-        return self._result.data
+        return self._result.get_map()
 
 
 class Vertex(Element):
@@ -160,7 +139,7 @@ class Edge(Element):
 
 
 class VertexProxy(object):
-    """ A proxy for interacting with vertices on Rexster. """
+    """ A proxy for interacting with vertices on the Resource. """
 
     def __init__(self,element_class,resource):
         assert issubclass(element_class,Vertex)
@@ -175,14 +154,14 @@ class VertexProxy(object):
         return initialize_element(self.resource,resp.results)
 
     def get(self,_id):
-        """Retrieves an element from Rexster and returns it."""
-        #print "TYPE", type(self.resource)
+        """Retrieves an element from the database and returns it."""
         try:
             resp = self.resource.get_vertex(_id)
             return initialize_element(self.resource,resp.results)
         except LookupError:
             return None
         
+    # is this really needed?
     def get_all(self):
         # for this 
         resp = self.resource.get_all()
@@ -197,19 +176,14 @@ class VertexProxy(object):
     def delete(self,_id):
         """Deletes a vertex from a graph DB and returns the response."""
         return self.resource.delete_vertex(_id)
-    
+
+    # is this really needed?    
     def remove_properties(self,_id):
         """Removes all properties from a element and returns the response.""" 
         return self.resource.remove_vertex_properties(_id)
     
-    # Why is this here???
-    #def create_index(self,name,index_class,**kwds):
-    #    resp = self.resource.create_vertex_index(name,**kwds)
-    #    return index_class(self.resource,resp.results)
-
-
 class EdgeProxy(object):
-    """ A proxy for interacting with edges on Rexster. """
+    """ A proxy for interacting with edges on the Resource. """
 
     def __init__(self,element_class,resource):
         assert issubclass(element_class,Edge)
@@ -227,7 +201,7 @@ class EdgeProxy(object):
         return initialize_element(self.resource,resp.results)
 
     def get(self,_id):
-        """Retrieves an element from Rexster and returns it."""
+        """Retrieves an element from the Resource and returns it."""
         try:
             resp = self.resource.get_edge(_id)
             return initialize_element(self.resource,resp.results)
@@ -247,12 +221,6 @@ class EdgeProxy(object):
         """Removes all properties from a element and returns the response."""
         return self.resource.remove_edge_properties(_id)
   
-
-    # Why is this here???
-    #def create_index(self,name,index_class,**kwds):
-    #    resp = self.resource.create_edge_index(name,**kwds)
-    #    return index_class(self.resource,resp.results)
-
     def _coerce_vertex_id(self,v):
         """Returns the vertex ID coerced into an int if need be."""
         # param v is either a Vertex object or a vertex ID.
@@ -260,13 +228,13 @@ class EdgeProxy(object):
         if isinstance(v,Vertex):
             vertex_id = v._id
         else:
-            # using corece_id to support linked-data URI IDs
+            # using corece_id to support OrientDB and linked-data URI (non-integer) IDs
             vertex_id = self._coerce_id(v)
         return vertex_id
 
     def _coerce_id(_id):
-        # try to coerce the element ID string to an int.
-        # ORIENTDB USES STRINGS SO THIS WON'T WORK FOR IT
+        # Try to coerce the element ID string to an int,
+        # but some resources, such as OrientDB, use string IDs
         try:
             return int(_id)
         except:

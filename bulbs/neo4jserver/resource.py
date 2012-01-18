@@ -54,6 +54,9 @@ class Neo4jResult(Result):
         neo4j_type = self._parse_type(uri)
         return self.type_map[neo4j_type]
         
+    def get_map(self):
+        return self.data
+
     def get_uri(self):
         """Returns the element URI."""
         return self.raw.get('self')
