@@ -7,8 +7,6 @@
 Bulbs supports plugabble type systems.
 
 """
-from bulbs.property import String, Integer, Float, List, Dictionary, Null
-
 
 class TypeSystem(object):
     """Abstract base class for plugabble database type systems."""
@@ -22,24 +20,9 @@ class TypeSystem(object):
     #: Converter object used to covert database values to Python values.
     python = None
 
-    def __init__(self):
-
-        # Python type mappings, format: Python type -> DataType Class
-        self.type_map = dict()
-        self.type_map[str] = String
-        self.type_map[int] = Integer
-        self.type_map[float] = Float
-        self.type_map[list] = List
-        self.type_map[dict] = Dictionary
-        self.type_map[type(None)] = Null
-
-        # You don't need the DB-type to Class mappings because for to_python() 
-        # we get the DataType class from the property_instance in Model.
-
-    def to_db(self,value):
+    def to_db(self,property_instance,value):
         """Returns a database-property value coerced to its database type."""
-        python_type = type(value)
-        datatype_class = self.type_map[python_type]
+        datatype_class = property_instance.datatype
         return datatype_class.to_db(self,value)
 
     def to_python(self,property_instance,value):

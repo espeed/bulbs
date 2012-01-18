@@ -46,9 +46,10 @@ class ModelMeta(type):
     def _set_property_default(cls,key,property_instance):
         # now that the property reference is stored away, 
         # initialize its vars to None, the default vale (TODO), or the fget
-        if property_instance.default:
+        if property_instance.default is not None:
             #TODO: Make this work for scalars too
-            fget = getattr(cls,value.default)
+            # Or more to the point, does this really need to be a Python property?
+            fget = getattr(cls,property_instance.default)
             default_value = property(fget)
         elif property_instance.fget:
             # wrapped fset and fdel in str() to make the default None work with getattr
@@ -67,7 +68,7 @@ class Model(object):
 
     def __setattr__(self, key, value):
         if key in self._properties:
-            if value:
+            if value is not None:
                 property_instance = self._properties[key]
                 value = property_instance.coerce_value(key,value)
         super(Model, self).__setattr__(key, value)
@@ -96,9 +97,8 @@ class Model(object):
             log.error("Property Type Mismatch: '%s' with value '%s': %s", key, value, ex)
             setattr(self,key,None)        
 
-
     def _get_property_data(self):
-        """Returns Property data ready to be saved in the DB."""
+        """Returns validated Property data, ready to be saved in the DB."""
         data = dict()
         type_var = self._resource.config.type_var
         if hasattr(self,type_var):
@@ -106,7 +106,7 @@ class Model(object):
         for key, property_instance in self._properties.items():
             value = getattr(self,key)
             property_instance.validate(key,value)
-            data[key] = self._resource.type_system.to_db(value)
+            data[key] = self._resource.type_system.to_db(property_instance,value)
         return data
 
     def _get_index(self,index_name):
@@ -117,11 +117,6 @@ class Model(object):
         return index
 
 class Node(Vertex,Model):
-
-    #
-    # Override the _create and _update methods to cusomize behavior.
-    #
-
 
     def _initialize(self,result):
         # this is called by initialize_element; 
@@ -135,33 +130,26 @@ class Node(Vertex,Model):
         element_type = getattr(self,self._resource.config.type_var)
         return element_type
 
-    def _create(self,data,index):
-        # Override this to use a custom script.
-        # Make sure the gremlin script returns the created vertex and nothing else.
-        # Moreover, make sure gremlin returns 1 element, not a multi-element list.
-        # If you aren't indexing the node, uncomment and use the create_vertex method.
-        # return self._resource.create_vertex(data)
-        return self._resource.create_indexed_vertex(data,index.index_name)
-
-    def _update(self,_id,data,index):
-        # Override this to use a custom script.
-        # If you aren't indexing the node, uncomment and use the update_vertex method.
-        # return self._resource.update_vertex(_id,data)
-        return self._resource.update_indexed_vertex(_id,data,index.index_name)
-
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()
         resp = self._update(self._id,data,self._index)
+        # does _initialize really need to be called here?
         # maybe called Vertex._initialize directly b/c Neo4j doesn't return data
-        self._initialize(resp.results)
+        #self._initialize(resp.results)
+
+    #
+    # Override the _create and _update methods to cusomize behavior.
+    #
+
+    def _create(self,data,index):
+        return self._resource.create_indexed_vertex(data,index.index_name)
+
+    def _update(self,_id,data,index):
+        return self._resource.update_indexed_vertex(_id,data,index.index_name)
+
         
-
 class Relationship(Edge,Model):
-
-    #
-    # Override the _create and _update methods to customize behavior.
-    #
 
     def _initialize(self,result):
         # this is called by initialize_element; 
@@ -175,17 +163,22 @@ class Relationship(Edge,Model):
         label = getattr(self,self._resource.config.label_var)
         return label
 
+    def save(self):
+        """Saves/updates the element's data in the database."""
+        data = self._get_property_data()      
+        resp = self._update(self._id,data)
+        #self.initialize(resp.results)
+
+    #
+    # Override the _create and _update methods to customize behavior.
+    #
+
     def _create(self,outV,label,inV,data):
         return self._resource.create_edge(outV,label,inV,data)
         
     def _update(self,_id,data):
         return self._resource.update_edge(_id,data)
 
-    def save(self):
-        """Saves/updates the element's data in the database."""
-        data = self._get_property_data()      
-        resp = self._update(self._id,data)
-        #self.initialize(resp.results)
 
 class NodeProxy(VertexProxy):
 
@@ -193,7 +186,6 @@ class NodeProxy(VertexProxy):
         node = instantiate_model(self.element_class,self.resource,kwds)
         data = node._get_property_data()
         resp = node._create(data,self.index)
-        # see comments in utils.get_one_result for why we're using this
         result = get_one_result(resp)  
         # doing it this way you're losing any extra kwds that may have been set
         return initialize_element(self.resource,result)
@@ -203,7 +195,6 @@ class NodeProxy(VertexProxy):
         data = node._get_property_data()
         resp = node._update(_id,data,self.index)
         result = get_one_result(resp)
-        # TODO: make this work for neo4j b/c neo4j doesn't return data
         return initialize_element(self.resource,result)
 
     def get_all(self):
@@ -248,7 +239,8 @@ class RelationshipProxy(EdgeProxy):
             inV = args.pop(0) 
             outV = self._coerce_vertex_id(outV)
             inV = self._coerce_vertex_id(inV)
-            args = (outV,relationship.label,inV)
+            label = relationship._get_label()
+            args = (outV,label,inV)
         return args
 
 

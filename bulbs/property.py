@@ -63,12 +63,11 @@ class Property(object):
     def coerce_value(self,key,value):
         initial_datatype = type(value)
         try:
-            python_type = self.datatype.python_type
-            value = python_type(value)
+            value = self.datatype.python_type(value)
             return value
         except ValueError:
             print "'%s' is not a valid value for %s, must be  %s." \
-                           % (value, key, python_type)
+                           % (value, key, self.datatype.python_type)
             raise
         except AttributeError:
             print "Can't set attribute '%s' to value '%s with type %s'" \
@@ -121,7 +120,7 @@ class Float(object):
 
     @classmethod
     def to_db(self,type_system,value):
-        return type_system.python.database.to_float(value)
+        return type_system.database.to_float(value)
     
     @classmethod
     def to_python(self,type_system,value):
