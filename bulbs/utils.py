@@ -54,6 +54,15 @@ def get_one_result(resp):
     return result
 
 #
+# Model Utils
+#
+
+def instantiate_model(element_class,resource,kwds):
+    model = element_class(resource)
+    model._set_keyword_attributes(kwds)
+    return model
+    
+#
 # Resource Utils
 #
 

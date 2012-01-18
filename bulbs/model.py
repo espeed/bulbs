@@ -9,16 +9,10 @@ Base classes for modeling domain objects that wrap vertices and edges.
 """
 from bulbs.property import Property
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
-from bulbs.utils import initialize_element, get_one_result
+from bulbs.utils import instantiate_model, initialize_element, get_one_result
 
 import logging
 log = logging.getLogger(__name__)
-
-# utility function used by NodeProxy and RelationshipProxy
-def instantiate_model(element_class,resource,kwds):
-    model = element_class(resource)
-    model._set_keyword_attributes(kwds)
-    return model
 
 
 class ModelMeta(type):
@@ -26,30 +20,30 @@ class ModelMeta(type):
 
     def __init__(cls, name, base, namespace):
         # store the Property definitions on the class as a dictionary mapping
-        # the Property name to the Property instance
-        cls._properties = {}
-        for key, value in namespace.items():
-            # loop through the class namespace looking for Property instances
-            # e.g. age = Property(Integer,default=None)
-            # key: age, value: Property(Integer,default=None)
-            if isinstance(value, Property):
-                property_instance = value     # (for clarity)
-                cls._register_property(key,property_instance)
-                cls._set_property_default(key,property_instance)
+        # the Property key to the Property instance
+        cls._properties = dict()
+        cls._register_properties(namespace)
 
-    def _register_property(cls,key,property_instance):
+    def _register_properties(cls,namespace):
+        # loop through the class namespace looking for Property instances
+        # e.g. age = Integer(), key: age, value: Integer()
+        for key, value in namespace.items():
+            if isinstance(value, Property):
+                property_instance = value  # for clarity
+                cls._properties[key] = property_instance
+                cls._set_property_name(key,property_instance)
+                cls._set_property_default(key,property_instance)
+                
+    def _set_property_name(cls,key,property_instance):
         # Property name will be none unless explicitly set via kwd param
         if property_instance.name is None:
             property_instance.name = key
-        cls._properties[key] = property_instance
-
+            
     def _set_property_default(cls,key,property_instance):
-        # now that the property reference is stored away, 
-        # initialize its vars to None, the default value, or the fget
         if property_instance.default is not None:
-            # TODO: Make this work for scalars too -- what???
-            # Or more to the point, why is this a Python property?
+            # TODO: Make this work for scalars too -- huh?
             fget = getattr(cls,property_instance.default)
+            # Or more to the point, why is this a Python property?
             default_value = property(fget)
         elif property_instance.fget:
             # wrapped fset and fdel in str() to make the default None work with getattr
@@ -68,11 +62,15 @@ class Model(object):
 
     def __setattr__(self, key, value):
         if key in self._properties:
-            if value is not None:
-                property_instance = self._properties[key]
-                value = property_instance.coerce_value(key,value)
+            value = self._coerce_property_value(key,value)
         super(Model, self).__setattr__(key, value)
                 
+    def _coerce_property_value(self,key,value):
+        if value is not None:
+            property_instance = self._properties[key]
+            value = property_instance.coerce_from_python_to_python(key,value)
+        return value
+
     def _set_keyword_attributes(self,kwds):
         for key, value in kwds.iteritems():
             # Notice that __setattr__ is overloaded
@@ -83,32 +81,26 @@ class Model(object):
         Sets Property data when an element is being initialized, after it is
         retrieved from the DB -- we set it to None if it won't set.        
         """
+        type_system = self._resource.type_system
         for key, property_instance in self._properties.items():
             value = result.data.get(key,None)
-            self._set_property_from_db(property_instance,key,value)
-
-    def _set_property_from_db(self,property_instance,key,value):
-        try:
-            # Notice that __setattr__ is overloaded
-            type_system = self._resource.type_system
-            value = property_instance.to_python(type_system,value)
-            setattr(self,key,value)
-        except Exception as e:
-            # TODO: log/warn/email regarding type mismatch
-            log.error("Property Type Mismatch: '%s' with value '%s': %s", key, value, ex)
-            setattr(self,key,None)        
-
+            value = property_instance.coerce_from_db_to_python(type_system,value)
+            super(Model, self).__setattr__(key, value)
+        
     def _get_property_data(self):
         """Returns validated Property data, ready to be saved in the DB."""
         data = dict()
         type_var = self._resource.config.type_var
         type_system = self._resource.type_system
         if hasattr(self,type_var):
+            # add element_type to the database properties to be saved;
+            # but don't worry about "label", it's always saved on the edge
             data[type_var] = getattr(self,type_var)
         for key, property_instance in self._properties.items():
             value = getattr(self,key)
             property_instance.validate(key,value)
-            data[key] = property_instance.to_db(type_system,value)
+            value = property_instance.coerce_from_python_to_db(type_system,value)
+            data[key] = value
         return data
 
     def _get_index(self,index_name):
@@ -246,7 +238,5 @@ class RelationshipProxy(EdgeProxy):
         return args
 
 
-
-    
     
     

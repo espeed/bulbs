@@ -2,19 +2,19 @@ import unittest
 from testcase import BulbsTestCase
 #from bulbs.index import IndexProxy
 from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
-from bulbs.property import Property, Integer, String, Float
+from bulbs.property import Integer, String, Float
 
 class Knows(Relationship):
 
     label = "knows"
-    timestamp = Property(Float)
+    timestamp = Float()
 
 class Person(Node):
 
     element_type = "person"
     
-    name = Property(String, nullable=False)
-    age  = Property(Integer)
+    name = String(nullable=False)
+    age  = Integer()
 
 
 

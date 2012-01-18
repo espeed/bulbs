@@ -14,6 +14,8 @@ log = logging.getLogger(__name__)
 # NOTE: "Property" refers to a graph-database property (i.e. the DB data)
 class Property(object):
 
+    #python_type = None
+
     def __init__(self, name=None, fget=None, fset=None, fdel=None, \
                      default=None, onupdate=None, constraint=None, \
                      nullable=True, unique=False, index=False):
@@ -58,7 +60,21 @@ class Property(object):
                          key, value)
            raise
 
-    def coerce_value(self,key,value):
+    # TODO: Simplify these, and make method names consistent....
+    def coerce_from_db_to_python(self,type_system,value):
+        try:
+            value = self.to_python(type_system,value)
+        except Exception as e:
+            # TODO: log/warn/email regarding type mismatch
+            log.error("Property Type Mismatch: '%s' with value '%s': %s", key, value, ex)
+            value = None
+        return value
+
+    def coerce_from_python_to_db(self,type_system,value):
+        value = self.to_db(type_system,value)
+        return value
+
+    def coerce_from_python_to_python(self,key,value):
         initial_datatype = type(value)
         try:
             value = self.python_type(value)
@@ -71,6 +87,7 @@ class Property(object):
             print "Can't set attribute '%s' to value '%s with type %s'" \
                 % (key,value,initial_datatype)
             raise
+
 
 class String(Property): 
 
