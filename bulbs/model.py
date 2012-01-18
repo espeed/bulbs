@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # 
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
@@ -45,10 +45,10 @@ class ModelMeta(type):
 
     def _set_property_default(cls,key,property_instance):
         # now that the property reference is stored away, 
-        # initialize its vars to None, the default vale (TODO), or the fget
+        # initialize its vars to None, the default value, or the fget
         if property_instance.default is not None:
-            #TODO: Make this work for scalars too
-            # Or more to the point, does this really need to be a Python property?
+            # TODO: Make this work for scalars too -- what???
+            # Or more to the point, why is this a Python property?
             fget = getattr(cls,property_instance.default)
             default_value = property(fget)
         elif property_instance.fget:
@@ -167,7 +167,7 @@ class Relationship(Edge,Model):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()      
         resp = self._update(self._id,data)
-        #self.initialize(resp.results)
+        #self._initialize(resp.results)
 
     #
     # Override the _create and _update methods to customize behavior.

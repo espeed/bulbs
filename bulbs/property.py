@@ -1,27 +1,23 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2013 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
 Interface for interacting with a graph database through Rexster.
 
-Graph, Vertex, Edge, Index, Query
-
 """
-#import array
 
 import logging
 log = logging.getLogger(__name__)
 
-# NOTE 1: "Property" refers to a graph-database property (i.e. the DB data)
+# NOTE: "Property" refers to a graph-database property (i.e. the DB data)
 class Property(object):
 
     def __init__(self, datatype, fget=None, fset=None, fdel=None, \
                      name=None, default=None, onupdate=None, constraint=None, \
                      nullable=True, unique=False, index=False):
 
-        # TODO: unique creates an index
         self.datatype = datatype
         self.fget = fget
         self.fset = fset
@@ -30,18 +26,20 @@ class Property(object):
         # FIX THIS!!!! -- why are they sharing the same namespace???
         self.name = name
         self.default = default
-        self.onupdate = onupdate
-        self.constraint = constraint,
         self.nullable = nullable
-        self.unique = unique
+
+        # These aren't implemented yet.         
+        # TODO: unique creates an index
         self.index = index
+        self.unique = unique
+        self.onupdate = onupdate
+        self.constraint = constraint
+
 
     def validate(self, key, value):
         """
         Validates that Property data is of the right datatype before saving it
         to the DB and that the Property has a value if nullable is set to False.
-        
-        Call this at the top of each save() method.
         
         """
         self._check_datatype(value)
