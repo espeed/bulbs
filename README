@@ -11,8 +11,8 @@ to several graph-database servers, including Neo4j Server and Rexster.
 Neo4j Server is Neo4j's open-source REST server, and it is avalble as an
 Heroku Add On.
 
-Rexster is  a REST server optimized for recommendations. It is part of the 
-TinkerPop stack. You can connect to any Blueprints-enabled graph database, 
+Rexster is a REST server optimized for recommendations. It is part of the 
+TinkerPop stack. It connects to any Blueprints-enabled graph database, 
 including Neo4j, OrientDB, Dex, OpenRDF Sail, and TinkerGraph.
 
 Bulbs supports pluggable backends, and more native bindings are in the works.
@@ -23,8 +23,6 @@ A preview release is out now, and I welecome feedback on how to improve it.
 The API will probably change somewhat until we hit 1.0.
 
 What do I need?
-
-Neo4j Server 
 
 Neo4j Server (http://neo4j.org/) or Rexster 
 (https://github.com/tinkerpop/rexster), and a few Python libraries, such as 
