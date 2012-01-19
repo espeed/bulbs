@@ -65,7 +65,7 @@ RESPONSE_HANDLERS = {200:ok,
                      500:server_error}
 
 class Request(object):
-    """Used for connecting to the Rexster REST server."""
+    """Used for connecting to the a REST server over HTTP."""
 
     response_class = Response
 
@@ -113,7 +113,7 @@ class Request(object):
 
         http_resp = self.http.request(uri, method, body, headers)
 
-        return self.response_class(http_resp)
+        return self.response_class(http_resp, self.config)
 
     def _display_debug(self, uri, method, body):
         log.debug("%s url:  %s  ", method, uri)

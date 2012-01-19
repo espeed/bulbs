@@ -13,6 +13,7 @@ import ujson as json
 
 from bulbs.utils import build_path, get_file_path, get_logger
 from bulbs.registry import Registry
+from bulbs.config import DEBUG
 
 log = get_logger(__name__)
 
@@ -73,7 +74,7 @@ class Response(object):
 
     result_class = Result
 
-    def __init__(self,  response):
+    def __init__(self,  response, config):
         self.handle_response(response)
 
         #: A dict containing the content returned in the response.
@@ -83,7 +84,12 @@ class Response(object):
         self.results, self.total_size = self.get_results()
 
         #: The raw response returned by the request.
-        self.raw = response
+        self.raw = self._maybe_get_raw(response, config)
+
+    def _maybe_get_raw(self,response, config):
+        # don't store raw response in production else you'll bloat the obj
+        if config.log_level == DEBUG:
+            return response
 
     def handle_response(self, response):
         """Check the server response and raise exceptions if needed."""
@@ -117,11 +123,13 @@ class Resource(object):
         self.registery = Registry()
 
     # Gremlin
+
     def gremlin(self, script, params=None): 
         """Executes a Gremlin script and returns the Response."""
         raise NotImplementedError 
 
     # Vertex Proxy
+
     def create_vertex(self, data):
         """Creates a vertex and returns the Response."""
         raise NotImplementedError
@@ -139,6 +147,7 @@ class Resource(object):
         raise NotImplementedError 
 
     # Edge Proxy
+
     def create_edge(self, outV, label, inV, data={}): 
         """Creates a edge and returns the Response."""
         raise NotImplementedError 
@@ -156,6 +165,7 @@ class Resource(object):
         raise NotImplementedError 
 
     # Vertex Container
+
     def outE(self, _id, label=None):
         """Returns the outgoing edges of the vertex."""
         raise NotImplementedError 
@@ -181,6 +191,7 @@ class Resource(object):
         raise NotImplementedError 
 
     # Index Proxy - Vertex
+
     def create_vertex_index(self, params):
         """Creates a vertex index with the specified params."""
         raise NotImplementedError 
@@ -194,6 +205,7 @@ class Resource(object):
         raise NotImplementedError 
 
     # Index Proxy - Edge
+
     def create_edge_index(self, params):
         """Creates a edge index with the specified params."""
         raise NotImplementedError 
@@ -207,11 +219,12 @@ class Resource(object):
         raise NotImplementedError 
     
     # Index Container - Vertex
-    def add_vertex_to_index(self, index_name, key, value, _id):
+
+    def put_vertex(self, index_name, key, value, _id):
         """Adds a vertex to the index with the index_name."""
         raise NotImplementedError 
 
-    def get_vertex(self, index_name, key, value):
+    def lookup_vertex(self, index_name, key, value):
         """Returns the vertices indexed with the key and value."""
         raise NotImplementedError 
 
@@ -219,16 +232,17 @@ class Resource(object):
         """Returns the vertices for the index query."""
         raise NotImplementedError 
 
-    def remove_vertex_from_index(self, index_name, _id, key=None, value=None):
+    def remove_vertex(self, index_name, _id, key=None, value=None):
         """Removes a vertex from the index and returns the Response."""
         raise NotImplementedError 
 
     # Index Container - Edge
-    def add_edge_to_index(self, index_name, key, value, _id):
+
+    def put_edge(self, index_name, key, value, _id):
         """Adds an edge to the index and returns the Response."""
         raise NotImplementedError 
 
-    def get_edge(self, index_name, key, value):
+    def lookup_edge(self, index_name, key, value):
         """Looks up an edge in the index and returns the Response."""
         raise NotImplementedError 
 
@@ -236,24 +250,22 @@ class Resource(object):
         """Queries for an edge in the index and returns the Response."""
         raise NotImplementedError 
 
-    def remove_edge_from_index(self, index_name, _id, key=None, value=None):
+    def remove_edge(self, index_name, _id, key=None, value=None):
         """Removes an edge from the index and returns the Response."""
         raise NotImplementedError 
 
     # Model Proxy - Vertex
+
     def create_indexed_vertex(self, data, index_name, keys=None):
-        """Creates a vertex,  indexes it, and returns the Response."""
+        """Creates a vertex, indexes it, and returns the Response."""
         raise NotImplementedError 
 
     def update_indexed_vertex(self, _id, data, index_name, keys=None):
         """Updates an indexed vertex and returns the Response."""
         raise NotImplementedError 
 
-    def delete_indexed_vertex(self, _id, index_name):
-        """Deletes an indexed vertex and returns the Response."""
-        raise NotImplementedError 
-    
     # Model Proxy - Edge
+
     def create_indexed_edge(self, data, index_name, keys=None):
         """Creates a edge, indexes it, and returns the Response."""
         raise NotImplementedError 
@@ -262,6 +274,10 @@ class Resource(object):
         """Updates an indexed edge and returns the Response."""
         raise NotImplementedError 
     
-    def delete_indexed_edge(self, _id, index_name):
-        """Deletes an indexed edge and returns the Response."""
+    # Utils
+
+    def warm_cache(self):
+        """Warms the server cache by loading elements into memory."""
         raise NotImplementedError 
+
+        
