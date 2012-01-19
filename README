@@ -24,9 +24,10 @@ The API will probably change somewhat until we hit 1.0.
 
 What do I need?
 
-Neo4j Server (http://neo4j.org/) or Rexster 
-(https://github.com/tinkerpop/rexster), and a few Python libraries, such as 
-ujson and httplib2.
+* Neo4j Server (http://neo4j.org/), or 
+* Rexster  (https://github.com/tinkerpop/rexster)
+
+And a few Python libraries, such as ujson and httplib2.
 
 Where are the docs?
 
