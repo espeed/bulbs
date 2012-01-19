@@ -1,26 +1,9 @@
+//
+// Copyright 2012 James Thornton (http://jamesthornton.com)
+// BSD License (see LICENSE for details)
+//
 
-// Index Proxy
-
-def create_vertex_index(index_name) {
-  manager = g.index()
-  index = manager.forNodes('$index_name')
-  // values stored as strings, so keys are stored as json or "null"
-  //manager.setConfiguration(index,"keys",$keys)
-}
-  
-def get_vertex_index(index_name) {
-  IndexManager manager = g.index()
-  Index<Node> index = manager.forNodes(index_name)
-  //Map<String, String> config = manager.getConfiguration(index) 
-}
-
-// Model Proxy - Vertex
-  
-// NOTE: Converting all index values to strings because that's what Neo4j does
-// anyway, and when using the JSON type system, Rexster doesn't have a way to 
-// specify types in the URL for index lookups. This keeps the code consistent.
-
-// TODO: Make this support multiple indices, e.g. an autoindex and a normal index
+// Model - Vertex
 
 def create_indexed_vertex(data,index_name,keys) {
   neo4j = g.getRawGraph()
@@ -69,7 +52,7 @@ def update_indexed_vertex(_id, data, index_name, keys) {
   }
 }
 
-// Model Proxy - Edge
+// Model - Edge
 
 def create_indexed_edge(outV,label,inV,data,index_name,keys) {
   import org.neo4j.graphdb.DynamicRelationshipType;
