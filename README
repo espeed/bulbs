@@ -9,7 +9,7 @@ Bulbs is a Python persistence framework for graph databases that connects
 to several graph-database servers, including Neo4j Server and Rexster.
 
 Neo4j Server is Neo4j's open-source REST server, and it is avalble as an
-Heroku Add On.
+Heroku Add On (http://addons.heroku.com/neo4j).
 
 Rexster is a REST server optimized for recommendations. It is part of the 
 TinkerPop stack. It connects to any Blueprints-enabled graph database, 
