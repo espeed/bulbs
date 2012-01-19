@@ -76,7 +76,7 @@ class Model(object):
     def _coerce_property_value(self,key,value):
         if value is not None:
             property_instance = self._properties[key]
-            value = property_instance.coerce_from_python_to_python(key,value)
+            value = property_instance.coerce(key,value)
         return value
 
     def _set_keyword_attributes(self,kwds):
@@ -92,7 +92,7 @@ class Model(object):
         type_system = self._resource.type_system
         for key, property_instance in self._properties.items():
             value = result.data.get(key,None)
-            value = property_instance.coerce_from_db_to_python(type_system,value)
+            value = property_instance.convert_to_python(type_system,value)
             # Notice that __setattr__ is overloaded so bypassing it and using parent's
             super(Model, self).__setattr__(key, value)
         
@@ -108,7 +108,7 @@ class Model(object):
         for key, property_instance in self._properties.items():
             value = getattr(self,key)
             property_instance.validate(key,value)
-            value = property_instance.coerce_from_python_to_db(type_system,value)
+            value = property_instance.convert_to_db(type_system,value)
             data[key] = value
         return data
 
@@ -203,9 +203,9 @@ class NodeProxy(VertexProxy):
 
     def get_all(self):
         """Returns all the elements for the model type."""
-        key = self.resource.config.type_var
-        value = getattr(self.element_class,self.resource.config.type_var)
-        return self.index.get(key,value)
+        type_var = self.resource.config.type_var
+        element_type = getattr(self.element_class,type_var)
+        return self.index.get(type_var,element_type)
 
 
 class RelationshipProxy(EdgeProxy):
@@ -226,10 +226,10 @@ class RelationshipProxy(EdgeProxy):
         return initialize_element(self.resource,result)
 
     def get_all(self):
-        """Returns all the elements for the model type."""
-        key = self.resource.config.label_var
-        value = getattr(self.element_class,self.resource.config.label_var)
-        return self.index.get(key,value)
+        """Returns all the relationships for the label."""
+        label_var = self.resource.config.label_var
+        label = getattr(self.element_class,label_var)
+        return self.index.get(label_var,label)
 
     def _parse_args(self,relationship,args):
         # Two different args options:

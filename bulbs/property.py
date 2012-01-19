@@ -8,22 +8,24 @@ Interface for interacting with a graph database through Rexster.
 
 """
 
-import logging
-log = logging.getLogger(__name__)
+from utils import get_logger
 
-# NOTE: "Property" refers to a graph-database property (i.e. the DB data)
+log = get_logger(__name__)
+
+
 class Property(object):
+    """Container for a graph-database property used to create Models."""
 
     def __init__(self, name=None, fget=None, fset=None, fdel=None, \
                      default=None, onupdate=None, constraint=None, \
                      nullable=True, unique=False, index=False):
 
-        #self.datatype = datatype
         self.fget = fget
         self.fset = fset
         self.fdel = fdel
         # NOTE: If you pass name as a kwd, then it overwrites variables named "name"
-        # FIX THIS!!!! -- why are they sharing the same namespace???
+        # FIX THIS!!!! -- why are they sharing the same namespace??? 
+        # The above is an old comment -- is this still an issue?
         self.name = name
         self.default = default
         self.nullable = nullable
@@ -58,32 +60,31 @@ class Property(object):
                          key, value)
            raise
 
-    # TODO: Simplify these, and make method names consistent....
-    def coerce_from_db_to_python(self,type_system,value):
+    def convert_to_python(self,type_system,value):
         try:
             value = self.to_python(type_system,value)
         except Exception as e:
-            # TODO: log/warn/email regarding type mismatch
-            log.error("Property Type Mismatch: '%s' with value '%s': %s", key, value, ex)
+            log.exception("Property Type Mismatch: '%s' with value '%s': %s", \
+                              key, value, e)
             value = None
         return value
 
-    def coerce_from_python_to_db(self,type_system,value):
+    def convert_to_db(self,type_system,value):
         value = self.to_db(type_system,value)
         return value
 
-    def coerce_from_python_to_python(self,key,value):
+    def coerce(self,key,value):
         initial_datatype = type(value)
         try:
             value = self.python_type(value)
             return value
         except ValueError:
-            print "'%s' is not a valid value for %s, must be  %s." \
-                           % (value, key, self.python_type)
+            log.exception("'%s' is not a valid value for %s, must be  %s.", \
+                              value, key, self.python_type)
             raise
         except AttributeError:
-            print "Can't set attribute '%s' to value '%s with type %s'" \
-                % (key,value,initial_datatype)
+            log.exception("Can't set attribute '%s' to value '%s with type %s'", \
+                              key, value, initial_datatype)
             raise
 
 
