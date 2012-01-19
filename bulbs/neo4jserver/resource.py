@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
@@ -11,7 +11,7 @@ Bulbs supports pluggable backends. This is the Neo4j Server resource.
 import ujson as json
 from urlparse import urlsplit
 
-from bulbs.utils import build_path, get_file_path
+from bulbs.utils import build_path, get_file_path, get_logger
 from bulbs.registry import Registry
 
 # specific to this resource
@@ -24,6 +24,7 @@ import os
 # The default URI
 NEO4J_URI = "http://localhost:7474/db/data/"
 
+log = get_logger(__name__)
 
 class Neo4jResult(Result):
     """

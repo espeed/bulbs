@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
+from utils import get_logger
+from logging import DEBUG, ERROR, StreamHandler
+
 
 class Config(object):
 
@@ -17,3 +20,13 @@ class Config(object):
         self.vertex_autoindex = "vertices"
         self.edge_autoindex = "edges"
         self.autoindex = True
+        self.log_level = ERROR
+        self.log_handler = StreamHandler
+        
+        self.configure_logging()
+
+    def configure_logging(self):
+        log = get_logger(__name__)
+        log.root.setLevel(self.log_level)
+        log.root.addHandler(self.log_handler())
+

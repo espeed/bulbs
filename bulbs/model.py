@@ -9,10 +9,18 @@ Base classes for modeling domain objects that wrap vertices and edges.
 """
 from bulbs.property import Property
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
-from bulbs.utils import instantiate_model, initialize_element, get_one_result
+from bulbs.utils import initialize_element, get_one_result
 
 import logging
 log = logging.getLogger(__name__)
+
+
+# Util used by NodeProxy and RelationshipProxy
+
+def instantiate_model(element_class,resource,kwds):
+    model = element_class(resource)
+    model._set_keyword_attributes(kwds)
+    return model
 
 
 class ModelMeta(type):
@@ -25,7 +33,7 @@ class ModelMeta(type):
         cls._register_properties(namespace)
 
     def _register_properties(cls,namespace):
-        # loop through the class namespace looking for Property instances
+        # loop through the class namespace looking for database Property instances
         # e.g. age = Integer(), key: age, property_instance: Integer()
         for key, value in namespace.items():
             if isinstance(value, Property):
@@ -55,7 +63,7 @@ class ModelMeta(type):
             default_value = None
         setattr(cls,key,default_value)
 
-    
+
 class Model(object):
 
     __metaclass__ = ModelMeta
@@ -110,6 +118,7 @@ class Model(object):
         except KeyError:
             index = None
         return index
+
 
 class Node(Vertex,Model):
 
@@ -239,5 +248,4 @@ class RelationshipProxy(EdgeProxy):
         return args
 
 
-    
     

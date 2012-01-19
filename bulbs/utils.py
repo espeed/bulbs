@@ -5,6 +5,19 @@
 #
 import os
 import inspect
+import logging
+
+#
+# Logging
+#
+
+def get_logger(name,level=None):
+    logger = logging.getLogger(name)
+    if level:
+        logger.setLevel(level)
+    return logger
+
+log = get_logger(__name__)
 
 #
 # Element Utils
@@ -46,22 +59,14 @@ def get_one_result(resp):
     # converts all lists to a generator of Result objects. Thus in that case,
     # we need to grab the single Result object out of the list/generator.
     if resp.total_size > 1:
-        raise ValueError('resp.results contains more than one item.')
+        log.error('resp.results contains more than one item.')
+        raise ValueError
     if inspect.isgenerator(resp.results):
         result = resp.results.next()
     else:
         result = resp.results
     return result
 
-#
-# Model Utils
-#
-
-def instantiate_model(element_class,resource,kwds):
-    model = element_class(resource)
-    model._set_keyword_attributes(kwds)
-    return model
-    
 #
 # Resource Utils
 #

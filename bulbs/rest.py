@@ -15,6 +15,9 @@ import ujson as json
 from pprint import pprint
 
 from resource import Response
+from utils import get_logger
+
+log = get_logger(__name__)
 
 def get_error(http_resp):
     """Returns the HTTP status, message, and error."""
@@ -106,20 +109,16 @@ class Request(object):
         """
         uri, method, body, headers = self._build_request_args(path, method, params)
 
-        #if self.config.debug is True:
-        #    self._display_debug(uri, method, body)
-       
-         # "retry code" moved to _retry_request method for now. - James  
+        self._display_debug(uri, method, body)
+
         http_resp = self.http.request(uri, method, body, headers)
 
-        #print http_resp
         return self.response_class(http_resp)
 
     def _display_debug(self, uri, method, body):
-        print "%s url:  %s  " % (method, uri)
-        print "%s body: %s " % (method, body)        
-        print  # print blank line between requests
-                
+        log.debug("%s url:  %s  ", method, uri)
+        log.debug("%s body: %s ", method, body)
+                    
     def _build_request_args(self, path, method, params):
         headers = {'Accept': 'application/json'}
         body = None

@@ -11,8 +11,10 @@ provides the server-resource interface. Implement these to create a new resource
 """
 import ujson as json
 
-from bulbs.utils import build_path, get_file_path
+from bulbs.utils import build_path, get_file_path, get_logger
 from bulbs.registry import Registry
+
+log = get_logger(__name__)
 
 # TODO: Consider making these real Python Abstract Base Classes (import abc)            
 
