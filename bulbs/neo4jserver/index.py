@@ -28,6 +28,7 @@ class IndexProxy(object):
     
 
 class VertexIndexProxy(IndexProxy):
+    """Manage vertex indices on Neo4j Server."""
 
     def create(self,index_name):
         """Creates an an index and returns it."""
@@ -46,18 +47,19 @@ class VertexIndexProxy(IndexProxy):
             return index
 
     def get_or_create(self,index_name):
-        # get it, create if doesn't exist, then register it
+        """Get a vertex index or creates it if it doesn't exist.""" 
         index = self.get(index_name)
         if not index:
             index = self.create(index_name)
         return index
 
     def delete(self,index_name):
-        """Deletes/drops an index and returns the Rexster Response object."""
+        """Deletes/drops an index and returns the Response."""
         return self.resource.delete_vertex_index(index_name)
 
 
 class EdgeIndexProxy(IndexProxy):
+    """Manage edge indices on Neo4j Server."""
 
     def create(self,index_name):
         """Creates an an index and returns it."""
@@ -76,14 +78,14 @@ class EdgeIndexProxy(IndexProxy):
             return index
 
     def get_or_create(self,index_name,*args,**kwds):
-        # get it, create if doesn't exist, then register it
+        """Get an edge index or creates it if it doesn't exist.""" 
         index = self.get(index_name)
         if not index:
             index = self.create(index_name,*args,**kwds)
         return index
 
     def delete(self,index_name):
-        """Deletes/drops an index and returns the Rexster Response object."""
+        """Deletes/drops an index and returns the Response."""
         return self.resource.delete_edge_index(index_name)
 
 #
@@ -109,10 +111,10 @@ class Index(object):
     @property
     def index_class(self):
         """Returns the index class."""
-    #    #print self.results.raw
         return self.results.get_index_class()
 
     def count(self,key=None,value=None,**pair):
+        """Return the number of items in the index for the key and value."""
         key, value = self._get_key_value(key,value,pair)
         script = self.resource.scripts.get('index_count')
         params = dict(index_name=self.index_name,key=key,value=value)
@@ -120,8 +122,8 @@ class Index(object):
         total_size = int(resp.content)
         return total_size
 
-
     def _get_key_value(self,key,value,pair):
+        """Return the key and value, regardless of how it was entered."""
         if pair:
             key, value = pair.popitem()
         return key, value
@@ -135,7 +137,6 @@ class ExactIndex(Index):
 
     def put(self,_id,key=None,value=None,**pair):
         """Put an element into the index at key/value and return the response."""
-        # NOTE: if you ever change the _id arg to element, change remove() too
         key, value = self._get_key_value(key,value,pair)
         method_map = dict(vertex=self.resource.put_vertex,
                           edge=self.resource.put_edge)
@@ -166,7 +167,6 @@ class ExactIndex(Index):
         resp = self.put(_id,key,value)
         return resp
 
-
     def get(self,key=None,value=None,**pair):
         """Return all the elements with key property equal to value in the index."""
         key, value = self._get_key_value(key,value,pair)
@@ -177,7 +177,7 @@ class ExactIndex(Index):
         """Returns a max of 1 elements matching the key/value pair in the index."""
         key, value = self._get_key_value(key,value,pair)
         resp = self.resource.lookup_vertex(self.index_name,key,value)
-        result = utils.get_one_result(resp)
+        result = get_one_result(resp)
         return initialize_element(self.resource,result)
          
     def query(self,query_string):

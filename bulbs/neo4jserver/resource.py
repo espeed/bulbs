@@ -100,7 +100,7 @@ class Neo4jResult(Result):
             return _id
 
     def _parse_type(self,uri):
-        """Parses the type ouf of a URI."""
+        """Parses the type ouf of a normal URI."""
         if uri:
             root_uri = uri.rpartition('/')[0]
             #print root_uri
@@ -108,6 +108,7 @@ class Neo4jResult(Result):
             return neo4j_type
     
     def _parse_index_class(self,uri):
+        """Parses the type out of an index URI."""
         if uri:
             path = urlsplit(uri).path
             segments = path.split("/")
@@ -138,12 +139,12 @@ class Neo4jResponse(Response):
         response_handler(response)
 
     def get_headers(self,response):
-        """Return headers from HTTP response."""
+        """Return the headers from the HTTP response."""
         headers, content = response
         return headers
 
     def get_content(self,response):
-        """Return content from HTTP response."""
+        """Return the content from the HTTP response."""
         
         # response is a tuple containing (headers, content)
         # headers is an httplib2 Response object, content is a string
@@ -480,9 +481,7 @@ class Neo4jResource(Resource):
 
     def _remove_null_values(self,data):
         """Removes null property values because they aren't valid in Neo4j."""
-        # You could do this at the Model._get_property_data(), 
-        # but this may not be needed for all databases. 
-        # Moreover, Neo4j Server uses PUTs to overwrite all properties so no need
+        # Neo4j Server uses PUTs to overwrite all properties so no need
         # to worry about deleting props that are being set to null.
         clean_data = [(k, v) for k, v in data.items() if v is not None]
         return dict(clean_data)
