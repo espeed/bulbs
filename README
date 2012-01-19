@@ -31,7 +31,12 @@ And a few Python libraries, such as ujson and httplib2.
 
 Where are the docs?
 
-Go to http://bulbflow.com for the current documentation.
+* The 0.2.x docs are online a http://bulbflow.com
+* The 0.3.x docs are coming soon (workin on it right now). There have been a few API changes, but the code is commented. Start at the bottom and work your way up:
+
+1. https://github.com/espeed/bulbs/blob/0.3.x/bulbs/neo4jserver/resource.py
+2. https://github.com/espeed/bulbs/blob/0.3.x/bulbs/model.py
+3. https://github.com/espeed/bulbs/blob/0.3.x/bulbs/neo4jserver/graph.py
 
 Where can I get help?
 
