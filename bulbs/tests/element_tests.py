@@ -56,14 +56,18 @@ class VertexTestCase(BulbsTestCase):
         self.edges = EdgeProxy(Edge,self.resource)
         self.james = self.vertices.create({'name':'James'})
         self.julie = self.vertices.create({'name':'Julie'})
-        assert isinstance(self.james,Vertex)
         self.edges.create(self.james,"test",self.julie)
         self.edges.create(self.julie,"test",self.james)
         
     def test_init(self):
-        int(self.james._id)
+        assert type(self.james._id) == int
+        assert isinstance(self.james,Vertex)
+
         assert self.james._type == "vertex"
         assert self.james.name == "James"
+
+        assert self.julie._type == "vertex"
+        assert self.julie.name == "Julie"
 
     def test_get_out_edges(self):
         edges = self.james.outE()
@@ -76,7 +80,6 @@ class VertexTestCase(BulbsTestCase):
         assert len(edges) == 1
 
     def test_get_both_edges(self):
-        # ok
         edges = self.james.bothE()
         edges = list(edges)
         assert len(edges) == 2

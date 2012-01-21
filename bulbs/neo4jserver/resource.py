@@ -21,6 +21,7 @@ from bulbs.resource import Resource, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
+from message import Message
 
 # The default URI
 NEO4J_URI = "http://localhost:7474/db/data/"
@@ -82,7 +83,7 @@ class Neo4jResult(Result):
     def get_index_class(self):
         """Returns the index class (either "vertex" or "edge")."""
         uri = self.raw.get('template') 
-        neo4j_type = self._parse_index_class(uri)
+        neo4j_type = self._parse_index_type(uri)
         return self.type_map[neo4j_type]
 
     def get(self,attribute):
@@ -107,7 +108,7 @@ class Neo4jResult(Result):
             neo4j_type = root_uri.rpartition('/')[-1]
             return neo4j_type
     
-    def _parse_index_class(self,uri):
+    def _parse_index_type(self,uri):
         """Parses the type out of an index URI."""
         if uri:
             path = urlsplit(uri).path
@@ -173,7 +174,11 @@ class Neo4jResponse(Response):
             total_size = 0
         return results, total_size
 
-
+    def set_index_name(self,index_name):
+        """Sets the index name to the raw result."""
+        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+        self.results.raw['name'] = index_name
+        
 
 class Neo4jRequest(Request):
     """Makes requests to Neo4j Server and returns a Neo4jResponse.""" 
@@ -183,13 +188,6 @@ class Neo4jRequest(Request):
 
 class Neo4jResource(Resource):
     """Low-level client that connects to Neo4j Server and returns a response.""" 
-
-    vertex_path = "node"
-    edge_path = "relationship"
-    index_path = "index"
-    gremlin_path = "ext/GremlinPlugin/graphdb/execute_script"
-    cypher_path = "ext/CypherPlugin/graphdb/execute_query"
-    #cypher_path = "cypher"
 
     def __init__(self,config):
         """
@@ -205,50 +203,53 @@ class Neo4jResource(Resource):
         self.registry.add_scripts("gremlin",self.scripts)
         self.type_system = JSONTypeSystem()
         self.request = Neo4jRequest(config,self.type_system.content_type)
+        self.message = Message(config, self.scripts)
         
     # Gremlin
 
     def gremlin(self,script,params=None): 
         """Executes a Gremlin script and returns the Response."""
-        params = dict(script=script,params=params)
-        return self.request.post(self.gremlin_path,params)
+        message = self.message.gremlin(script,params)
+        return self.request.send(message)
 
     # Cypher
 
     def cypher(self,query,params=None):
         """Executes a Cypher query and returns the Response."""
-        params = dict(query=query,params=params)
-        return self.request.post(self.cypher_path,params)
+        message = self.message.cypher(query,params)
+        return self.request.send(message)
         
     # Vertex Proxy
+
+    def create_vertex(self,data):
+        message = self.message.create_vertex(data)
+        return self.request.send(message)
 
     def create_vertex(self,data):
         """Creates a vertex and returns the Response."""
         if self.config.autoindex is True:
             index_name = self.config.vertex_autoindex
             return self.create_indexed_vertex(data,index_name,keys=None)
-        data = self._remove_null_values(data)
-        return self.request.post(self.vertex_path,data)
+        message = self.message.create_vertex(data)
+        return self.request.send(message)
 
     def get_vertex(self,_id):
         """Gets the vertex with the _id and returns the Response."""
-        path = build_path(self.vertex_path,_id)
-        return self.request.get(path,params=None)
+        message = self.message.get_vertex(_id)
+        return self.request.send(message)
         
     def update_vertex(self,_id,data):
         """Updates the vertex with the _id and returns the Response."""
         if self.config.autoindex is True:
             index_name = self.config.vertex_autoindex
             return self.update_indexed_vertex(_id,data,index_name,keys=None)
-        data = self._remove_null_values(data)
-        path = build_path(self.vertex_path,_id,"properties")
-        return self.request.put(path,data)
+        message = self.message.update_vertex(_id,data)
+        return self.request.send(message)
 
     def delete_vertex(self,_id):
         """Deletes a vertex with the _id and returns the Response."""
-        script = self.scripts.get("delete_vertex")
-        params = dict(_id=_id)
-        return self.gremlin(script,params)
+        message = self.message.delete_vertex(_id)
+        return self.request.send(message)
         
     # Edge Proxy
 
@@ -257,219 +258,187 @@ class Neo4jResource(Resource):
         if self.config.autoindex is True:
             index_name = self.config.edge_autoindex
             return self.create_indexed_edge(outV,label,inV,data,index_name,keys=None)
-        data = self._remove_null_values(data)
-        path = build_path(self.vertex_path,outV,"relationships")
-        inV_uri = "%s/node/%s" % (self.config.root_uri.rstrip("/"), inV)
-        params = {'to':inV_uri,'type':label, 'data':data}
-        return self.request.post(path,params)
-        
+        message = self.message.create_edge(outV,label,inV,data)
+        return self.request.send(message)
+
     def get_edge(self,_id):
         """Gets the edge with the _id and returns the Response."""
-        path = build_path(self.edge_path,_id)
-        return self.request.get(path,params=None)
+        message = self.message.get_edge(_id)
+        return self.request.send(message)
         
     def update_edge(self,_id,data):
         """Updates the edge with the _id and returns the Response."""
         if self.config.autoindex is True:
             index_name = self.config.edge_autoindex
             return self.update_indexed_edge(_id,data,index_name,keys=None)
-        data = self._remove_null_values(data)
-        path = build_path(self.edge_path,_id,"properties")
-        return self.request.put(path,data)
+        message = self.message.update_edge(_id, data)
+        return self.request.send(message)
 
     def delete_edge(self,_id):
         """Deletes a edge with the _id and returns the Response."""
-        path = build_path(self.edge_path,_id)
-        return self.request.delete(path,params=None)
+        message = self.message.delete_edge(_id)
+        return self.request.send(message)
 
     # Vertex Container
 
     def outE(self,_id,label=None):
         """Return the outgoing edges of the vertex."""
-        script = self.scripts.get('outE')
-        params = dict(_id=_id,label=label)
-        return self.gremlin(script,params)
+        message = self.message.outE(_id,label)
+        return self.request.send(message)
 
     def inE(self,_id,label=None):
         """Return the incoming edges of the vertex."""
-        script = self.scripts.get('inE')
-        params = dict(_id=_id,label=label)
-        return self.gremlin(script,params)
+        message = self.message.outE(_id,label)
+        return self.request.send(message)
 
     def bothE(self,_id,label=None):
         """Return all incoming and outgoing edges of the vertex."""
-        script = self.scripts.get('bothE')
-        params = dict(_id=_id,label=label)
-        return self.gremlin(script,params)
+        message = self.message.bothE(_id,label)
+        return self.request.send(message)
 
     def outV(self,_id,label=None):
         """Return the out-adjacent vertices to the vertex."""
-        script = self.scripts.get('outV')
-        params = dict(_id=_id,label=label)
-        return self.gremlin(script,params)
+        message = self.message.outE(_id,label)
+        return self.request.send(message)
         
     def inV(self,_id,label=None):
         """Return the in-adjacent vertices of the vertex."""
-        script = self.scripts.get('inV')
-        params = dict(_id=_id,label=label)
-        return self.gremlin(script,params)
+        message = self.message.outE(_id,label)
+        return self.request.send(message)
         
     def bothV(self,_id,label=None):
         """Return all incoming- and outgoing-adjacent vertices of vertex."""
-        script = self.scripts.get('bothV')
-        params = dict(_id=_id,label=label)
-        return self.gremlin(script,params)
+        message = self.message.outE(_id,label)
+        return self.request.send(message)
 
     # Index Proxy - Vertex
 
     def create_vertex_index(self,index_name,*args,**kwds):
         """Creates a vertex index with the specified params."""
-        index_type = kwds.pop("index_type","exact")
-        provider = kwds.pop("provider","lucene")
-        #keys = kwds.pop("keys",None)
-        #config = {'type':index_type,'provider':provider,'keys':str(keys)}
-        config = {'type':index_type,'provider':provider}
-        path = build_path(self.index_path,"node")
-        params = dict(name=index_name,config=config)
-        resp = self.request.post(path,params)
-        resp = self._add_index_name(index_name,resp)
+        message = self.message.create_vertex_index(index_name,*args,**kwds)
+        resp = self.request.send(message)
+        resp.set_index_name(index_name)        
         return resp
 
     def get_vertex_indices(self):
         """Returns a map of all the vertex indices."""
-        path = build_path(self.index_path,"node")
-        return self.request.get(path,params=None)
+        message = self.message.get_vertex_indices()
+        return self.request.send(message)
 
     def get_vertex_index(self,index_name):
         """Returns the vertex index with the index_name."""
         resp = self.get_vertex_indices()
         resp.results = self._get_index_results(index_name,resp)
         if resp.results:
-            resp = self._add_index_name(index_name,resp)
+            resp.set_index_name(index_name)
         return resp
 
     def delete_vertex_index(self,name): 
         """Deletes the vertex index with the index_name."""
-        path = build_path(self.index_path,"node",name)
-        return self.request.delete(path,params=None)
+        message = self.message.delete_vertex_index(name)
+        return self.request.send(message)
 
     # Index Proxy - Edge
 
     def create_edge_index(self,index_name,*args,**kwds):
         """Creates a edge index with the specified params."""
-        path = build_path(self.index_path,self.edge_path)
-        params = dict(name=index_name)
-        resp = self.request.post(path,params)
-        resp = self._add_index_name(index_name,resp)
+        message = self.message.create_edge_index(index_name,*args,**kwds)
+        resp = self.request.send(message)
+        resp.set_index_name(index_name)
         return resp
 
     def get_edge_indices(self):
         """Returns a map of all the vertex indices."""
-        path = build_path(self.index_path,self.edge_path)
-        return self.request.get(path,params=None)
+        message = self.message.get_edge_indices()
+        return self.request.send(message)
 
     def get_edge_index(self,index_name):
         """Returns the edge index with the index_name."""
         resp = self.get_edge_indices()
         resp.results = self._get_index_results(index_name,resp)
         if resp.results:
-            resp = self._add_index_name(index_name,resp)
+            resp.set_index_name(index_name)
         return resp
 
     def delete_edge_index(self,name):
         """Deletes the edge index with the index_name."""
-        path = build_path(self.index_path,self.edge_path,name)
-        return self.request.delete(path,params=None)
+        message = self.message.delete_edge_index(name)
+        return self.request.send(message)
 
     # Index Container - Vertex
 
     def put_vertex(self,name,key,value,_id):
         """Adds a vertex to the index with the index_name."""
-        path = build_path(self.index_path,"node",name)
-        uri = "%s/%s/%d" % (self.config.root_uri,"node",_id)
-        params = dict(key=key,value=value,uri=uri)
-        return self.request.post(path,params)
+        message = self.message.put_vertex(name,key,value,_id)
+        return self.request.send(message)
 
     def lookup_vertex(self,name,key,value):
         """Returns the vertices indexed with the key and value."""
-        path = build_path(self.index_path,"node",name,key,value)
-        return self.request.get(path,params=None)
+        message = self.message.lookup_vertex(name,key,value)
+        return self.request.send(message)
 
     def query_vertex(self,name,params):
         """Returns the vertices for the index query."""
-        path = build_path(self.index_path,"node",name)
-        return self.request.get(path,params)
+        message = self.message.query_vertex(name,params)
+        return self.request.send(message)
 
     def remove_vertex(self,name,_id,key=None,value=None):
         """Removes a vertex from the index and returns the Response."""
-        path = build_path("node",name,key,value,_id)
-        return self.request.delete(path,params=None)
+        message = self.message.remove_vertex(name,_id,key,value)
+        return self.request.send(message)
 
     # Index Container - Edge
 
     def put_edge(self,name,key,value,_id):
         """Adds an edge to the index and returns the Response."""
-        path = build_path(self.index_path,self.edge_path,name)
-        uri = "%s/%s/%d" % (self.config.root_uri,self.edge_path,_id)
-        params = dict(key=key,value=value,uri=uri)
-        return self.request.post(path,params)
+        message = self.message.put_edge(name,key,value,_id)
+        return self.request.send(message)
 
     def lookup_edge(self,name,key,value):
         """Looks up an edge in the index and returns the Response."""
-        path = build_path(self.index_path,self.edge_path,name,key,value)
-        return self.request.get(path,params=None)
+        message = self.message.lookup_edge(name,key,value)
+        return self.request.send(message)
 
     def query_edge(self,name,params):
         """Queries for an edge in the index and returns the Response."""
-        path = build_path(self.index_path,self.edge_path,name)
-        return self.request.get(path,params)
+        message = self.message.query_edge(name,params)
+        return self.request.send(message)
 
     def remove_edge(self,name,_id,key=None,value=None):
         """Removes an edge from the index and returns the Response."""
-        path = build_path(self.edge_path,name,key,value,_id)
-        return self.request.delete(path,params=None)
-
+        message = self.message.remove_edge(name,_id,key,value)
+        return self.request.send(message)
 
     # Model Proxy - Vertex
 
     def create_indexed_vertex(self,data,index_name,keys=None):
         """Creates a vertex, indexes it, and returns the Response."""
-        data = self._remove_null_values(data)
-        params = dict(data=data,index_name=index_name,keys=keys)
-        script = self.scripts.get("create_indexed_vertex")
-        return self.gremlin(script,params)
+        message = self.message.create_indexed_vertex(data,index_name,keys)
+        return self.request.send(message)
     
     def update_indexed_vertex(self,_id,data,index_name,keys=None):
         """Updates an indexed vertex and returns the Response."""
-        data = self._remove_null_values(data)
-        params = dict(_id=_id,data=data,index_name=index_name,keys=keys)
-        script = self.scripts.get("update_indexed_vertex")
-        return self.gremlin(script,params)
+        message = self.message.update_indexed_vertex(_id,data,index_name,keys)
+        return self.request.send(message)
 
     # Model Proxy - Edge
 
     def create_indexed_edge(self,outV,label,inV,data,index_name,keys=None):
         """Creates a edge, indexes it, and returns the Response."""
-        data = self._remove_null_values(data)
-        edge_params = dict(outV=outV,label=label,inV=inV)
-        params = dict(data=data,index_name=index_name,keys=keys)
-        params.update(edge_params)
-        script = self.scripts.get("create_indexed_edge")
-        return self.gremlin(script,params)
+        message = self.message.create_indexed_edge(outV,label,inV,data,index_name,keys)
+        return self.request.send(message)
 
     def update_indexed_edge(self,_id,data,index_name,keys=None):
         """Updates an indexed edge and returns the Response."""
-        data = self._remove_null_values(data)
-        params = dict(_id=_id,data=data,index_name=index_name,keys=keys)
-        script = self.scripts.get("update_indexed_edge")
-        return self.gremlin(script,params)
+        message = self.message.update_indexed_edge(_id,data,index_name,keys)
+        return self.request.send(message)
 
     # Utils
 
     def warm_cache(self):
         """Warms the server cache by loading elements into memory."""
-        script = self.scripts.get('warm_cache')
-        return self.gremlin(script,params=None)
+        message = self.message.warm_cache()
+        return self.request.send(message)
 
     # Private 
 
@@ -479,22 +448,11 @@ class Neo4jResource(Resource):
         file_path = get_file_path(dir_name,file_name)
         return file_path
 
-    def _remove_null_values(self,data):
-        """Removes null property values because they aren't valid in Neo4j."""
-        # Neo4j Server uses PUTs to overwrite all properties so no need
-        # to worry about deleting props that are being set to null.
-        clean_data = [(k, v) for k, v in data.items() if v is not None]
-        return dict(clean_data)
-
     def _get_index_results(self,index_name,resp):
         """Returns the index from a map of indicies."""
         if resp.content and index_name in resp.content:
             result = resp.content[index_name]
             return Neo4jResult(result)
 
-    def _add_index_name(self,index_name,resp):
-        """Adds the index name to the raw result."""
-        # this is pretty much a hack becuase the way neo4j does this is inconsistent
-        resp.results.raw['name'] = index_name
-        return resp
-    
+
+

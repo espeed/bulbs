@@ -5,7 +5,8 @@
 #
 
 from graph import Neo4jGraph
-from resource import Neo4jResource, NEO4J_URI
+from batch import Neo4jBatch
+from resource import Neo4jResource, Message, NEO4J_URI
 from index import ExactIndex, FulltextIndex, AutomaticIndex, \
     VertexIndexProxy, EdgeIndexProxy
 

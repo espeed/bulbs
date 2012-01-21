@@ -7,7 +7,6 @@
 Interface for interacting with a graph database through Rexster.
 
 """
-
 from utils import get_logger
 
 log = get_logger(__name__)
@@ -56,21 +55,21 @@ class Property(object):
                 # should this be "assert value is True" to catch empties?
                 assert value is not None
         except AssertionError:
-           log.error("Null Property Error: '%s' cannot be set to '%s'", \
-                         key, value)
+           log.error("Null Property Error: '%s' cannot be set to '%s'", 
+                     key, value)
            raise
+
+    def convert_to_db(self,type_system,value):
+        value = self.to_db(type_system,value)
+        return value
 
     def convert_to_python(self,type_system,value):
         try:
             value = self.to_python(type_system,value)
         except Exception as e:
-            log.exception("Property Type Mismatch: '%s' with value '%s': %s", \
-                              key, value, e)
+            log.exception("Property Type Mismatch: '%s' with value '%s': %s", 
+                          key, value, e)
             value = None
-        return value
-
-    def convert_to_db(self,type_system,value):
-        value = self.to_db(type_system,value)
         return value
 
     def coerce(self,key,value):
@@ -79,12 +78,12 @@ class Property(object):
             value = self.python_type(value)
             return value
         except ValueError:
-            log.exception("'%s' is not a valid value for %s, must be  %s.", \
-                              value, key, self.python_type)
+            log.exception("'%s' is not a valid value for %s, must be  %s.", 
+                          value, key, self.python_type)
             raise
         except AttributeError:
-            log.exception("Can't set attribute '%s' to value '%s with type %s'", \
-                              key, value, initial_datatype)
+            log.exception("Can't set attribute '%s' to value '%s with type %s'", 
+                          key, value, initial_datatype)
             raise
 
 

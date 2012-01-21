@@ -8,7 +8,6 @@ Low-level module for connecting to the Rexster REST server and
 returning a Response object.
 
 """
-
 import urllib
 import httplib2
 import ujson as json
@@ -18,6 +17,11 @@ from resource import Response
 from utils import get_logger
 
 log = get_logger(__name__)
+
+GET = "GET"
+PUT = "PUT"
+POST = "POST"
+DELETE = "DELETE"
 
 def get_error(http_resp):
     """Returns the HTTP status, message, and error."""
@@ -83,20 +87,25 @@ class Request(object):
     
     def get(self, path, params=None):
         """Convenience method that sends GET requests to the resource.""" 
-        return self.request("GET", path, params)
+        return self.request(GET, path, params)
 
     def put(self, path, params=None):
         """Convenience method that sends PUT requests to the resource."""
-        return self.request("PUT", path, params)
+        return self.request(PUT, path, params)
 
     def post(self, path, params=None):
         """Convenience method that sends POST requests to the resource."""
-        return self.request("POST", path, params)
+        return self.request(POST, path, params)
 
     def delete(self, path, params=None):
         """Convenience method that sends DELETE requests to the resource."""
-        return self.request("DELETE", path, params)
+        return self.request(DELETE, path, params)
     
+    def send(self,message):
+        """Convenience method that sends message requests to the resource."""
+        method, path, params = message
+        return self.request(method, path, params)
+
     def request(self, method, path, params):
         """
         Sends a request to the resource.
@@ -125,10 +134,10 @@ class Request(object):
 
         uri = "%s/%s" % (self.config.root_uri.rstrip("/"), path.lstrip("/"))
 
-        if params and method is "GET":
+        if params and method is GET:
             uri = "%s?%s" % (uri, urllib.urlencode(params))
         
-        if params and (method in ["PUT", "POST", "DELETE"]):
+        if params and (method in [PUT, POST, DELETE]):
             body = json.dumps(params)
             post_headers = {'Content-Type': self.content_type}
             headers.update(post_headers)

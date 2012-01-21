@@ -9,10 +9,9 @@ Base classes for modeling domain objects that wrap vertices and edges.
 """
 from bulbs.property import Property
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
-from bulbs.utils import initialize_element, get_one_result
+from bulbs.utils import initialize_element, get_one_result, get_logger
 
-import logging
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 # Util used by NodeProxy and RelationshipProxy
