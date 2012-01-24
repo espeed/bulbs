@@ -1,5 +1,5 @@
 import unittest
-from bulbs.config import Config
+from bulbs.config import Config, DEBUG
 from bulbs.tests import BulbsTestCase, bulbs_test_suite
 from bulbs.rexster import RexsterResource, REXSTER_URI, \
     VertexIndexProxy, EdgeIndexProxy, ManualIndex

@@ -34,42 +34,42 @@ def get_edges() {
 // See https://github.com/tinkerpop/rexster/issues/197
 
 def outE(_id, label) {
-  if (label == null || label == "null")
+  if (label == null)
     g.v(_id).outE()
   else
     g.v(_id).outE(label)
 }
 
 def inE(_id, label) {
-  if (label == null || label == "null")
+  if (label == null)
     g.v(_id).inE()
   else
     g.v(_id).inE(label)
 }
 
 def bothE(_id, label) { 
-  if (label == null || label == "null")
+  if (label == null)
     g.v(_id).bothE()
   else
     g.v(_id).bothE(label)
 }
 
 def outV(_id, label) {
-  if (label == null || label == "null")
+  if (label == null)
     g.v(_id).out()
   else
     g.v(_id).out(label)
 }
 
 def inV(_id, label) {
-  if (label == null || label == "null")
+  if (label == null)
     g.v(_id).in()
   else
     g.v(_id).in(label)
 }
 
 def bothV(_id, label) { 
-  if (label == null  || label == "null")
+  if (label == null)
     g.v(_id).both()
   else
     g.v(_id).both(label)

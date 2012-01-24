@@ -47,15 +47,18 @@ class VertexIndexProxy(IndexProxy):
 
     def get_or_create(self,index_name,*args,**kwds):
         # get it, create if doesn't exist, then register it
-        index = self.get(index_name)
-        if not index:
+        try:
+            index = self.get(index_name)
+        except LookupError:
             index = self.create(index_name,*args,**kwds)
         return index
 
     def delete(self,index_name):
         """Deletes/drops an index and returns the Rexster Response object."""
-        return self.resource.delete_vertex_index(index_name)
-
+        try:
+            return self.resource.delete_vertex_index(index_name)
+        except LookupError:
+            return None
 
 class EdgeIndexProxy(IndexProxy):
     """
@@ -94,14 +97,18 @@ class EdgeIndexProxy(IndexProxy):
 
     def get_or_create(self,index_name,*args,**kwds):
         # get it, create if doesn't exist, then register it
-        index = self.get(index_name)
-        if not index:
+        try: 
+            index = self.get(index_name)
+        except LookupError:
             index = self.create(index_name,*args,**kwds)
         return index
 
     def delete(self,index_name):
         """Deletes/drops an index and returns the Rexster Response object."""
-        return self.resource.delete_edge_index(index_name)
+        try:
+            return self.resource.delete_edge_index(index_name)
+        except LookupError:
+            return None
 
 
 class Index(object):
@@ -126,7 +133,7 @@ class Index(object):
         return self.results.data['type']
 
     # TODO: change to lookup?
-    def lookup(self,key=None,value=None,**pair):
+    def get(self,key=None,value=None,**pair):
         """
         Return a generator containing all the elements with key property equal 
         to value in the index.
@@ -146,7 +153,7 @@ class Index(object):
         """
         key, value = self._parse_args(key,value,pair)
         resp = self.resource.lookup_vertex(self.index_name,key,value)
-        return initialize_elements(self.resource,result)
+        return initialize_elements(self.resource,resp)
 
     def _parse_args(self,key,value,pair):
         if pair:
@@ -296,7 +303,7 @@ class ManualIndex(Index):
         return self.put_unique(_id,key,value,**pair)
 
          
-    def lookup_unique(self,key=None,value=None,**pair):
+    def get_unique(self,key=None,value=None,**pair):
         """
         Returns a max of 1 elements matching the key/value pair in the index.
 

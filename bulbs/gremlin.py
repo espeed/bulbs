@@ -16,7 +16,7 @@ class Gremlin(object):
     def __init__(self,resource):
         self.resource = resource
 
-    def command(self,script,params):
+    def command(self,script,params=None):
         """
         Returns raw results of an arbitrary Gremlin command.
 
@@ -27,7 +27,7 @@ class Gremlin(object):
         resp = self.resource.gremlin(script,params)
         return get_one_result(resp)
         
-    def query(self,script,params):
+    def query(self,script,params=None):
         """
         Returns initialized results of an arbitrary Gremlin query.
 

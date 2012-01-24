@@ -10,7 +10,7 @@
 // Model Proxy - Vertex
 
 def create_indexed_vertex(data,index_name,keys) {
-  def createIndexedVertex {
+  def createIndexedVertex = {
     vertex = g.addVertex()
     index = g.idx(index_name)
     for (entry in data.entrySet()) {

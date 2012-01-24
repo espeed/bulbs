@@ -12,7 +12,7 @@ import os
 import ujson as json
 from urlparse import urlsplit
 
-from bulbs.utils import build_path, get_file_path, get_logger
+from bulbs.utils import get_file_path, get_logger
 from bulbs.registry import Registry
 from bulbs.config import DEBUG
 
@@ -29,6 +29,7 @@ NEO4J_URI = "http://localhost:7474/db/data/"
 # The logger defined in Config
 log = get_logger(__name__)
 
+
 class Neo4jResult(Result):
     """
     Container class for a single result, not a list of results.
@@ -36,9 +37,14 @@ class Neo4jResult(Result):
     :param result: The raw result.
     :type result: dict
 
+    :param config: The resource Config object.
+    :type config: Config 
+
     """
 
-    def __init__(self,result):
+    def __init__(self,result, config):
+        self.config = config
+
         #: The raw result.
         self.raw = result
 
@@ -122,6 +128,7 @@ class Neo4jResponse(Response):
     result_class = Neo4jResult
 
     def __init__(self, response, config):
+        self.config = config
         self.handle_response(response)
         self.headers = self.get_headers(response)
         self.content = self.get_content(response)
@@ -160,14 +167,14 @@ class Neo4jResponse(Response):
     def get_results(self):
         """Return results from response, formatted as Result objects, and its total size."""
         if type(self.content) == list:
-            results = (self.result_class(result) for result in self.content)
+            results = (self.result_class(result, self.config) for result in self.content)
             total_size = len(self.content)
         elif self.content and self.content != "null":
             # Checking for self.content.get('data') won't work b/c the data value
             # isn't returned for edges with no properties;
             # and self.content != "null": Yep, the null thing is sort of a hack. 
             # Neo4j returns "null" if Gremlin scripts don't return anything.
-            results = self.result_class(self.content)
+            results = self.result_class(self.content, self.config)
             total_size = 1
         else:
             results = None
@@ -190,12 +197,6 @@ class Neo4jResource(Resource):
     """Low-level client that connects to Neo4j Server and returns a response.""" 
 
     def __init__(self,config):
-        """
-        Initializes a resource object.
-
-        :param root_uri: the base URL of Rexster.
-
-        """
         self.config = config
         self.registry = Registry(config)
         self.scripts = GroovyScripts()
@@ -220,10 +221,6 @@ class Neo4jResource(Resource):
         return self.request.send(message)
         
     # Vertex Proxy
-
-    def create_vertex(self,data):
-        message = self.message.create_vertex(data)
-        return self.request.send(message)
 
     def create_vertex(self,data):
         """Creates a vertex and returns the Response."""
@@ -415,6 +412,18 @@ class Neo4jResource(Resource):
         """Creates a vertex, indexes it, and returns the Response."""
         message = self.message.create_indexed_vertex(data,index_name,keys)
         return self.request.send(message)
+
+    # Batch try...
+    #def create_indexed_vertex(self,data,index_name,keys=None):
+    #    """Creates a vertex, indexes it, and returns the Response."""
+    #    batch = Neo4jBatch(self.resource)
+    #    placeholder = batch.add(self.message.create_vertex(data))
+    #    for key in keys:
+    #        value = data.get(key)
+    #        if value is None: continue
+    #        batch.add(self.message.put_vertex(index_name,key,value,placeholder))
+    #    resp = batch.send()
+    #    #for result in resp.results:
     
     def update_indexed_vertex(self,_id,data,index_name,keys=None):
         """Updates an indexed vertex and returns the Response."""
@@ -452,7 +461,7 @@ class Neo4jResource(Resource):
         """Returns the index from a map of indicies."""
         if resp.content and index_name in resp.content:
             result = resp.content[index_name]
-            return Neo4jResult(result)
+            return Neo4jResult(result, self.config)
 
 
 

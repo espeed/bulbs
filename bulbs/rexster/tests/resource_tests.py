@@ -17,13 +17,20 @@ class RexsterIndexTestCase(unittest.TestCase):
         config = Config(REXSTER_URI)
         self.resource = RexsterResource(config)
 
+    def _delete_vertex_index(self,index_name):
+        try:
+            self.resource.delete_vertex_index(index_name)
+        except LookupError:
+            return None
+
+
     #
     # Index Controller Tests
     #
 
     def test_create_vertex_index(self):
         name = "test_idxV"
-        self.resource.delete_vertex_index(name)
+        self._delete_vertex_index(name)
         resp = self.resource.create_vertex_index(name)
         assert resp.results.get("name") == name
         assert resp.results.get("class") == "vertex"  
@@ -39,7 +46,7 @@ class RexsterIndexTestCase(unittest.TestCase):
 
     def test_get_index(self):
         name = "test_idxV"
-        self.resource.delete_index(name)
+        self._delete_vertex_index(name)
         self.resource.create_vertex_index(name)
         resp = self.resource.get_index(name)
         assert resp.results.get("name") == name
@@ -48,7 +55,7 @@ class RexsterIndexTestCase(unittest.TestCase):
                 
     def test_delete_index(self):
         name = "test_idxV"
-        resp = self.resource.delete_index(name)
+        resp = self._delete_vertex_index(name)
     
     #
     # Index Container Tests
@@ -56,7 +63,7 @@ class RexsterIndexTestCase(unittest.TestCase):
 
     def test_put_and_lookup_vertex(self):
         index_name = "test_idxV"
-        self.resource.delete_index(index_name)
+        self._delete_vertex_index(index_name)
         self.resource.create_vertex_index(index_name)
         respV = self.resource.create_vertex({'name':'James'})
         key, value, _id = "name", "James", respV.results.get_id()
@@ -67,7 +74,7 @@ class RexsterIndexTestCase(unittest.TestCase):
         
     def test_remove_vertex(self):
         name = "test_idxV"
-        self.resource.delete_index(name)
+        self._delete_vertex_index(name)
         self.resource.create_vertex_index(name)
         respV = self.resource.create_vertex({'name':'James'})
         key, value = "name", "James"
@@ -88,7 +95,7 @@ class RexsterAutomaticIndexTestCase(unittest.TestCase):
     def test_create_automatic_vertex_index(self):
         index_name = "test_automatic_idxV"
         element_class = "TestVertex"
-        self.resource.delete_index(index_name)
+        self._delete_vertex_index(index_name)
         resp = self.resource.create_automatic_vertex_index(index_name,element_class)
         print "RAW", resp.raw
 

@@ -7,6 +7,7 @@
 Build the messages sent in single and batch requests.
 
 """
+import re
 from bulbs.utils import build_path
 from bulbs.rest import GET, PUT, POST, DELETE
 
@@ -18,6 +19,7 @@ cypher_path = "ext/CypherPlugin/graphdb/execute_query"
 
 
 class Message(object):
+    """Request message..."""
 
     def __init__(self, config, scripts):
         self.config = config
@@ -35,7 +37,7 @@ class Message(object):
 
     def cypher(self,query,params=None):
         """Executes a Cypher query and returns the Response."""
-        path = self.cypher_path
+        path = cypher_path
         params = dict(query=query,params=params)
         return POST, path, params 
 
@@ -49,13 +51,13 @@ class Message(object):
 
     def get_vertex(self,_id):
         """Gets the vertex with the _id and returns the Response."""
-        path = build_path(vertex_path,_id)
+        path = self._build_vertex_path(_id)
         params = None
         return GET, path, params
  
     def update_vertex(self,_id,data):
         """Updates the vertex with the _id and returns the Response."""
-        path = build_path(vertex_path,_id,"properties")
+        path = self._build_vertex_path(_id,"properties")
         params = self._remove_null_values(data)
         return PUT, path, params
 
@@ -70,7 +72,7 @@ class Message(object):
     def create_edge(self,outV,label,inV,data={}): 
         """Creates a edge and returns the Response."""
         data = self._remove_null_values(data)
-        inV_uri = "%s/node/%s" % (self.config.root_uri.rstrip("/"), inV)
+        inV_uri = self._build_vertex_uri(inV)
         path = build_path(vertex_path,outV,"relationships")
         params = {'to':inV_uri,'type':label, 'data':data}
         return POST, path, params
@@ -248,7 +250,7 @@ class Message(object):
         params = dict(data=data,index_name=index_name,keys=keys)
         script = self.scripts.get("create_indexed_vertex")
         return self.gremlin(script,params)
-    
+        
     def update_indexed_vertex(self,_id,data,index_name,keys=None):
         """Updates an indexed vertex and returns the Response."""
         data = self._remove_null_values(data)
@@ -290,12 +292,41 @@ class Message(object):
         clean_data = [(k, v) for k, v in data.items() if v is not None]
         return dict(clean_data)
 
+    def _placeholder(self,_id):
+        pattern = "^{.*}$"
+        match = re.search(pattern,str(_id))
+        if match:
+            placeholder = match.group()
+            return placeholder
 
+    def _build_vertex_path(self,_id,*args):
+        # if the _id is a placeholder, return the placeholder;
+        # othewise, return a normal vertex path
+        placeholder = self._placeholder(_id) 
+        if placeholder:
+            segments = [placeholder]
+        else:
+            segments = [vertex_path,_id]
+        segments = segments + list(args)
+        return build_path(*segments)
+        
+    def _build_vertex_uri(self,_id,*args):
+        placeholder = self._placeholder(_id) 
+        if placeholder:
+            return placeholder
+        root_uri = self.config.root_uri.rstrip("/")
+        segments = [vertex_path, _id] + list(args)
+        path = build_path(*segments)
+        uri = "%s/%s" % (root_uri, path)
+        return uri
 
+    def _build_edge_path(self,_id):
+        # if the _id is a placeholder, return the placeholder;
+        # othewise, return a normal edge path
+        return self._placeholder(_id) or build_path(edge_path,_id)
 
-
-
-
+    def _build_edge_uri(self,_id):
+        pass
 
 
 
