@@ -1,0 +1,16 @@
+from bulbs.model import  Node, Relationship
+from bulbs.datatype import Property, Integer, String
+        
+class Person(Node):
+
+    element_type = "person"
+
+    name = Property(String, nullable=False)
+    age  = Property(Integer)
+
+james = Person(name="James", age=34)
+julie = Person(name="Julie", age=28)
+
+Relationship.create(james,"knows",julie)
+
+
