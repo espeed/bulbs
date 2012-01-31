@@ -1,5 +1,7 @@
 include Makefile CHANGES LICENSE AUTHORS 
 recursive-include tests *
 recursive-include docs *.html *.css *.png *.gif 
+recursive-include bulbs *.groovy, *.yaml
 recursive-exclude . *~ *.pyc 
 recursive-exclue old *
+
