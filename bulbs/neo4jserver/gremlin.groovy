@@ -3,6 +3,9 @@
 // BSD License (see LICENSE for details)
 //
 
+// TODO: This will error for property values that are lists.
+//       See https://groups.google.com/forum/#!topic/neo4j/sjH2f5dulTQ
+
 // Model - Vertex
 
 def create_indexed_vertex(data,index_name,keys) {

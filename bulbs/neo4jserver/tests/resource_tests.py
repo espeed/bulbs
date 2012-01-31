@@ -86,7 +86,7 @@ class CypherTestCase(unittest.TestCase):
         resp = self.resource.cypher(query,params)
         #print resp.raw
 
-def suite():
+def neo4j_resource_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(Neo4jResourceTestCase))
     suite.addTest(unittest.makeSuite(Neo4jIndexTestCase))
@@ -95,5 +95,5 @@ def suite():
     return suite
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+    unittest.main(defaultTest='neo4j_resource_suite')
 

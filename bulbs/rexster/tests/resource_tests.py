@@ -79,7 +79,6 @@ class RexsterIndexTestCase(unittest.TestCase):
         respV = self.resource.create_vertex({'name':'James'})
         key, value = "name", "James"
         self.resource.put_vertex(name,key,value,respV.results.get_id())
-        print "HERE", respV.raw
         self.resource.remove_vertex(name,respV.results.get_id(),key,value)
         resp = self.resource.lookup_vertex(name,key,value)
         assert resp.total_size == 0
@@ -111,11 +110,11 @@ class RexsterAutomaticIndexTestCase(unittest.TestCase):
 
 
 
-def suite():
+def rexster_resource_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(RexsterResourceTestCase))
     suite.addTest(unittest.makeSuite(RexsterIndexTestCase))
     return suite
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+    unittest.main(defaultTest='rexster_resource_suite')

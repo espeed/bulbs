@@ -12,9 +12,12 @@ BulbsTestCase.vertex_index_proxy = VertexIndexProxy
 BulbsTestCase.edge_index_proxy = EdgeIndexProxy
 BulbsTestCase.index_class = ExactIndex
 
-if __name__ == '__main__':
+def neo4j_bulbs_suite():
     suite = bulbs_test_suite()
     #suite.addTest(unittest.makeSuite(RestTestCase))
     suite.addTest(unittest.makeSuite(GremlinTestCase))
-    unittest.main(defaultTest='suite')
+    return suite
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='neo4j_bulbs_suite')
 

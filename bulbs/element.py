@@ -24,10 +24,7 @@ class Element(object):
         self._set_pretty_id(self._resource)
         self._vertices = VertexProxy(Vertex,self._resource)
         self._edges = EdgeProxy(Edge,self._resource)
-        self._set_initialized(True)
-
-    def _set_initialized(self,value=True):
-        self._initialized = value
+        self._initialized = True
        
     @property
     def _id(self):
@@ -63,7 +60,7 @@ class Element(object):
         _initialized = getattr(self,"_initialized",False)
         if key in self.__dict__ or _initialized is False:
             # set the attribute normally
-            super(Element,self).__setattr__(key, value)
+            object.__setattr__(self, key, value)
         else:
             # set the attribute as a data property
             self._data[key] = value
@@ -145,7 +142,7 @@ class Vertex(Element):
         return initialize_elements(self._resource,resp)
 
     def save(self):
-        self._vertices.update(self._id, self._data)
+        return self._vertices.update(self._id, self._data)
     
 
 class Edge(Element):
@@ -176,7 +173,7 @@ class Edge(Element):
         return self._vertices.get(self._inV)
 
     def save(self):
-        self._edges.update(self._id, self._data)
+        return self._edges.update(self._id, self._data)
 
 class VertexProxy(object):
     """ A proxy for interacting with vertices on the Resource. """

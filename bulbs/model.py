@@ -8,7 +8,7 @@ Base classes for modeling domain objects that wrap vertices and edges.
 
 """
 from bulbs.property import Property
-from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
+from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy
 from bulbs.utils import initialize_element, get_one_result, get_logger
 
 log = get_logger(__name__)
@@ -67,11 +67,18 @@ class Model(object):
 
     __metaclass__ = ModelMeta
 
+    strict = False
+
     def __setattr__(self, key, value):
         if key in self._properties:
+            # we want Model properties to be set be set as actual attributes
+            # because they can be real Python propertes or calculated values,
+            # which are calcualted/set upon each save().
             value = self._coerce_property_value(key,value)
-        super(Model, self).__setattr__(key, value)
-                
+            object.__setattr__(self, key, value)
+        else:
+            Element.__setattr__(self, key, value)
+
     def _coerce_property_value(self,key,value):
         if value is not None:
             property_instance = self._properties[key]
@@ -92,12 +99,12 @@ class Model(object):
         for key, property_instance in self._properties.items():
             value = result.data.get(key,None)
             value = property_instance.convert_to_python(type_system,value)
-            # Notice that __setattr__ is overloaded so bypassing it and using parent's
-            super(Model, self).__setattr__(key, value)
+            # Notice that __setattr__ is overloaded so bypassing it
+            object.__setattr__(self, key, value)
         
     def _get_property_data(self):
         """Returns validated Property data, ready to be saved in the DB."""
-        data = dict()
+        data = self._get_initial_data()
         type_var = self._resource.config.type_var
         type_system = self._resource.type_system
         if hasattr(self,type_var):
@@ -111,6 +118,13 @@ class Model(object):
             data[key] = value
         return data
 
+    def _get_initial_data(self):
+        if self.strict:
+            data = {}
+        else:
+            data = self._data.copy()
+        return data
+
     def _get_index(self,index_name):
         try:
             index = self._resource.registry.get_index(index_name)
@@ -121,16 +135,17 @@ class Model(object):
 
 class Node(Vertex,Model):
 
+
     def _initialize(self,result):
         # this is called by initialize_element; 
         # putting it here to ensure method resolution order
         # initialize all non-DB properties here
         Vertex._initialize(self,result)
-        self._set_initialized(False)
-        element_type = self._get_element_type()
+        self._initialized = False
         self._set_property_data(result)
+        element_type = self._get_element_type()
         self._index = self._get_index(element_type)
-        self._set_initialized(True)
+        self._initialized = True
 
     def _get_element_type(self):
         element_type = getattr(self,self._resource.config.type_var)
@@ -143,6 +158,7 @@ class Node(Vertex,Model):
         # does _initialize really need to be called here?
         # maybe called Vertex._initialize directly b/c Neo4j doesn't return data
         #self._initialize(resp.results)
+        return resp
 
     #
     # Override the _create and _update methods to cusomize behavior.
@@ -162,11 +178,11 @@ class Relationship(Edge,Model):
         # putting it here to ensure method resolution order
         # initialize all non-DB properties here
         Edge._initialize(self,result)
-        self._set_initialized(False)
-        label = self._get_label()
+        self._initialized = False
         self._set_property_data(result)
+        label = self._get_label()
         self._index = self._get_index(label)
-        self._set_initialized(True)
+        self._initialized = True
 
     def _get_label(self):
         label = getattr(self,self._resource.config.label_var)
@@ -177,6 +193,7 @@ class Relationship(Edge,Model):
         data = self._get_property_data()      
         resp = self._update(self._id,data)
         #self._initialize(resp.results)
+        return resp
 
     #
     # Override the _create and _update methods to customize behavior.
