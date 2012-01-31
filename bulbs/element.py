@@ -17,6 +17,8 @@ class Element(object):
         self._data = {}
 
     def _initialize(self,result):
+        # initialize all non-DB properties here because
+        # __setattr__ will set all other properties as database properties
         self._result = result
         self._data = result.get_map().copy()
         self._set_pretty_id(self._resource)
@@ -59,10 +61,12 @@ class Element(object):
 
     def __setattr__(self, key, value):
         _initialized = getattr(self,"_initialized",False)
-        if _initialized is True:
-            self._data[key] = value
-        else:
+        if key in self.__dict__ or _initialized is False:
+            # set the attribute normally
             super(Element,self).__setattr__(key, value)
+        else:
+            # set the attribute as a data property
+            self._data[key] = value
 
     def __getattr__(self,attribute):
         """

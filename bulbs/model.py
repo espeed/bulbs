@@ -124,6 +124,7 @@ class Node(Vertex,Model):
     def _initialize(self,result):
         # this is called by initialize_element; 
         # putting it here to ensure method resolution order
+        # initialize all non-DB properties here
         Vertex._initialize(self,result)
         self._set_initialized(False)
         element_type = self._get_element_type()
@@ -159,6 +160,7 @@ class Relationship(Edge,Model):
     def _initialize(self,result):
         # this is called by initialize_element; 
         # putting it here to ensure method resolution order
+        # initialize all non-DB properties here
         Edge._initialize(self,result)
         self._set_initialized(False)
         label = self._get_label()
