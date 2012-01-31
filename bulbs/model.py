@@ -125,9 +125,11 @@ class Node(Vertex,Model):
         # this is called by initialize_element; 
         # putting it here to ensure method resolution order
         Vertex._initialize(self,result)
+        self._set_initialized(False)
         element_type = self._get_element_type()
         self._set_property_data(result)
         self._index = self._get_index(element_type)
+        self._set_initialized(True)
 
     def _get_element_type(self):
         element_type = getattr(self,self._resource.config.type_var)
@@ -158,9 +160,11 @@ class Relationship(Edge,Model):
         # this is called by initialize_element; 
         # putting it here to ensure method resolution order
         Edge._initialize(self,result)
+        self._set_initialized(False)
         label = self._get_label()
         self._set_property_data(result)
         self._index = self._get_index(label)
+        self._set_initialized(True)
 
     def _get_label(self):
         label = getattr(self,self._resource.config.label_var)

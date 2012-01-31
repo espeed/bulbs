@@ -7,6 +7,7 @@
 Interface for interacting with a graph database through Neo4j Server.
 
 """
+from bulbs.config import Config
 from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
 

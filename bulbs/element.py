@@ -1,63 +1,94 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
-Vertex and Edge container classes and proxies.
+Vertex and Edge container and proxy classes.
 
 """
 from utils import initialize_element, initialize_elements
 
 class Element(object):
-    """This is an abstract base class for Vertex and Edge"""
+    """An abstract base class for Vertex and Edge containers."""
     
     def __init__(self,resource):
         self._resource = resource
+        self._data = {}
 
     def _initialize(self,result):
         self._result = result
-        self._set_pretty_vars(self._resource)
+        self._data = result.get_map().copy()
+        self._set_pretty_id(self._resource)
         self._vertices = VertexProxy(Vertex,self._resource)
         self._edges = EdgeProxy(Edge,self._resource)
- 
+        self._set_initialized(True)
+
+    def _set_initialized(self,value=True):
+        self._initialized = value
+       
     @property
     def _id(self):
+        """
+        Returns the element ID. This is the element's "primary key"; however,
+        some DBs (such as neo4j) reuse IDs if they are deleted so be careful 
+        with how you use them. If you want to guarantee they are unique across 
+        the DB's lifetime either don't physically delete elements and just set 
+        a deleted flag, or use some other mechanism, such as an external 
+        sequence or a hash.
+
+        """
         return self._result.get_id()
 
     @property 
     def _type(self):
+        """Returns the element's base type, either vertex or edge."""
         return self._result.get_type()
 
-    def _set_pretty_vars(self,resource):
-        self._set_python_property(resource.config.id_var,"_id")
-        # this won't work b/c element_type and label are set as class vars
-        #self._set_python_property(resource.config.type_var,"_type")
-        #self._set_python_property(resource.config.label_var,"_label")
+    def _set_pretty_id(self, resource):
+        """
+        Sets the ID var specified in Config. Defaults to eid.
+        
+        The user-configured element_type and label vars are not set because 
+        they are class vars so you set those when you create the Model.
 
-    def _set_python_property(self,pretty_var,ugly_var):
-        fget = lambda x: getattr(self,ugly_var)
+        """
+        pretty_var = resource.config.id_var
+        fget = lambda x: self._result.get_id()
         setattr(self.__class__,pretty_var,property(fget))                    
 
+    def __setattr__(self, key, value):
+        _initialized = getattr(self,"_initialized",False)
+        if _initialized is True:
+            self._data[key] = value
+        else:
+            super(Element,self).__setattr__(key, value)
+
     def __getattr__(self,attribute):
+        """
+        Returns the value stored in the DB if the property hasn't been 
+        set explicitly. 
+
+        If you explicitly set/change the values of an element's properties,
+        make sure you call save() to updated the values in the DB.
+
+        """
         try:
-            return self._result.data[attribute]
+            return self._data[attribute]
         except:
-            raise AttributeError("%s is not defined and is not in Result data" % attribute)
+            raise AttributeError(attribute)
 
     def __len__(self):
-        return len(self._result.data)
+        return len(self._data)
 
     def __contains__(self, item):
-        return item in self._result.data
+        return item in self._data
 
     def __eq__(self, obj):
         return (hasattr(obj, "__class__") and
                 self.__class__ == obj.__class__ and
-                hasattr(self, "_result") and 
-                hasattr(obj, "_result") and
-                self._result.get_id() == obj._result.get_id() and
-                self._result.data == obj._result.data)
+                self._id == obj._id and
+                self._data == obj._data)
 
     def __ne__(self, obj):
         return not self.__eq__(obj)
@@ -72,8 +103,8 @@ class Element(object):
         return u"<%s: %s>" % (self.__class__.__name__,self._result.get_uri())
 
     def map(self):
-        """Returns a dict of the element's data that's stored in the DB."""
-        return self._result.get_map()
+        """Returns a dict of the element's data."""
+        return self._data
 
 
 class Vertex(Element):
@@ -109,6 +140,9 @@ class Vertex(Element):
         resp = self._resource.bothV(self._id,label)
         return initialize_elements(self._resource,resp)
 
+    def save(self):
+        self._vertices.update(self._id, self._data)
+    
 
 class Edge(Element):
     """A container for Edge elements returned by the resource."""
@@ -137,6 +171,8 @@ class Edge(Element):
         """Returns the incoming Vertex of the edge."""
         return self._vertices.get(self._inV)
 
+    def save(self):
+        self._edges.update(self._id, self._data)
 
 class VertexProxy(object):
     """ A proxy for interacting with vertices on the Resource. """
