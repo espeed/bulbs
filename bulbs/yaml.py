@@ -1,6 +1,7 @@
 import os
 import yaml 
 from string import Template
+from utils import get_file_path
 
 # You only need this for Gremlin scripts if the server doesn't implement param 
 # bindings; otherwise, use groovy.py with gremlin.groovy -- it's several 
@@ -31,7 +32,7 @@ class Yaml(object):
     def _get_file_name(self,file_name):
         if file_name is None:
             dir_name = os.path.dirname(__file__)
-            file_name = utils.get_file_path(dir_name,"gremlin.yaml")
+            file_name = get_file_path(dir_name,"gremlin.yaml")
         return file_name
 
     def _get_templates(self,file_name):

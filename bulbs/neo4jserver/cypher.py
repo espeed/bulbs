@@ -9,13 +9,16 @@ import re
 import yaml 
 from string import Template
 
-from utils import initialize_elements
+from bulbs.utils import initialize_elements
 
 class Cypher(object):
 
     def __init__(self,resource):
         self.resource = resource
 
+    def query(self, query, params=None):
+        resp = self.resource.cypher(query,params)
+        return initialize_elements(self.resource, resp)
 
 class ScriptError(Exception):
     pass

@@ -51,6 +51,8 @@ class ModelMeta(type):
                 cls._properties[key] = property_instance
                 cls._set_property_name(key,property_instance)
                 cls._set_property_default(key,property_instance)
+                # not doing this b/c some Properties are calculated
+                #delattr(cls, key) 
                 
     def _set_property_name(cls,key,property_instance):
         # Property name will be none unless explicitly set via kwd param

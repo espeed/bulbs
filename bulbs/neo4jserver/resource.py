@@ -218,8 +218,12 @@ class Neo4jResource(Resource):
     def cypher(self,query,params=None):
         """Executes a Cypher query and returns the Response."""
         message = self.message.cypher(query,params)
-        return self.request.send(message)
-        
+        resp = self.request.send(message)
+        # Cypher data hack
+        resp.results = (self.result_class(result[0], self.config) for result in resp.results.data)
+        resp.total_size = len(resp.results.data)
+        return resp
+
     # Vertex Proxy
 
     def create_vertex(self,data):
