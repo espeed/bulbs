@@ -32,20 +32,19 @@ class ModelMeta(type):
         cls._register_properties(namespace)
 
     def _get_initial_properties(cls):
-        if not hasattr(cls, '_properties'):
-            # Model doesn't have any registered properties
-            properties = {}
-        else:
-            # Inherit properties and add more
+        if hasattr(cls, '_properties'):
+            # Initial Properties have been set by parent, inherit them and add more
             properties = cls._properties.copy()
+        else:
+            # Model doesn't have any parents so we'll initialize the properties here
+            properties = {}
         return properties
             
-
     def _register_properties(cls,namespace):
         # loop through the class namespace looking for database Property instances
-        # e.g. age = Integer(), key: age, property_instance: Integer()
+        # e.g. age = Integer()
         for key, value in namespace.items():
-            assert key not in cls._properties, "Can't redefine property '%s'" % key
+            assert key not in cls._properties, "Can't redefine Property '%s'" % key
             if isinstance(value, Property):
                 property_instance = value  # for clarity
                 cls._properties[key] = property_instance
@@ -55,7 +54,7 @@ class ModelMeta(type):
                 #delattr(cls, key) 
                 
     def _set_property_name(cls,key,property_instance):
-        # Property name will be none unless explicitly set via kwd param
+        # Property name will be None unless explicitly set via kwd param
         if property_instance.name is None:
             property_instance.name = key
             
@@ -84,7 +83,7 @@ class Model(object):
 
     def __setattr__(self, key, value):
         if key in self._properties:
-            # we want Model properties to be set be set as actual attributes
+            # we want Model Properties to be set be set as actual attributes
             # because they can be real Python propertes or calculated values,
             # which are calcualted/set upon each save().
             value = self._coerce_property_value(key,value)
@@ -167,12 +166,8 @@ class Node(Vertex,Model):
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()
-        resp = self._update(self._id,data,self._index)
-        # does _initialize really need to be called here?
-        # maybe called Vertex._initialize directly b/c Neo4j doesn't return data
-        #self._initialize(resp.results)
-        return resp
-
+        return self._update(self._id,data,self._index)
+        
     #
     # Override the _create and _update methods to cusomize behavior.
     #
@@ -204,10 +199,8 @@ class Relationship(Edge,Model):
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()      
-        resp = self._update(self._id,data)
-        #self._initialize(resp.results)
-        return resp
-
+        return self._update(self._id,data)
+        
     #
     # Override the _create and _update methods to customize behavior.
     #

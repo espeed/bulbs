@@ -15,7 +15,7 @@ from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
 from resource import Neo4jResource, NEO4J_URI
 from index import ExactIndex, VertexIndexProxy, EdgeIndexProxy
 
-class Neo4jGraph(object):
+class Graph(object):
     """
     The primary interface to graph databases on the Rexster REST server.
 
