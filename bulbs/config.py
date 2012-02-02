@@ -4,7 +4,7 @@
 # BSD License (see LICENSE for details)
 #
 from utils import get_logger
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL, StreamHandler
+from logging import StreamHandler, DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
 class Config(object):
@@ -63,10 +63,10 @@ class Config(object):
         self.edge_autoindex = "edges"
         self.autoindex = True
         
-        self.configure_logging()
+        self.set_logger()
 
-    def configure_logging(self):
-        """Sets the log level and log handler."""
+    def set_logger(self):
+        """Sets or updates the log level and log handler."""
         log = get_logger(__name__)
         log.root.setLevel(self.log_level)
         log.root.addHandler(self.log_handler())
