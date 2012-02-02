@@ -30,7 +30,7 @@ class Gremlin(object):
 
     def command(self,script,params=None):
         """
-        Returns raw results of an arbitrary Gremlin command.
+        Returns the raw result of an arbitrary Gremlin command.
 
         :param script: Gremlin script to execute on the resource.
         :type script: str
@@ -38,11 +38,12 @@ class Gremlin(object):
         :param params: Optional paramaters to bind to the Gremlin script. 
         :type params: dict or None
 
-        """
+        :rtype: Result
 
+        """
         resp = self.resource.gremlin(script,params)
         return get_one_result(resp)
-        
+
     def query(self,script,params=None):
         """
         Returns initialized results of an arbitrary Gremlin query.
@@ -53,8 +54,9 @@ class Gremlin(object):
         :param params: Optional paramaters to bind to the Gremlin script. 
         :type params: dict or None
 
-        """
+        :rtype: Generator of objects: Vertex, Edge, Node, or Relationship
 
+        """
         resp = self.resource.gremlin(script,params)
         return initialize_elements(self.resource,resp)
  
