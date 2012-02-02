@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
@@ -11,7 +11,19 @@ from utils import initialize_elements, get_one_result
 
 
 class Gremlin(object):
-    """An interface for executing Gremlin scripts on the resource."""
+    """
+    An interface for executing Gremlin scripts on the resource.
+    
+    :param resource: The Resource object for the database.
+    :type resource: Resource
+
+    .. note:: To get the raw query results, use the lower-level method 
+              self.resource.gremlin(script, params)
+           
+              Use case: You are returning element IDs and the actual
+              elements are cached in Redis or Membase.
+
+    """
 
     def __init__(self,resource):
         self.resource = resource
@@ -20,10 +32,14 @@ class Gremlin(object):
         """
         Returns raw results of an arbitrary Gremlin command.
 
-        :param script: Gremlin script to send to the resource. 
-        :param params: Paramaters to bind to the Gremlin script. 
+        :param script: Gremlin script to execute on the resource.
+        :type script: str
+ 
+        :param params: Optional paramaters to bind to the Gremlin script. 
+        :type params: dict or None
 
         """
+
         resp = self.resource.gremlin(script,params)
         return get_one_result(resp)
         
@@ -31,18 +47,14 @@ class Gremlin(object):
         """
         Returns initialized results of an arbitrary Gremlin query.
 
-        :param script: Gremlin script to send to the resource.
-        :param params: Paramaters to bind to the Gremlin script. 
+        :param script: Gremlin script to execute on the resource.
+        :type script: str
+ 
+        :param params: Optional paramaters to bind to the Gremlin script. 
+        :type params: dict or None
 
         """
+
         resp = self.resource.gremlin(script,params)
         return initialize_elements(self.resource,resp)
  
-    #
-    # NOTE: To get the raw query results, use the lower-level 
-    #       self.resource.gremlin(script,params) method.
-    #       
-    #       Use case: You are returning element IDs and the actual
-    #       elements are cached in Redis or Membase.
-    #
-
