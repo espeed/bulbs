@@ -158,16 +158,16 @@ class Node(Vertex,Model):
 
         class Person(Node):
             element_type = "person"
-
+            
             name = String(nullable=False)
             age = Integer()
 
     Example usage::
 
         # Create a node in the DB:
-        >>> from bulbs.neo4jserver import Graph
+        >>> from bulbs.neo4jserver import Graph, ExactIndex
         >>> g = Graph()
-        >>> people = g.create_proxy(Person)
+        >>> people = g.get_proxy(Person, ExactIndex)
         >>> james = people.create(name="James Thornton")
         >>> james.eid
         3

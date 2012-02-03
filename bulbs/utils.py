@@ -52,6 +52,10 @@ def get_element_key(resource,result):
     return element_key
 
 def get_default_index_name(element_class, resource):
+    # Here's how the default index names are determined: 
+    # Vertex and Edge index names are set in Config.
+    # Node index name is the value of element_type.
+    # Relationship index name is the value of label.
     index_names = dict(vertex=resource.config.vertex_index, 
                        edge=resource.config.edge_index,
                        node=element_class.get_element_key(resource),

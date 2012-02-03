@@ -106,6 +106,10 @@ def save_graphml() {
   new File('data/bulbs.graphml').getText()
 }
 
+def clear() {
+  g.clear()
+}
+
 //
 // Gremln user-defined steps
 //

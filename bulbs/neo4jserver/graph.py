@@ -11,10 +11,11 @@ from bulbs.config import Config
 from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, Edge
 from bulbs.model import Node, Relationship
+from bulbs.proxy import ProxyFactory
 
 # Neo4j-specific imports
 from resource import Neo4jResource, NEO4J_URI
-from proxy import ProxyFactory, ELEMENT_PROXIES, INDEX_PROXIES
+from proxy import ELEMENT_PROXIES, INDEX_PROXIES
 from index import ExactIndex
 
 class Graph(object):
@@ -46,29 +47,31 @@ class Graph(object):
         self.gremlin = Gremlin(self.resource)
 
         # What happens if these REST calls error on Heroku?
-        self.vertices = self.proxies.get_element_proxy(Vertex, ExactIndex)
-        self.edges = self.proxies.get_element_proxy(Edge, ExactIndex)
+        self.vertices = self.proxies.build_element_proxy(Vertex, ExactIndex)
+        self.edges = self.proxies.build_element_proxy(Edge, ExactIndex)
 
+    def get_proxy(self, element_class, index_class):
+        return self.proxies.build_element_proxy(element_class, index_class)
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""
         script = self.resource.scripts.get('load_graphml')
         params = dict(uri=uri)
-        return self.gremlin.execute(script,params)
+        return self.gremlin.command(script,params)
         
     def save_graphml(self):
         """Returns a GraphML file representing the entire database."""
         script = self.resource.scripts.get('save_graphml')
-        results = self.gremlin.execute(script,params=None)
-        return results[0]
-
+        return self.gremlin.command(script,params=None)
+        
     def clear(self):
         """Deletes all the elements in the graph.
 
         .. admonition:: WARNING 
 
-           g.clear() will delete all your data!
+           This will delete all your data!
 
         """
-        return self.resource.clear()
+        script = self.resource.scripts.get('clear')
+        return self.gremlin.command(script,params=None)
         
