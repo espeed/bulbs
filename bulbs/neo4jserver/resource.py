@@ -229,7 +229,7 @@ class Neo4jResource(Resource):
     def create_vertex(self,data):
         """Creates a vertex and returns the Response."""
         if self.config.autoindex is True:
-            index_name = self.config.vertex_autoindex
+            index_name = self.config.vertex_index
             return self.create_indexed_vertex(data,index_name,keys=None)
         message = self.message.create_vertex(data)
         return self.request.send(message)
@@ -242,7 +242,7 @@ class Neo4jResource(Resource):
     def update_vertex(self,_id,data):
         """Updates the vertex with the _id and returns the Response."""
         if self.config.autoindex is True:
-            index_name = self.config.vertex_autoindex
+            index_name = self.config.vertex_index
             return self.update_indexed_vertex(_id,data,index_name,keys=None)
         message = self.message.update_vertex(_id,data)
         return self.request.send(message)
@@ -257,7 +257,7 @@ class Neo4jResource(Resource):
     def create_edge(self,outV,label,inV,data={}): 
         """Creates a edge and returns the Response."""
         if self.config.autoindex is True:
-            index_name = self.config.edge_autoindex
+            index_name = self.config.edge_index
             return self.create_indexed_edge(outV,label,inV,data,index_name,keys=None)
         message = self.message.create_edge(outV,label,inV,data)
         return self.request.send(message)
@@ -270,7 +270,7 @@ class Neo4jResource(Resource):
     def update_edge(self,_id,data):
         """Updates the edge with the _id and returns the Response."""
         if self.config.autoindex is True:
-            index_name = self.config.edge_autoindex
+            index_name = self.config.edge_index
             return self.update_indexed_edge(_id,data,index_name,keys=None)
         message = self.message.update_edge(_id, data)
         return self.request.send(message)

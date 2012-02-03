@@ -50,6 +50,14 @@ def get_element_key(resource,result):
     # if key_var not found, just return the generic type for the Vertex/Edge class
     element_key = result.data.get(key_var,base_type)
     return element_key
+
+def get_default_index_name(element_class, resource):
+    index_names = dict(vertex=resource.config.vertex_index, 
+                       edge=resource.config.edge_index,
+                       node=element_class.get_element_key(resource),
+                       relationship=element_class.get_element_key(resource))
+    index_name = index_names[element_class._class_type]                       
+    return index_name
  
 def get_one_result(resp):
     # If you're using this utility, that means the results attribute in the 
@@ -66,6 +74,8 @@ def get_one_result(resp):
     else:
         result = resp.results
     return result
+    
+
 
 #
 # Resource Utils

@@ -4,9 +4,14 @@
 # BSD License (see LICENSE for details)
 #
 from bulbs.config import Config
+from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
+from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
+
 from graph import Graph
 from batch import Neo4jBatch
 from resource import Neo4jResource, Message, NEO4J_URI
+from proxy import ELEMENT_PROXIES, INDEX_PROXIES
 from index import ExactIndex, FulltextIndex, AutomaticIndex, \
     VertexIndexProxy, EdgeIndexProxy
+
 

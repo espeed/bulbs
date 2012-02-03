@@ -15,8 +15,8 @@ log = get_logger(__name__)
 
 
 # Util used by NodeProxy and RelationshipProxy
-
 def instantiate_model(element_class,resource,kwds):
+    """Returns an instantiated Model with keyword attributes set."""
     model = element_class(resource)
     model._set_keyword_attributes(kwds)
     return model
@@ -32,15 +32,12 @@ class ModelMeta(type):
         cls._register_properties(namespace)
 
     def _get_initial_properties(cls):
-        if hasattr(cls, '_properties'):
-            # Initial Properties have been set by parent, inherit them and add more
-            properties = cls._properties.copy()
-        else:
-            # Model doesn't have any parents so we'll initialize the properties here
-            properties = {}
-        return properties
+        # Get Properties defined in the parent and inherit them.
+        # Or if the Model doesn't have a parent Model, set it to an empty dict
+        properties = getattr(cls, '_properties', {})
+        return properties.copy()
             
-    def _register_properties(cls,namespace):
+    def _register_properties(cls, namespace):
         # loop through the class namespace looking for database Property instances
         # e.g. age = Integer()
         for key, value in namespace.items():
@@ -50,29 +47,29 @@ class ModelMeta(type):
                 cls._properties[key] = property_instance
                 cls._set_property_name(key,property_instance)
                 cls._set_property_default(key,property_instance)
-                # not doing this b/c some Properties are calculated
+                # not doing this b/c some Properties are calculated at savetime
                 #delattr(cls, key) 
                 
-    def _set_property_name(cls,key,property_instance):
+    def _set_property_name(cls, key, property_instance):
         # Property name will be None unless explicitly set via kwd param
         if property_instance.name is None:
             property_instance.name = key
             
-    def _set_property_default(cls,key,property_instance):
+    def _set_property_default(cls, key, property_instance):
         if property_instance.default is not None:
             # TODO: Make this work for scalars too -- huh?
-            fget = getattr(cls,property_instance.default)
+            fget = getattr(cls, property_instance.default)
             # Or more to the point, why is this a Python property?
             default_value = property(fget)
         elif property_instance.fget:
             # wrapped fset and fdel in str() to make the default None work with getattr
-            fget = getattr(cls,property_instance.fget)
-            fset = getattr(cls,str(property_instance.fset),None)
-            fdel = getattr(cls,str(property_instance.fdel),None)
-            default_value = property(fget,fset,fdel)
+            fget = getattr(cls, property_instance.fget)
+            fset = getattr(cls, str(property_instance.fset), None)
+            fdel = getattr(cls, str(property_instance.fdel), None)
+            default_value = property(fget, fset, fdel)
         else:
             default_value = None
-        setattr(cls,key,default_value)
+        setattr(cls, key, default_value)
 
 
 class Model(object):
@@ -86,31 +83,31 @@ class Model(object):
             # we want Model Properties to be set be set as actual attributes
             # because they can be real Python propertes or calculated values,
             # which are calcualted/set upon each save().
-            value = self._coerce_property_value(key,value)
+            value = self._coerce_property_value(key, value)
             object.__setattr__(self, key, value)
         else:
             Element.__setattr__(self, key, value)
 
-    def _coerce_property_value(self,key,value):
+    def _coerce_property_value(self, key, value):
         if value is not None:
             property_instance = self._properties[key]
-            value = property_instance.coerce(key,value)
+            value = property_instance.coerce(key, value)
         return value
 
-    def _set_keyword_attributes(self,kwds):
+    def _set_keyword_attributes(self, kwds):
         for key, value in kwds.iteritems():
             # Notice that __setattr__ is overloaded
-            setattr(self,key,value)
+            setattr(self, key, value)
 
-    def _set_property_data(self,result):
+    def _set_property_data(self, result):
         """
         Sets Property data when an element is being initialized, after it is
         retrieved from the DB -- we set it to None if it won't set.        
         """
         type_system = self._resource.type_system
         for key, property_instance in self._properties.items():
-            value = result.data.get(key,None)
-            value = property_instance.convert_to_python(type_system,value)
+            value = result.data.get(key, None)
+            value = property_instance.convert_to_python(type_system, value)
             # Notice that __setattr__ is overloaded so bypassing it
             object.__setattr__(self, key, value)
         
@@ -119,18 +116,19 @@ class Model(object):
         data = self._get_initial_data()
         type_var = self._resource.config.type_var
         type_system = self._resource.type_system
-        if hasattr(self,type_var):
+        if hasattr(self, type_var):
             # add element_type to the database properties to be saved;
             # but don't worry about "label", it's always saved on the edge
-            data[type_var] = getattr(self,type_var)
+            data[type_var] = getattr(self, type_var)
         for key, property_instance in self._properties.items():
-            value = getattr(self,key)
-            property_instance.validate(key,value)
-            value = property_instance.convert_to_db(type_system,value)
+            value = getattr(self, key)
+            property_instance.validate(key, value)
+            value = property_instance.convert_to_db(type_system, value)
             data[key] = value
         return data
 
     def _get_initial_data(self):
+        """Returns empty dict if Model is set to strict, else return the existing _data."""
         if self.strict:
             data = {}
         else:
@@ -138,6 +136,7 @@ class Model(object):
         return data
 
     def _get_index(self,index_name):
+        """Returns an index for the given name if it's stored in the Registery."""
         try:
             index = self._resource.registry.get_index(index_name)
         except KeyError:
@@ -146,7 +145,54 @@ class Model(object):
 
 
 class Node(Vertex,Model):
+    """ 
+    An abstract base class used to create classes that model domain objects. It is
+    not meant to be used directly
 
+    To use this, create a subclass specific to the type of data you are storing. 
+
+    Example model declaration::
+
+        from bulbs.model import Node
+        from bulbs.property import String, Integer
+
+        class Person(Node):
+            element_type = "person"
+
+            name = String(nullable=False)
+            age = Integer()
+
+    Example usage::
+
+        # Create a node in the DB:
+        >>> from bulbs.neo4jserver import Graph
+        >>> g = Graph()
+        >>> people = g.create_proxy(Person)
+        >>> james = people.create(name="James Thornton")
+        >>> james.eid
+        3
+        >>> james.name
+        'James Thornton'
+
+        # Get a node from the DB:
+        >>> james = people.get(3)
+
+        # Update the node in the DB:
+        >>> james.age = 34
+        >>> james.save()
+
+    """
+    #: Don't override this
+    _class_type = "node"
+
+    @classmethod
+    def get_element_type(cls, resource):
+        element_type = getattr(cls, resource.config.type_var)
+        return element_type
+
+    @classmethod
+    def get_element_key(cls, resource):
+        return cls.get_element_type(resource)
 
     def _initialize(self,result):
         # this is called by initialize_element; 
@@ -155,22 +201,18 @@ class Node(Vertex,Model):
         Vertex._initialize(self,result)
         self._initialized = False
         self._set_property_data(result)
-        element_type = self._get_element_type()
+        element_type = self.get_element_type(self._resource)
         self._index = self._get_index(element_type)
         self._initialized = True
-
-    def _get_element_type(self):
-        element_type = getattr(self,self._resource.config.type_var)
-        return element_type
-
+        
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()
         return self._update(self._id,data,self._index)
         
-    #
-    # Override the _create and _update methods to cusomize behavior.
-    #
+    #:
+    #: Override the _create and _update methods to cusomize behavior.
+    #:
 
     def _create(self,data,index):
         return self._resource.create_indexed_vertex(data,index.index_name)
@@ -180,6 +222,50 @@ class Node(Vertex,Model):
 
         
 class Relationship(Edge,Model):
+    """ 
+    An abstract base class used to create classes that model domain objects. It is
+    not meant to be used directly
+
+    To use this, create a subclass specific to the type of data you are 
+    storing. 
+
+    Example usage for an edge between a blog entry node and its creating user::
+
+        class CreatedBy(Relationship):
+            label = "created_by"
+
+            timestamp = Property(Float, default="current_timestamp", nullable=False)
+
+            @property
+            def entry(self):
+                return Entry.get(self.outV)
+
+            @property
+            def user(self):
+                return User.get(self.inV)
+        
+            def current_timestamp(self):
+                return time.time()
+
+          >>> entry = Entry(text="example blog entry")
+          >>> james = Person(name="James")
+          >>> CreatedBy(entry,james)
+      
+          # Or if you just want to create a basic relationship between two nodes, do::
+          >>> Relationship.create(entry,"created_by",james)
+
+    """
+    #: Don't override this
+    _class_type = "relationship"
+
+    @classmethod
+    def get_label(cls, resource):
+        label = getattr(cls, resource.config.label_var)
+        return label
+
+    @classmethod
+    def get_element_key(cls, resource):
+        return cls.get_label(resource)
 
     def _initialize(self,result):
         # this is called by initialize_element; 
@@ -188,13 +274,9 @@ class Relationship(Edge,Model):
         Edge._initialize(self,result)
         self._initialized = False
         self._set_property_data(result)
-        label = self._get_label()
+        label = self.get_label(self._resource)
         self._index = self._get_index(label)
         self._initialized = True
-
-    def _get_label(self):
-        label = getattr(self,self._resource.config.label_var)
-        return label
 
     def save(self):
         """Saves/updates the element's data in the database."""
@@ -271,7 +353,7 @@ class RelationshipProxy(EdgeProxy):
             inV = args.pop(0) 
             outV = self._coerce_vertex_id(outV)
             inV = self._coerce_vertex_id(inV)
-            label = relationship._get_label()
+            label = relationship.get_label(self.resource)
             args = (outV,label,inV)
         return args
 

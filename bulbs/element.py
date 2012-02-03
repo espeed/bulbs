@@ -18,7 +18,8 @@ class Element(object):
     :type resource: Resource
 
     """
-    
+    _class_type = None
+
     def __init__(self,resource):
         self._resource = resource
         self._data = {}
@@ -33,6 +34,10 @@ class Element(object):
         self._edges = EdgeProxy(Edge,self._resource)
         self._initialized = True
        
+    @classmethod
+    def get_element_key(cls, resource):
+        raise NotImplementedError 
+
     @property
     def _id(self):
         """
@@ -164,8 +169,15 @@ class Vertex(Element):
     >>> james.age = 34
     >>> james.save()
 
-    """     
+    """  
+
+    #: Don't override this
+    _class_type = "vertex"
          
+    @classmethod
+    def get_element_key(cls, resource):
+        return cls._class_type
+
     def outE(self,label=None):
         """
         Returns the outgoing edges of the vertex.
@@ -278,6 +290,13 @@ class Edge(Element):
     >>> knows.map()
 
     """
+
+    #: Don't override this
+    _class_type = "edge"
+
+    @classmethod
+    def get_element_key(cls, resource):
+        return cls._class_type
 
     @property
     def _outV(self):

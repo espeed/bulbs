@@ -9,11 +9,13 @@ Interface for interacting with a graph database through Neo4j Server.
 """
 from bulbs.config import Config
 from bulbs.gremlin import Gremlin
-from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
+from bulbs.element import Vertex, Edge
+from bulbs.model import Node, Relationship
 
 # Neo4j-specific imports
 from resource import Neo4jResource, NEO4J_URI
-from index import ExactIndex, VertexIndexProxy, EdgeIndexProxy
+from proxy import ProxyFactory, ELEMENT_PROXIES, INDEX_PROXIES
+from index import ExactIndex
 
 class Graph(object):
     """
@@ -39,19 +41,14 @@ class Graph(object):
     def __init__(self,root_uri=NEO4J_URI):
         self.config = Config(root_uri)
         self.resource = Neo4jResource(self.config)
+        self.proxies = ProxyFactory(self.resource, ELEMENT_PROXIES, INDEX_PROXIES)
 
         self.gremlin = Gremlin(self.resource)
 
-        self.indicesV = VertexIndexProxy(ExactIndex,self.resource)
-        self.indicesE = EdgeIndexProxy(ExactIndex,self.resource)
-        
         # What happens if these REST calls error on Heroku?
+        self.vertices = self.proxies.get_element_proxy(Vertex, ExactIndex)
+        self.edges = self.proxies.get_element_proxy(Edge, ExactIndex)
 
-        self.vertices = VertexProxy(Vertex,self.resource)
-        self.vertices.index = self.indicesV.get_or_create("vertices")
- 
-        self.edges = EdgeProxy(Edge,self.resource)
-        self.edges.index = self.indicesE.get_or_create("edges")
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""
