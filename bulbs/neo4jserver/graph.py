@@ -41,7 +41,7 @@ class Graph(BaseGraph):
     default_index = ExactIndex
     resource_class = Neo4jResource
 
-    # What happens if these REST calls error on Heroku?
+    # What happens if these REST init calls error on Heroku?
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""

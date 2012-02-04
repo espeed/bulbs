@@ -28,7 +28,7 @@ class Graph(object):
         self.vertices = self.build_proxy(Vertex)
         self.edges = self.build_proxy(Edge)
 
-        self.relationships = self.build_proxy(Relationship, Index)
+        #self.relationships = self.build_proxy(Relationship)
 
     def get_root_uri(self, root_uri):
         if not root_uri:

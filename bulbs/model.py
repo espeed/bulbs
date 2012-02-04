@@ -11,6 +11,10 @@ from bulbs.property import Property
 from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy
 from bulbs.utils import initialize_element, get_one_result, get_logger
 
+# Model Modes
+DEFAULT = 1
+STRICT = 2
+
 log = get_logger(__name__)
 
 
@@ -76,7 +80,7 @@ class Model(object):
 
     __metaclass__ = ModelMeta
 
-    strict = False
+    mode = DEFAULT
 
     def __setattr__(self, key, value):
         if key in self._properties:
@@ -128,8 +132,8 @@ class Model(object):
         return data
 
     def _get_initial_data(self):
-        """Returns empty dict if Model is set to strict, else return the existing _data."""
-        if self.strict:
+        """Returns empty dict if mode is set to strict, else return the existing _data."""
+        if self.mode == STRICT:
             data = {}
         else:
             data = self._data.copy()
@@ -279,6 +283,8 @@ class Relationship(Edge,Model):
 
     @classmethod
     def get_element_key(cls, config):
+        #if cls.__name__ == "Relationship":
+        #    return "relationship"
         return cls.get_label(config)
 
     @classmethod 
