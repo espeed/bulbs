@@ -293,7 +293,7 @@ class Neo4jResource(Resource):
 
     def inE(self,_id,label=None):
         """Return the incoming edges of the vertex."""
-        message = self.message.outE(_id,label)
+        message = self.message.inE(_id,label)
         return self.request.send(message)
 
     def bothE(self,_id,label=None):
@@ -303,17 +303,17 @@ class Neo4jResource(Resource):
 
     def outV(self,_id,label=None):
         """Return the out-adjacent vertices to the vertex."""
-        message = self.message.outE(_id,label)
+        message = self.message.outV(_id,label)
         return self.request.send(message)
         
     def inV(self,_id,label=None):
         """Return the in-adjacent vertices of the vertex."""
-        message = self.message.outE(_id,label)
+        message = self.message.inV(_id,label)
         return self.request.send(message)
         
     def bothV(self,_id,label=None):
         """Return all incoming- and outgoing-adjacent vertices of vertex."""
-        message = self.message.outE(_id,label)
+        message = self.message.bothV(_id,label)
         return self.request.send(message)
 
     # Index Proxy - Vertex
