@@ -10,8 +10,12 @@ from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
 from graph import Graph
 from batch import Neo4jBatch
 from resource import Neo4jResource, Message, NEO4J_URI
-from proxy import ELEMENT_PROXIES, INDEX_PROXIES
 from index import ExactIndex, FulltextIndex, AutomaticIndex, \
     VertexIndexProxy, EdgeIndexProxy
 
-
+INDEX_PROXIES = {
+    'vertex':          VertexIndexProxy,
+    'edge':            EdgeIndexProxy,
+    'node':            VertexIndexProxy,
+    'relationship':    EdgeIndexProxy
+    }

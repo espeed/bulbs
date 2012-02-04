@@ -35,7 +35,15 @@ class Element(object):
         self._initialized = True
        
     @classmethod
-    def get_element_key(cls, resource):
+    def get_element_key(cls, config):
+        raise NotImplementedError 
+
+    @classmethod
+    def get_index_name(cls, config):
+        raise NotImplementedError 
+
+    @classmethod
+    def get_proxy_class(cls):
         raise NotImplementedError 
 
     @property
@@ -175,8 +183,20 @@ class Vertex(Element):
     _class_type = "vertex"
          
     @classmethod
+    def get_base_type(cls):
+        return "vertex"
+
+    @classmethod
     def get_element_key(cls, resource):
         return cls._class_type
+
+    @classmethod 
+    def get_index_name(cls, resource):
+        return resource.config.vertex_index
+
+    @classmethod 
+    def get_proxy_class(cls):
+        return VertexProxy
 
     def outE(self,label=None):
         """
@@ -295,8 +315,20 @@ class Edge(Element):
     _class_type = "edge"
 
     @classmethod
+    def get_base_type(cls):
+        return "edge"
+
+    @classmethod
     def get_element_key(cls, resource):
         return cls._class_type
+
+    @classmethod 
+    def get_index_name(cls, resource):
+        return resource.config.edge_index
+
+    @classmethod 
+    def get_proxy_class(cls):
+        return EdgeProxy
 
     @property
     def _outV(self):

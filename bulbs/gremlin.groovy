@@ -102,8 +102,8 @@ def load_graphml(uri) {
 }
 
 def save_graphml() {
-  g.saveGraphML('data/bulbs.graphml')
-  new File('data/bulbs.graphml').getText()
+  g.saveGraphML('bulbs.graphml')
+  new File('bulbs.graphml').getText()
 }
 
 def clear() {

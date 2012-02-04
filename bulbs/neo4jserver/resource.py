@@ -86,6 +86,10 @@ class Neo4jResult(Result):
         """Returns the edge label (relationship type)."""
         return self.raw.get('type')
 
+    def get_index_name(self):
+        """Returns the index name."""
+        return self.raw.get('name')
+   
     def get_index_class(self):
         """Returns the index class (either "vertex" or "edge")."""
         uri = self.raw.get('template') 

@@ -135,9 +135,10 @@ class Model(object):
             data = self._data.copy()
         return data
 
-    def _get_index(self,index_name):
+    def _get_index(self):
         """Returns an index for the given name if it's stored in the Registery."""
         try:
+            index_name = self.get_index_name(self._resource.config)
             index = self._resource.registry.get_index(index_name)
         except KeyError:
             index = None
@@ -162,37 +163,53 @@ class Node(Vertex,Model):
             name = String(nullable=False)
             age = Integer()
 
+            # will have name collisions
+            knows = Relation(Knows)
+
     Example usage::
 
         # Create a node in the DB:
-        >>> from bulbs.neo4jserver import Graph, ExactIndex
+        >>> from person import Person
+        >>> from bulbs.neo4jserver import Graph
         >>> g = Graph()
-        >>> people = g.get_proxy(Person, ExactIndex)
-        >>> james = people.create(name="James Thornton")
+        >>> g.add_proxy("people", Person)
+        >>> james = g.people.create(name="James Thornton")
         >>> james.eid
         3
         >>> james.name
         'James Thornton'
 
-        # Get a node from the DB:
-        >>> james = people.get(3)
+        # Get a node from the DB by ID:
+        >>> james = g.people.get(3)
 
         # Update the node in the DB:
         >>> james.age = 34
         >>> james.save()
 
-    """
-    #: Don't override this
-    _class_type = "node"
+        >>> james.knows(julie)
 
+        # Lookup people using the index.
+        >>> nodes = g.people.index.lookup(name="James Thornton")
+
+
+        
+    """
     @classmethod
-    def get_element_type(cls, resource):
-        element_type = getattr(cls, resource.config.type_var)
+    def get_element_type(cls, config):
+        element_type = getattr(cls, config.type_var)
         return element_type
 
     @classmethod
-    def get_element_key(cls, resource):
-        return cls.get_element_type(resource)
+    def get_element_key(cls, config):
+        return cls.get_element_type(config)
+
+    @classmethod 
+    def get_index_name(cls, config):
+        return cls.get_element_type(config)
+
+    @classmethod 
+    def get_proxy_class(cls):
+        return NodeProxy
 
     def _initialize(self,result):
         # this is called by initialize_element; 
@@ -201,8 +218,7 @@ class Node(Vertex,Model):
         Vertex._initialize(self,result)
         self._initialized = False
         self._set_property_data(result)
-        element_type = self.get_element_type(self._resource)
-        self._index = self._get_index(element_type)
+        self._index = self._get_index()
         self._initialized = True
         
     def save(self):
@@ -231,41 +247,47 @@ class Relationship(Edge,Model):
 
     Example usage for an edge between a blog entry node and its creating user::
 
-        class CreatedBy(Relationship):
-            label = "created_by"
+        class AuthoredBy(Relationship):
+            label = "authored_by"
 
-            timestamp = Property(Float, default="current_timestamp", nullable=False)
+            timestamp = Float(default="current_timestamp", nullable=False)
 
             @property
             def entry(self):
-                return Entry.get(self.outV)
+                return self.outV()
 
             @property
-            def user(self):
-                return User.get(self.inV)
+            def person(self):
+                return self.inV()
         
             def current_timestamp(self):
                 return time.time()
 
-          >>> entry = Entry(text="example blog entry")
-          >>> james = Person(name="James")
-          >>> CreatedBy(entry,james)
+          >>> g = Graph()
+          >>> entry = g.entries.create(text="Forrester Predictions 2012: Graph databases will come into vogue")
+          >>> james = g.people.create(name="James")
+          >>> g.authored_by.create(entry, james)
       
           # Or if you just want to create a basic relationship between two nodes, do::
-          >>> Relationship.create(entry,"created_by",james)
+          >>> g.relationships.create(entry,"created_by",james)
 
     """
-    #: Don't override this
-    _class_type = "relationship"
-
     @classmethod
-    def get_label(cls, resource):
-        label = getattr(cls, resource.config.label_var)
+    def get_label(cls, config):
+        label = getattr(cls, config.label_var)
         return label
 
     @classmethod
-    def get_element_key(cls, resource):
-        return cls.get_label(resource)
+    def get_element_key(cls, config):
+        return cls.get_label(config)
+
+    @classmethod 
+    def get_index_name(cls, config):
+        return cls.get_label(config)
+
+    @classmethod 
+    def get_proxy_class(cls):
+        return RelationshipProxy
 
     def _initialize(self,result):
         # this is called by initialize_element; 
@@ -274,8 +296,7 @@ class Relationship(Edge,Model):
         Edge._initialize(self,result)
         self._initialized = False
         self._set_property_data(result)
-        label = self.get_label(self._resource)
-        self._index = self._get_index(label)
+        self._index = self._get_index()
         self._initialized = True
 
     def save(self):
@@ -315,7 +336,7 @@ class NodeProxy(VertexProxy):
         """Returns all the elements for the model type."""
         type_var = self.resource.config.type_var
         element_type = getattr(self.element_class,type_var)
-        return self.index.get(type_var,element_type)
+        return self.index.lookup(type_var,element_type)
 
 
 class RelationshipProxy(EdgeProxy):
@@ -339,7 +360,7 @@ class RelationshipProxy(EdgeProxy):
         """Returns all the relationships for the label."""
         label_var = self.resource.config.label_var
         label = getattr(self.element_class,label_var)
-        return self.index.get(label_var,label)
+        return self.index.lookup(label_var,label)
 
     def _parse_args(self,relationship,args):
         # Two different args options:
@@ -353,9 +374,9 @@ class RelationshipProxy(EdgeProxy):
             inV = args.pop(0) 
             outV = self._coerce_vertex_id(outV)
             inV = self._coerce_vertex_id(inV)
-            label = relationship.get_label(self.resource)
+            label = relationship.get_label(self.resource.config)
             args = (outV,label,inV)
         return args
 
 
-    
+        

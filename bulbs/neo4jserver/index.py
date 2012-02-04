@@ -30,7 +30,7 @@ class IndexProxy(object):
 class VertexIndexProxy(IndexProxy):
     """Manage vertex indices on Neo4j Server."""
 
-    def create(self,index_name):
+    def create(self, index_name):
         """Creates an an index and returns it."""
         index_config = self._build_index_config(self.index_class)
         resp = self.resource.create_vertex_index(index_name,index_config)
@@ -38,7 +38,7 @@ class VertexIndexProxy(IndexProxy):
         self.resource.registry.add_index(index_name,index)
         return index
 
-    def get(self,index_name):
+    def get(self, index_name):
         """Returns the Index object with the specified name or None if not found."""
         resp = self.resource.get_vertex_index(index_name)
         if resp.results:
@@ -46,14 +46,14 @@ class VertexIndexProxy(IndexProxy):
             self.resource.registry.add_index(index_name,index)
             return index
 
-    def get_or_create(self,index_name):
+    def get_or_create(self, index_name):
         """Get a vertex index or creates it if it doesn't exist.""" 
         index = self.get(index_name)
         if not index:
             index = self.create(index_name)
         return index
 
-    def delete(self,index_name):
+    def delete(self, index_name):
         """Deletes/drops an index and returns the Response."""
         return self.resource.delete_vertex_index(index_name)
 
@@ -61,7 +61,7 @@ class VertexIndexProxy(IndexProxy):
 class EdgeIndexProxy(IndexProxy):
     """Manage edge indices on Neo4j Server."""
 
-    def create(self,index_name):
+    def create(self, index_name):
         """Creates an an index and returns it."""
         index_config = self._build_index_config(self.index_class)
         resp = self.resource.create_edge_index(index_name,index_config)
@@ -69,7 +69,7 @@ class EdgeIndexProxy(IndexProxy):
         self.resource.registry.add_index(index_name,index)
         return index
 
-    def get(self,index_name):
+    def get(self, index_name):
         """Returns the Index object with the specified name or None if not found."""
         resp = self.resource.get_edge_index(index_name)
         if resp.results:
@@ -77,19 +77,19 @@ class EdgeIndexProxy(IndexProxy):
             self.resource.registry.add_index(index_name,index)
             return index
 
-    def get_or_create(self,index_name,*args,**kwds):
+    def get_or_create(self, index_name, *args, **kwds):
         """Get an edge index or creates it if it doesn't exist.""" 
         index = self.get(index_name)
         if not index:
-            index = self.create(index_name,*args,**kwds)
+            index = self.create(index_name, *args, **kwds)
         return index
 
-    def delete(self,index_name):
+    def delete(self, index_name):
         """Deletes/drops an index and returns the Response."""
         return self.resource.delete_edge_index(index_name)
 
 #
-# Index Containers (Exact, Fulltext, Automatic)
+# Index Containers (Exact, Unique, Fulltext, Automatic)
 #
 
 class Index(object):
@@ -103,17 +103,21 @@ class Index(object):
         self.resource = resource
         self.results = results
 
+    @classmethod 
+    def get_proxy_class(cls):
+        raise NotImplementedError
+
     @property
     def index_name(self):
         """Returns the index name."""
-        return self.results.get('name')
+        return self.results.get_index_name()
 
     @property
     def index_class(self):
         """Returns the index class."""
         return self.results.get_index_class()
 
-    def count(self,key=None,value=None,**pair):
+    def count(self, key=None, value=None, **pair):
         """Return the number of items in the index for the key and value."""
         key, value = self._get_key_value(key,value,pair)
         script = self.resource.scripts.get('index_count')
@@ -122,12 +126,16 @@ class Index(object):
         total_size = int(resp.content)
         return total_size
 
-    def _get_key_value(self,key,value,pair):
+    def _get_key_value(self, key, value, pair):
         """Return the key and value, regardless of how it was entered."""
         if pair:
             key, value = pair.popitem()
         return key, value
 
+    def _get_method(self, **method_map):
+        method_name = method_map[self.index_class]
+        method = getattr(self.resource, method_name)
+        return method
 
 class ExactIndex(Index):
 
@@ -135,63 +143,61 @@ class ExactIndex(Index):
     index_provider = "lucene"
     blueprints_type = "MANUAL"
 
-    def put(self,_id,key=None,value=None,**pair):
+    @classmethod 
+    def get_proxy_class(cls):
+        raise 
+
+    def put(self, _id, key=None, value=None, **pair):
         """Put an element into the index at key/value and return the response."""
         key, value = self._get_key_value(key,value,pair)
-        method_map = dict(vertex=self.resource.put_vertex,
-                          edge=self.resource.put_edge)
-        put_method = method_map.get(self.index_class)
-        resp = put_method(self.index_name,key,value,_id)
-        return resp
+        put = self._get_method(vertex="put_vertex", edge="put_edge")
+        return put(self.index_name,key,value,_id)
 
-    def put_unique(self,_id,key=None,value=None,**pair):
+    def update(self, _id, key=None, value=None, **pair):
+        """Update the element ID for the key and value."""
+        # This should be a Gremlin method
+        key, value = self._get_key_value(key,value,pair)
+        for result in self.get(key,value):
+            self.remove(self.index_name, result._id, key, value)
+        return self.put(_id,key,value)
+
+    def lookup(self, key=None, value=None, **pair):
+        """Return all the elements with key property equal to value in the index."""
+        key, value = self._get_key_value(key,value,pair)
+        lookup = self._get_method(vertex="lookup_vertex", edge="lookup_edge")
+        resp = lookup(self.index_name,key,value)
+        return initialize_elements(self.resource,resp)
+
+    def query(self, query_string):
+        pass
+
+    def remove(self, _id, key=None, value=None, **pair):
+        """Remove the element from the index located by key/value."""
+        key, value = self._get_key_value(key,value,pair)
+        remove = self._get_method(vertex="remove_vertex", edge="remove_edge")
+        return remove(self.index_name,_id,key,value)
+
+
+class UniqueIndex(ExactIndex):
+
+    def put(self, _id, key=None, value=None, **pair):
         """
         Put an element into the index at key/value and overwrite it if an 
         element already exists at that key and value; thus, there will be a max
         of 1 element returned for that key/value pair. Return Rexster's 
         response.
         """
-        return self.update(_id,key,value,**pair)
+        return self.update(_id, key, value, **pair)
 
-    def update(self,_id,key=None,value=None,**pair):
-        """Update the element ID for the key and value."""
-
-        # This should be a Gremlin method
-
-        key, value = self._get_key_value(key,value,pair)
-        method_map = dict(vertex=self.resource.remove_vertex,
-                          edge=self.resource.remove_edge)
-        remove_method = method_map.get(self.index_type)
-        for result in self.get(key,value):
-            remove_method(self.index_name,result._id,key,value)
-        resp = self.put(_id,key,value)
-        return resp
-
-    def get(self,key=None,value=None,**pair):
-        """Return all the elements with key property equal to value in the index."""
-        key, value = self._get_key_value(key,value,pair)
-        resp = self.resource.lookup_vertex(self.index_name,key,value)
-        return initialize_elements(self.resource,resp)
-
-    def get_unique(self,key=None,value=None,**pair):
+    def lookup(self, key=None, value=None, **pair):
         """Returns a max of 1 elements matching the key/value pair in the index."""
         key, value = self._get_key_value(key,value,pair)
-        resp = self.resource.lookup_vertex(self.index_name,key,value)
+        lookup = self._get_method(vertex="lookup_vertex", edge="lookup_edge")
+        resp = lookup(self.index_name,key,value)
         result = get_one_result(resp)
         if result:
             return initialize_element(self.resource,result)
-         
-    def query(self,query_string):
-        pass
-
-    def remove(self,_id,key=None,value=None,**pair):
-        """Remove the element from the index located by key/value."""
-        key, value = self._get_key_value(key,value,pair)
-        method_map = dict(vertex=self.resource.remove_vertex,
-                          edge=self.resource.remove_edge)
-        remove_method = method_map.get(self.index_class)
-        return remove_method(self.index_name,_id,key,value)
-
+   
 
 class FulltextIndex(Index):
     
@@ -199,7 +205,7 @@ class FulltextIndex(Index):
     index_provider = "lucene"
     blueprints_type = "MANUAL"
 
-    def query(self,query_string):
+    def query(self, query_string):
         """
         Return elements mathing the query.
 
@@ -211,19 +217,27 @@ class FulltextIndex(Index):
         resp = self.resource.query_fulltext_index(self.index_name,query_string)
         return initialize_elements(self.resource,resp)
 
-class AutomaticIndex(Index):
+class AutomaticIndex(ExactIndex):
 
     index_type = "exact"
     index_provider = "lucene"
     blueprints_type = "AUTOMATIC"
 
-    def get(self,key=None,value=None,**pair):
-        """Return all the elements with key property equal to value in the index."""
-        key, value = self._get_key_value(key,value,pair)
-        resp = self.resource.lookup_vertex(self.index_name,key,value)
-        return initialize_elements(self.resource,resp)
+    # This works just like an ExactIndex except that the put, update, remove methods
+    # are not implemented because those are done automatically.
 
-    def query(self,query_string):
-        pass
+    def put(self,_id, key=None, value=None, **pair):
+        raise NotImplementedError
 
+    def update(self, _id, key=None, value=None, **pair):
+        raise NotImplementedError
 
+    def remove(self, _id, key=None, value=None, **pair):
+        raise NotImplementedError
+
+INDEX_PROXIES = {
+    'vertex':          VertexIndexProxy,
+    'edge':            EdgeIndexProxy,
+    'node':            VertexIndexProxy,
+    'relationship':    EdgeIndexProxy
+    }

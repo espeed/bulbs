@@ -15,8 +15,7 @@ from bulbs.proxy import ProxyFactory
 
 # Neo4j-specific imports
 from resource import Neo4jResource, NEO4J_URI
-from proxy import ELEMENT_PROXIES, INDEX_PROXIES
-from index import ExactIndex
+from index import INDEX_PROXIES, ExactIndex, UniqueIndex, FulltextIndex
 
 class Graph(object):
     """
@@ -43,14 +42,25 @@ class Graph(object):
         self.config = Config(root_uri)
         self.resource = Neo4jResource(self.config)
         self.proxies = ProxyFactory(self.resource, ELEMENT_PROXIES, INDEX_PROXIES)
+        self.default_index_class = ExactIndex
 
         self.gremlin = Gremlin(self.resource)
 
         # What happens if these REST calls error on Heroku?
-        self.vertices = self.proxies.build_element_proxy(Vertex, ExactIndex)
-        self.edges = self.proxies.build_element_proxy(Edge, ExactIndex)
+        self.vertices = self.build_proxy(Vertex, ExactIndex)
+        self.edges = self.build_proxy(Edge, ExactIndex)
 
-    def get_proxy(self, element_class, index_class):
+        self.relationships = self.build_proxy(Relationship, ExactIndex)
+
+    def add_proxy(self, proxy_name, element_class, index_class=None):
+        """Adds an element proxy to an existing Graph object."""
+        proxy = self.build_proxy(element_class, index_class)
+        setattr(self, proxy_name, proxy)
+    
+    def build_proxy(self, element_class, index_class=None):
+        """Returns an element proxy built to specifications."""
+        if not index_class:
+            index_class = self.default_index_class
         return self.proxies.build_element_proxy(element_class, index_class)
 
     def load_graphml(self,uri):

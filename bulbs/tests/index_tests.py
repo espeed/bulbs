@@ -40,7 +40,7 @@ class IndexTestCase(BulbsTestCase):
         james = self.vertices.create({'name':'James'})
         self.vertices.index.put(james._id,'name','James')
         self.vertices.index.put(james._id,'location','Dallas')
-        results = self.vertices.index.get('name','James')
+        results = self.vertices.index.lookup('name','James')
         results = list(results)
         #print "RESULTS", results
         assert len(results) == 1
