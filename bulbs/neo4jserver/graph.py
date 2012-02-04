@@ -12,14 +12,15 @@ from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, Edge
 from bulbs.model import Node, Relationship
 from bulbs.factory import Factory
+from bulbs.graph import Graph as BaseGraph
 
 # Neo4j-specific imports
 from resource import Neo4jResource, NEO4J_URI
 from index import ExactIndex, UniqueIndex, FulltextIndex
 
-class Graph(object):
+class Graph(BaseGraph):
     """
-    The primary interface to graph databases on the Rexster REST server.
+    The primary interface to graph databases on Neo4j Server.
 
     Instantiates the database :class:`~bulbs.rest.Resource` object using 
     the specified database URL and sets up proxy objects to the database.
@@ -36,32 +37,11 @@ class Graph(object):
     >>> g.vertices.index.lookup(name="James")
 
     """
+    default_uri = NEO4J_URI
+    default_index = ExactIndex
+    resource_class = Neo4jResource
 
-    
-    def __init__(self,root_uri=NEO4J_URI):
-        self.config = Config(root_uri)
-        self.resource = Neo4jResource(self.config)
-        self.factory = Factory(self.resource)
-        self.default_index_class = ExactIndex
-
-        self.gremlin = Gremlin(self.resource)
-
-        # What happens if these REST calls error on Heroku?
-        self.vertices = self.build_proxy(Vertex, ExactIndex)
-        self.edges = self.build_proxy(Edge, ExactIndex)
-
-        self.relationships = self.build_proxy(Relationship, ExactIndex)
-
-    def add_proxy(self, proxy_name, element_class, index_class=None):
-        """Adds an element proxy to an existing Graph object."""
-        proxy = self.build_proxy(element_class, index_class)
-        setattr(self, proxy_name, proxy)
-    
-    def build_proxy(self, element_class, index_class=None):
-        """Returns an element proxy built to specifications."""
-        if not index_class:
-            index_class = self.default_index_class
-        return self.factory.build_element_proxy(element_class, index_class)
+    # What happens if these REST calls error on Heroku?
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""
