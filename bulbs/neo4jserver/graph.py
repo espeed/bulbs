@@ -11,11 +11,11 @@ from bulbs.config import Config
 from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, Edge
 from bulbs.model import Node, Relationship
-from bulbs.proxy import ProxyFactory
+from bulbs.factory import Factory
 
 # Neo4j-specific imports
 from resource import Neo4jResource, NEO4J_URI
-from index import INDEX_PROXIES, ExactIndex, UniqueIndex, FulltextIndex
+from index import ExactIndex, UniqueIndex, FulltextIndex
 
 class Graph(object):
     """
@@ -41,7 +41,7 @@ class Graph(object):
     def __init__(self,root_uri=NEO4J_URI):
         self.config = Config(root_uri)
         self.resource = Neo4jResource(self.config)
-        self.proxies = ProxyFactory(self.resource, ELEMENT_PROXIES, INDEX_PROXIES)
+        self.factory = Factory(self.resource)
         self.default_index_class = ExactIndex
 
         self.gremlin = Gremlin(self.resource)
@@ -61,7 +61,7 @@ class Graph(object):
         """Returns an element proxy built to specifications."""
         if not index_class:
             index_class = self.default_index_class
-        return self.proxies.build_element_proxy(element_class, index_class)
+        return self.factory.build_element_proxy(element_class, index_class)
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""

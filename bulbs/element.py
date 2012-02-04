@@ -179,20 +179,19 @@ class Vertex(Element):
 
     """  
 
-    #: Don't override this
-    _class_type = "vertex"
-         
+
     @classmethod
     def get_base_type(cls):
+        #: Don't override this
         return "vertex"
 
     @classmethod
-    def get_element_key(cls, resource):
-        return cls._class_type
+    def get_element_key(cls, config):
+        return cls.get_base_type()
 
     @classmethod 
-    def get_index_name(cls, resource):
-        return resource.config.vertex_index
+    def get_index_name(cls, config):
+        return config.vertex_index
 
     @classmethod 
     def get_proxy_class(cls):
@@ -311,20 +310,18 @@ class Edge(Element):
 
     """
 
-    #: Don't override this
-    _class_type = "edge"
-
     @classmethod
     def get_base_type(cls):
+        #: Don't override this
         return "edge"
 
     @classmethod
-    def get_element_key(cls, resource):
-        return cls._class_type
+    def get_element_key(cls, config):
+        return cls.get_base_type()
 
     @classmethod 
-    def get_index_name(cls, resource):
-        return resource.config.edge_index
+    def get_index_name(cls, config):
+        return config.edge_index
 
     @classmethod 
     def get_proxy_class(cls):

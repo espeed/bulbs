@@ -12,10 +12,3 @@ from batch import Neo4jBatch
 from resource import Neo4jResource, Message, NEO4J_URI
 from index import ExactIndex, FulltextIndex, AutomaticIndex, \
     VertexIndexProxy, EdgeIndexProxy
-
-INDEX_PROXIES = {
-    'vertex':          VertexIndexProxy,
-    'edge':            EdgeIndexProxy,
-    'node':            VertexIndexProxy,
-    'relationship':    EdgeIndexProxy
-    }

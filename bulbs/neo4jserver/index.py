@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
@@ -104,8 +104,9 @@ class Index(object):
         self.results = results
 
     @classmethod 
-    def get_proxy_class(cls):
-        raise NotImplementedError
+    def get_proxy_class(cls, base_type=None):
+        class_map = dict(vertex=VertexIndexProxy, edge=EdgeIndexProxy)
+        return class_map[base_type]
 
     @property
     def index_name(self):
@@ -142,10 +143,6 @@ class ExactIndex(Index):
     index_type = "exact"
     index_provider = "lucene"
     blueprints_type = "MANUAL"
-
-    @classmethod 
-    def get_proxy_class(cls):
-        raise 
 
     def put(self, _id, key=None, value=None, **pair):
         """Put an element into the index at key/value and return the response."""
@@ -235,9 +232,3 @@ class AutomaticIndex(ExactIndex):
     def remove(self, _id, key=None, value=None, **pair):
         raise NotImplementedError
 
-INDEX_PROXIES = {
-    'vertex':          VertexIndexProxy,
-    'edge':            EdgeIndexProxy,
-    'node':            VertexIndexProxy,
-    'relationship':    EdgeIndexProxy
-    }
