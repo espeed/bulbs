@@ -48,11 +48,11 @@ class Config(object):
     :type autoindex: bool
 
     """
-    def __init__(self,root_uri,username=None,password=None,log_level=ERROR):
+    def __init__(self,root_uri,username=None,password=None):
         self.root_uri = root_uri
         self.username = username
         self.password = password
-        self.log_level = log_level
+        self.log_level = ERROR
         self.log_handler = StreamHandler
         self.id_var = "eid"
         self.type_var = "element_type"
@@ -62,11 +62,14 @@ class Config(object):
         self.edge_index = "edges"
         self.autoindex = True
         
-        self.set_logger()
+        self.set_logger(self.log_level, self.log_handler)
 
-    def set_logger(self):
+    def set_logger(self, log_level, log_handler=None):
         """Sets or updates the log level and log handler."""
+        if log_handler is None:
+            log_handler = self.log_handler
         log = get_logger(__name__)
-        log.root.setLevel(self.log_level)
-        log.root.addHandler(self.log_handler())
+        log.root.setLevel(log_level)
+        log.root.addHandler(log_handler())
 
+ 

@@ -167,9 +167,6 @@ class Node(Vertex,Model):
             name = String(nullable=False)
             age = Integer()
 
-            # will have name collisions
-            knows = Relation(Knows)
-
     Example usage::
 
         # Create a node in the DB:
@@ -190,12 +187,8 @@ class Node(Vertex,Model):
         >>> james.age = 34
         >>> james.save()
 
-        >>> james.knows(julie)
-
-        # Lookup people using the index.
+        # Lookup people using the model's primary index:
         >>> nodes = g.people.index.lookup(name="James Thornton")
-
-
         
     """
     @classmethod
@@ -215,9 +208,9 @@ class Node(Vertex,Model):
     def get_proxy_class(cls):
         return NodeProxy
 
-    def _initialize(self,result):
-        # this is called by initialize_element; 
-        # putting it here to ensure method resolution order
+    def _initialize(self, result):
+        # this is called by the initialize_element util; 
+        # putting it here to ensure method resolution order.
         # initialize all non-DB properties here
         Vertex._initialize(self,result)
         self._initialized = False
@@ -234,10 +227,10 @@ class Node(Vertex,Model):
     #: Override the _create and _update methods to cusomize behavior.
     #:
 
-    def _create(self,data,index):
+    def _create(self, data, index):
         return self._resource.create_indexed_vertex(data,index.index_name)
 
-    def _update(self,_id,data,index):
+    def _update(self, _id, data, index):
         return self._resource.update_indexed_vertex(_id,data,index.index_name)
 
         
@@ -251,29 +244,34 @@ class Relationship(Edge,Model):
 
     Example usage for an edge between a blog entry node and its creating user::
 
-        class AuthoredBy(Relationship):
-            label = "authored_by"
+        class Knows(Relationship):
+            label = "knows"
 
             timestamp = Float(default="current_timestamp", nullable=False)
 
-            @property
-            def entry(self):
-                return self.outV()
-
-            @property
-            def person(self):
-                return self.inV()
-        
             def current_timestamp(self):
                 return time.time()
 
+          # Import the models you just created and the Neo4j Graph
+          >>> from person import Person, Knows
+          >>> from bulbs.neo4jserver import Graph
+
+          # Create a Graph object, the primary interface to Neo4j Server
           >>> g = Graph()
-          >>> entry = g.entries.create(text="Forrester Predictions 2012: Graph databases will come into vogue")
+
+          # Add proxy interfaces to the Graph object for each custom Model:
+          >>> g.add_proxy("people", Person)
+          >>> g.add_proxy("knows", Knows)
+
+          # Create two Person nodes:
           >>> james = g.people.create(name="James")
-          >>> g.authored_by.create(entry, james)
-      
-          # Or if you just want to create a basic relationship between two nodes, do::
-          >>> g.relationships.create(entry,"created_by",james)
+          >>> julie = g.people.create(name="Julie")
+
+          # Create a "knows" relationship between James and Julie:
+          >>> g.knows.create(james,julie)
+
+          # Get the people James knows (the outgoing vertices labeled "knows")
+          >>> friends = james.outV('knows')
 
     """
     @classmethod

@@ -11,6 +11,7 @@ import re
 from bulbs.utils import build_path
 from bulbs.rest import GET, PUT, POST, DELETE
 
+
 vertex_path = "node"
 edge_path = "relationship"
 index_path = "index"

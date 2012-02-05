@@ -132,6 +132,7 @@ class Request(object):
         headers = {'Accept': 'application/json'}
         body = None
 
+        path = urllib.quote(path)
         uri = "%s/%s" % (self.config.root_uri.rstrip("/"), path.lstrip("/"))
 
         if params and method is GET:
