@@ -28,8 +28,9 @@ class Element(object):
         # initialize all non-database properties here because
         # __setattr__ will assume all non-defined properties are database properties
         self._result = result
-        self._data = result.get_map().copy()
+        self._data = result.get_map().copy() # Do we really need/want to make a copy?
         self._set_pretty_id(self._resource)
+        # These vertex and edge proxies are only used for gets, not mutable stuff
         self._vertices = VertexProxy(Vertex,self._resource)
         self._edges = EdgeProxy(Edge,self._resource)
         self._initialized = True
@@ -80,8 +81,8 @@ class Element(object):
 
         """
         pretty_var = resource.config.id_var
-        fget = lambda x: self._result.get_id()
-        setattr(self.__class__,pretty_var,property(fget))                    
+        fget = lambda self: self._result.get_id()
+        setattr(Element,pretty_var,property(fget))                    
 
     def __setattr__(self, key, value):
         """
@@ -385,7 +386,7 @@ class VertexProxy(object):
         self.resource.registry.add_class(element_class)
         self.index = None
 
-    def create(self,data={}):
+    def create(self,_data=None,**kwds):
         """
         Adds a vertex to the database and returns it.
 
@@ -395,6 +396,7 @@ class VertexProxy(object):
         :rtype: Vertex
 
         """
+        data = build_data(_data, kwds)
         resp = self.resource.create_vertex(data)
         return initialize_element(self.resource,resp.results)
 
@@ -425,7 +427,7 @@ class VertexProxy(object):
         resp = self.resource.get_all()
         return intialize_elements(self.resource,resp)
 
-    def update(self,_id,data):
+    def update(self,_id, _data=None, **kwds):
         """
         Updates an element in the graph DB and returns it.
 
@@ -437,7 +439,8 @@ class VertexProxy(object):
         """ 
         # NOTE: this no longer returns an initialized element because not all 
         # Resources return element data, e.g. Neo4jServer retuns nothing.
-        self.resource.update_vertex(_id,data)
+        data = build_data(_data, kwds)
+        self.resource.update_vertex(_id,_data)
 
     # is this really needed?    
     def remove_properties(self,_id):
@@ -464,7 +467,7 @@ class VertexProxy(object):
         """
         return self.resource.delete_vertex(_id)
 
-
+    
 class EdgeProxy(object):
     """ 
     A proxy for interacting with edges on the Resource. 
@@ -491,7 +494,7 @@ class EdgeProxy(object):
         self.resource.registry.add_class(element_class)
         self.index = None
 
-    def create(self,outV,label,inV,data={}):
+    def create(self,outV,label,inV,_data=None,**kwds):
         """
         Creates an edge in the database and returns it.
         
@@ -511,8 +514,8 @@ class EdgeProxy(object):
 
         """ 
         assert label is not None
-        outV = self._coerce_vertex_id(outV)
-        inV = self._coerce_vertex_id(inV)
+        data = build_data(_data, kwds)
+        outV, inV = coerce_vertices(outV, inV)
         resp = self.resource.create_edge(outV,label,inV,data)
         return initialize_element(self.resource,resp.results)
 
@@ -532,7 +535,7 @@ class EdgeProxy(object):
         except LookupError:
             return None
 
-    def update(self,_id,data):
+    def update(self,_id,_data=None,**kwds):
         """ 
         Updates an edge in the database and returns it. 
         
@@ -547,7 +550,8 @@ class EdgeProxy(object):
         """
         # NOTE: this no longer returns an initialized element because 
         # not all Resources return element data, e.g. Neo4jServer retuns nothing.
-        return self.resource.update_edge(_id,data)
+        data = build_data(_data, kwds)
+        return self.resource.update_edge(_id, data)
                     
     def remove_properties(self,_id):
         """
@@ -572,37 +576,54 @@ class EdgeProxy(object):
 
         """
         return self.resource.delete_edge(_id)
+
+
+#
+# Utils
+#
+
+def build_data(_data, kwds):
+    # Doing this rather than defaulting the _data arg to {}
+    data = {} if _data is None else _data
+    data.update(kwds)
+    return data
+
+def coerce_vertices(outV, inV):
+    outV = coerce_vertex_id(outV)
+    inV = coerce_vertex_id(inV)
+    return outV, inV
   
-    def _coerce_vertex_id(self,v):
-        """
-        Coerces an object into a vertex ID and returns it.
+def coerce_vertex_id(v):
+    """
+    Coerces an object into a vertex ID and returns it.
+    
+    :param v: The object we want to coerce into a vertex ID.
+    :type v: Vertex object or vertex ID.
 
-        :param v: The object we want to coerce into a vertex ID.
-        :type v: Vertex object or vertex ID.
+    :rtype: int or str
 
-        :rtype: int or str
+    """
+    if isinstance(v, Vertex):
+        vertex_id = v._id
+    else:
+        # the vertex ID may have been passed in as a string
+        # using corece_id to support OrientDB and linked-data URI (non-integer) IDs
+        vertex_id = coerce_id(v)
+    return vertex_id
 
-        """
-        if isinstance(v,Vertex):
-            vertex_id = v._id
-        else:
-            # the vertex ID may have been passed in as a string
-            # using corece_id to support OrientDB and linked-data URI (non-integer) IDs
-            vertex_id = self._coerce_id(v)
-        return vertex_id
+def coerce_id(_id):
+    """
+    Tries to coerce a vertex ID into an integer and returns it.
 
-    def _coerce_id(_id):
-        """
-        Tries to coerce a vertex ID into an integer and returns it.
+    :param v: The vertex ID we want to coerce into an integer.
+    :type v: int or str
 
-        :param v: The vertex ID we want to coerce into an integer.
-        :type v: int or str
+    :rtype: int or str
 
-        :rtype: int or str
+    """
+    try:
+        return int(_id)
+    except:
+        # some DBs, such as OrientDB, use string IDs
+        return _id
 
-        """
-        try:
-            return int(_id)
-        except:
-            # some DBs, such as OrientDB, use string IDs
-            return _id

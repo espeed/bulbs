@@ -8,22 +8,14 @@ Base classes for modeling domain objects that wrap vertices and edges.
 
 """
 from bulbs.property import Property
-from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy
-from bulbs.utils import initialize_element, get_one_result, get_logger
+from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy, coerce_vertices
+from bulbs.utils import initialize_element, get_one_result, get_logger, extract
 
 # Model Modes
 DEFAULT = 1
 STRICT = 2
 
 log = get_logger(__name__)
-
-
-# Util used by NodeProxy and RelationshipProxy
-def instantiate_model(element_class,resource,kwds):
-    """Returns an instantiated Model with keyword attributes set."""
-    model = element_class(resource)
-    model._set_keyword_attributes(kwds)
-    return model
 
 
 class ModelMeta(type):
@@ -50,37 +42,45 @@ class ModelMeta(type):
                 property_instance = value  # for clarity
                 cls._properties[key] = property_instance
                 cls._set_property_name(key,property_instance)
-                cls._set_property_default(key,property_instance)
+                cls._set_property_attribute(key,property_instance)
                 # not doing this b/c some Properties are calculated at savetime
                 #delattr(cls, key) 
                 
     def _set_property_name(cls, key, property_instance):
-        # Property name will be None unless explicitly set via kwd param
+        """Set the Property name; use the attribute name unless explicitly set via kwd param."""
         if property_instance.name is None:
             property_instance.name = key
             
-    def _set_property_default(cls, key, property_instance):
+    def _set_property_attribute(cls, key, property_instance):
+        """Set the Model class attribute based on the Property definition."""
         if property_instance.default is not None:
-            # TODO: Make this work for scalars too -- huh?
-            fget = getattr(cls, property_instance.default)
-            # Or more to the point, why is this a Python property?
-            default_value = property(fget)
+            # The value entered could be a scalar or a method name in the model
+            property_value = cls._get_property_default(key, property_instance)
         elif property_instance.fget:
             # wrapped fset and fdel in str() to make the default None work with getattr
             fget = getattr(cls, property_instance.fget)
             fset = getattr(cls, str(property_instance.fset), None)
             fdel = getattr(cls, str(property_instance.fdel), None)
-            default_value = property(fget, fset, fdel)
+            property_value = property(fget, fset, fdel)
         else:
-            default_value = None
-        setattr(cls, key, default_value)
+            property_value = None
+        setattr(cls, key, property_value)
+
+    def _get_property_default(cls, key, property_instance):
+        # The value entered could be a scalar or a method name in the model
+        default_value = property_instance.default
+        fget = getattr(cls, default_value, None)
+        if fget is not None:
+            # The default_value is the name of a method defined in the Model
+            default_value = property(fget)
+        return default_value
 
 
 class Model(object):
 
     __metaclass__ = ModelMeta
 
-    mode = DEFAULT
+    _mode = DEFAULT
 
     def __setattr__(self, key, value):
         if key in self._properties:
@@ -91,6 +91,9 @@ class Model(object):
             object.__setattr__(self, key, value)
         else:
             Element.__setattr__(self, key, value)
+
+    def _instantiate(self, args, kwds):
+        self._set_keyword_attributes(kwds)
 
     def _coerce_property_value(self, key, value):
         if value is not None:
@@ -103,6 +106,8 @@ class Model(object):
             # Notice that __setattr__ is overloaded
             setattr(self, key, value)
 
+    
+
     def _set_property_data(self, result):
         """
         Sets Property data when an element is being initialized, after it is
@@ -110,10 +115,22 @@ class Model(object):
         """
         type_system = self._resource.type_system
         for key, property_instance in self._properties.items():
+            # Convert the Properties to the defined data types and then 
+            # update the self._data values that were initially set by Element._initialize()
+            # Actually, no we're not, we're bypassing setattr, but will this work for 
+            # Python properties that don't have an fset?
+            #if property_instance.default is not None:
+            #    # for now, don't set read-only vars
+            #    continue
+            name = property_instance.name
             value = result.data.get(key, None)
             value = property_instance.convert_to_python(type_system, value)
-            # Notice that __setattr__ is overloaded so bypassing it
-            object.__setattr__(self, key, value)
+            # TODO: think through this some more...
+            if property_instance.fset is None:
+                self._data[key] = value
+            else:
+                # Notice that __setattr__ is overloaded so bypassing it
+                object.__setattr__(self, key, value)
         
     def _get_property_data(self):
         """Returns validated Property data, ready to be saved in the DB."""
@@ -127,22 +144,22 @@ class Model(object):
         for key, property_instance in self._properties.items():
             value = getattr(self, key)
             property_instance.validate(key, value)
+            name = property_instance.name
             value = property_instance.convert_to_db(type_system, value)
             data[key] = value
         return data
 
     def _get_initial_data(self):
         """Returns empty dict if mode is set to strict, else return the existing _data."""
-        if self.mode == STRICT:
+        if self._mode == STRICT:
             data = {}
         else:
             data = self._data.copy()
         return data
 
-    def _get_index(self):
+    def _get_index(self, index_name):
         """Returns an index for the given name if it's stored in the Registery."""
         try:
-            index_name = self.get_index_name(self._resource.config)
             index = self._resource.registry.get_index(index_name)
         except KeyError:
             index = None
@@ -169,25 +186,28 @@ class Node(Vertex,Model):
 
     Example usage::
 
-        # Create a node in the DB:
         >>> from person import Person
         >>> from bulbs.neo4jserver import Graph
         >>> g = Graph()
+
+        # Add a proxy interface to the Graph object for the Person Model:
         >>> g.add_proxy("people", Person)
+
+        # Create a Person node, which automatically saves it in the database:
         >>> james = g.people.create(name="James Thornton")
         >>> james.eid
         3
         >>> james.name
         'James Thornton'
 
-        # Get a node from the DB by ID:
-        >>> james = g.people.get(3)
+        # Get the node (again) from the database by its element ID:
+        >>> james = g.people.get(james.eid)
 
-        # Update the node in the DB:
+        # Update the node and save it in the database:
         >>> james.age = 34
         >>> james.save()
 
-        # Lookup people using the model's primary index:
+        # Lookup people using the Person Model's primary index:
         >>> nodes = g.people.index.lookup(name="James Thornton")
         
     """
@@ -215,24 +235,33 @@ class Node(Vertex,Model):
         Vertex._initialize(self,result)
         self._initialized = False
         self._set_property_data(result)
-        self._index = self._get_index()
         self._initialized = True
         
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()
-        return self._update(self._id,data,self._index)
+        index_name = self.get_index_name(self._resource.config)
+        return self._resource.update_indexed_vertex(self._id, data, index_name)
         
     #:
     #: Override the _create and _update methods to cusomize behavior.
     #:
-
-    def _create(self, data, index):
-        return self._resource.create_indexed_vertex(data,index.index_name)
-
-    def _update(self, _id, data, index):
-        return self._resource.update_indexed_vertex(_id,data,index.index_name)
-
+        
+    def _create(self, args, kwds):  
+        self._instantiate(args, kwds)
+        data = self._get_property_data()
+        index_name = self.get_index_name(self._resource.config)
+        resp = self._resource.create_indexed_vertex(data, index_name)
+        result = get_one_result(resp)  
+        self._initialize(result)
+        
+    def _update(self, _id, kwds):
+        self._instantiate(kwds)
+        data = self._get_property_data()
+        index_name = self.get_index_name(self._resource.config)
+        resp = self._resource.update_indexed_vertex(data, index_name)
+        result = get_one_result(resp)  
+        self._initialize(result)
         
 class Relationship(Edge,Model):
     """ 
@@ -252,23 +281,23 @@ class Relationship(Edge,Model):
             def current_timestamp(self):
                 return time.time()
 
-          # Import the models you just created and the Neo4j Graph
+    Example usage::
+
           >>> from person import Person, Knows
           >>> from bulbs.neo4jserver import Graph
-
-          # Create a Graph object, the primary interface to Neo4j Server
           >>> g = Graph()
 
           # Add proxy interfaces to the Graph object for each custom Model:
           >>> g.add_proxy("people", Person)
           >>> g.add_proxy("knows", Knows)
 
-          # Create two Person nodes:
+          # Create two Person nodes, which are automatically saved in the database:
           >>> james = g.people.create(name="James")
           >>> julie = g.people.create(name="Julie")
 
           # Create a "knows" relationship between James and Julie:
-          >>> g.knows.create(james,julie)
+          >>> knows = g.knows.create(james,julie)
+          >>> knows.timestamp
 
           # Get the people James knows (the outgoing vertices labeled "knows")
           >>> friends = james.outV('knows')
@@ -300,87 +329,68 @@ class Relationship(Edge,Model):
         Edge._initialize(self,result)
         self._initialized = False
         self._set_property_data(result)
-        self._index = self._get_index()
         self._initialized = True
 
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()      
-        return self._update(self._id,data)
+        return self._resource.update_edge(self._id, data)
         
     #
     # Override the _create and _update methods to customize behavior.
     #
 
-    def _create(self,outV,label,inV,data):
-        return self._resource.create_edge(outV,label,inV,data)
+    def _create(self, outV, inV, args, kwds):
+        self._instantiate(args, kwds)
+        label = self.get_label(self._resource.config)
+        data = self._get_property_data()
+        outV, inV = coerce_vertices(outV, inV)
+        resp = self._resource.create_edge(outV, label, inV, data)
+        result = get_one_result(resp)
+        self._initialize(result)
         
-    def _update(self,_id,data):
-        return self._resource.update_edge(_id,data)
+    def _update(self, _id, data):
+        self._instantiate(args, kwds)
+        data = self._get_property_data()
+        resp = self._resource.update_edge(_id, data)
+        result = get_one_result(resp)
+        self._initialize(result)
 
 
 class NodeProxy(VertexProxy):
 
-    def create(self,*args,**kwds):
-        node = instantiate_model(self.element_class,self.resource,kwds)
-        data = node._get_property_data()
-        resp = node._create(data,self.index)
-        result = get_one_result(resp)  
-        # doing it this way you're losing any extra kwds that may have been set
-        return initialize_element(self.resource,result)
+    def create(self, *args, **kwds):
+        node = self.element_class(self.resource)
+        node._create(args, kwds)
+        return node
         
-    def update(self,_id,*args,**kwds):
-        node = instantiate_model(self.element_class,self.resource,kwds)
-        data = node._get_property_data()
-        resp = node._update(_id,data,self.index)
-        result = get_one_result(resp)
-        return initialize_element(self.resource,result)
+    def update(self, _id, *args, **kwds):
+        node = self.element_class(self.resource)
+        node._update(_id, args, kwds)
+        return node
 
     def get_all(self):
         """Returns all the elements for the model type."""
         type_var = self.resource.config.type_var
-        element_type = getattr(self.element_class,type_var)
+        element_type = self.element_class.get_element_type(self.resource.config)
         return self.index.lookup(type_var,element_type)
 
 
 class RelationshipProxy(EdgeProxy):
 
-    def create(self,*args,**kwds):
-        relationship = instantiate_model(self.element_class,self.resource,kwds)
-        outV, label, inV = self._parse_args(relationship,args)
-        data = relationship._get_property_data()
-        resp = relationship._create(outV,label,inV,data)
-        result = get_one_result(resp)
-        return initialize_element(self.resource,result)
+    def create(self, outV, inV, *args, **kwds):
+        relationship = self.element_class(self.resource)
+        relationship._create(outV, inV, args, kwds)
+        return relationship
 
-    def update(self,_id,*args,**kwds):
-        relationship = instantiate_model(self.element_class,self.resource,kwds)
-        data = relationship._get_property_data()
-        resp = relationship._update(_id,data)
-        result = get_one_result(resp)
-        return initialize_element(self.resource,result)
+    def update(self, _id, *args, **kwds):
+        relationship = self.element_class(self.resource)
+        relationship._update(_id, args, kwds)
+        return relationship
 
     def get_all(self):
         """Returns all the relationships for the label."""
+        # find a blueprints method that returns all edges for a given label
         label_var = self.resource.config.label_var
-        label = getattr(self.element_class,label_var)
+        label = self.element_class.get_label(self.resource.config)
         return self.index.lookup(label_var,label)
-
-    def _parse_args(self,relationship,args):
-        # Two different args options:
-        # 1. generic relationship args: (outV, label, inV)
-        # 2. subclassed relationship args: (outV, inV) 
-        args = list(args)
-        if args and isinstance(args[1],Vertex):
-            # no label, so this is the subclassed format;
-            # the label is defined on the relationship class
-            outV = args.pop(0)
-            inV = args.pop(0) 
-            outV = self._coerce_vertex_id(outV)
-            inV = self._coerce_vertex_id(inV)
-            label = relationship.get_label(self.resource.config)
-            args = (outV,label,inV)
-        return args
-
-
-        

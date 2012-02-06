@@ -85,4 +85,12 @@ def get_file_path(dir_name,file_name):
     return os.path.normpath(os.path.join(dir_name,file_name))
 
 
+#
+# Generic utils
+#
+
+def extract(desired_keys, bigdict):
+    subset = dict([(i, bigdict[i]) for i in desired_keys if i in bigdict])
+    return subset
+
 

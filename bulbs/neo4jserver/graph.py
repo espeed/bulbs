@@ -43,9 +43,9 @@ class Graph(BaseGraph):
     resource_class = Neo4jResource
 
 
-    def __init__(self, config):
+    def __init__(self, root_uri=None):
         # What happens if these REST init calls error on Heroku?    
-        super(Graph, self).__init__(config)
+        super(Graph, self).__init__(root_uri)
 
         self.gremlin = Gremlin(self.resource)
 

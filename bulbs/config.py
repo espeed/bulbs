@@ -66,10 +66,9 @@ class Config(object):
 
     def set_logger(self, log_level, log_handler=None):
         """Sets or updates the log level and log handler."""
-        if log_handler is None:
-            log_handler = self.log_handler
         log = get_logger(__name__)
         log.root.setLevel(log_level)
-        log.root.addHandler(log_handler())
+        if log_handler is not None:
+            log.root.addHandler(log_handler())
 
  
