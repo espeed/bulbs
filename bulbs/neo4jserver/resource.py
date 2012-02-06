@@ -21,7 +21,7 @@ from bulbs.resource import Resource, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
-from message import Message
+from message import RequestMessage
 
 # The default URI
 NEO4J_URI = "http://localhost:7474/db/data/"
@@ -208,7 +208,7 @@ class Neo4jResource(Resource):
         self.registry.add_scripts("gremlin",self.scripts)
         self.type_system = JSONTypeSystem()
         self.request = Neo4jRequest(config,self.type_system.content_type)
-        self.message = Message(config, self.scripts)
+        self.message = RequestMessage(config, self.scripts)
         
     # Gremlin
 

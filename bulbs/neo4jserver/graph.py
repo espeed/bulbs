@@ -45,7 +45,7 @@ class Graph(BaseGraph):
 
     def __init__(self, config):
         # What happens if these REST init calls error on Heroku?    
-        super(BaseGraph, self).__init__(config)
+        super(Graph, self).__init__(config)
 
         self.gremlin = Gremlin(self.resource)
 

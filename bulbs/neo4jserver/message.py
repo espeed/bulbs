@@ -19,7 +19,7 @@ gremlin_path = "ext/GremlinPlugin/graphdb/execute_script"
 cypher_path = "ext/CypherPlugin/graphdb/execute_query"
 
 
-class Message(object):
+class RequestMessage(object):
     """Request message..."""
 
     def __init__(self, config, scripts):
