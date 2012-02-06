@@ -18,6 +18,7 @@ from bulbs.graph import Graph as BaseGraph
 from resource import Neo4jResource, NEO4J_URI
 from index import ExactIndex, UniqueIndex, FulltextIndex
 
+
 class Graph(BaseGraph):
     """
     The primary interface to graph databases on Neo4j Server.
@@ -41,7 +42,12 @@ class Graph(BaseGraph):
     default_index = ExactIndex
     resource_class = Neo4jResource
 
-    # What happens if these REST init calls error on Heroku?
+
+    def __init__(self, config):
+        # What happens if these REST init calls error on Heroku?    
+        super(BaseGraph, self).__init__(config)
+
+        self.gremlin = Gremlin(self.resource)
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""
