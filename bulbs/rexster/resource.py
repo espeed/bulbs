@@ -61,6 +61,7 @@ class RexsterResult(Result):
         
     def get_map(self):
         """Returns the element's property map."""
+        print type(self.data), self.data
         property_map = dict()
         private_keys = ['_id','_type','_outV','_inV','_label']
         for key, value in self.data.items():

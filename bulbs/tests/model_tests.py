@@ -23,7 +23,7 @@ class NodeTestCase(BulbsTestCase):
     def setUp(self):
         indices = self.vertex_index_proxy(self.index_class,self.resource)
         self.people = NodeProxy(Person,self.resource)
-        self.people.index = indices.get_or_create("people")
+        self.people.index = indices.get_or_create("person")
         self.james = self.people.create(name="James", age=34)
 
     def test_properties(self):
@@ -42,7 +42,7 @@ class NodeTestCase(BulbsTestCase):
         
     def test_index_name(self):
         index_name = self.people.index.index_name
-        assert index_name == "people"
+        assert index_name == "person"
 
     # Will this work for autmatic indices?
     #def test_index_put_and_get(self): 

@@ -36,6 +36,10 @@ class Element(object):
         self._initialized = True
        
     @classmethod
+    def get_base_type(cls):
+        raise NotImplementedError 
+
+    @classmethod
     def get_element_key(cls, config):
         raise NotImplementedError 
 
@@ -179,8 +183,6 @@ class Vertex(Element):
     >>> james.save()
 
     """  
-
-
     @classmethod
     def get_base_type(cls):
         #: Don't override this
@@ -188,7 +190,7 @@ class Vertex(Element):
 
     @classmethod
     def get_element_key(cls, config):
-        return cls.get_base_type()
+        return "vertex"
 
     @classmethod 
     def get_index_name(cls, config):
@@ -286,6 +288,19 @@ class Vertex(Element):
         return self._vertices.update(self._id, self._data)
     
 
+    #def _create(self,_data=None,**kwds):
+    #    data = build_data(_data, kwds)
+    #    resp = self.resource.create_vertex(data)
+    #    self._initialize(resp.results)
+        
+    #def _update(self,_id, _data=None, **kwds):
+    #    data = build_data(_data, kwds)
+    #    resp = self.resource.update_vertex(_id,_data)
+    #    # with Neo4j, there is nothting to initialize
+    #    self._initialize(resp.results)
+        
+        
+
 class Edge(Element):
     """
     A container for an Edge returned by a resource proxy.
@@ -318,7 +333,7 @@ class Edge(Element):
 
     @classmethod
     def get_element_key(cls, config):
-        return cls.get_base_type()
+        return "edge"
 
     @classmethod 
     def get_index_name(cls, config):
@@ -579,7 +594,7 @@ class EdgeProxy(object):
 
 
 #
-# Utils
+# Element Utils
 #
 
 def build_data(_data, kwds):
@@ -589,26 +604,26 @@ def build_data(_data, kwds):
     return data
 
 def coerce_vertices(outV, inV):
-    outV = coerce_vertex_id(outV)
-    inV = coerce_vertex_id(inV)
+    outV = coerce_vertex(outV)
+    inV = coerce_vertex(inV)
     return outV, inV
   
-def coerce_vertex_id(v):
+def coerce_vertex(vertex):
     """
     Coerces an object into a vertex ID and returns it.
     
-    :param v: The object we want to coerce into a vertex ID.
-    :type v: Vertex object or vertex ID.
+    :param vertex: The object we want to coerce into a vertex ID.
+    :type vertex: Vertex object or vertex ID.
 
     :rtype: int or str
 
     """
-    if isinstance(v, Vertex):
-        vertex_id = v._id
+    if isinstance(vertex, Vertex):
+        vertex_id = vertex._id
     else:
         # the vertex ID may have been passed in as a string
         # using corece_id to support OrientDB and linked-data URI (non-integer) IDs
-        vertex_id = coerce_id(v)
+        vertex_id = coerce_id(vertex)
     return vertex_id
 
 def coerce_id(_id):

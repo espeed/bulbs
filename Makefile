@@ -2,9 +2,15 @@
 
 all: clean-pyc test
 
-test:
-	python setup.py test
+$test_args = 
 
+ifneq ($(server), )
+	test_args = -m bulbs.$(server).tests.bulbs_tests
+endif
+
+
+test:
+	python setup.py test $(test_args)
 audit:
 	python setup.py audit
 

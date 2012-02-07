@@ -1,9 +1,9 @@
 import unittest
 
-from bulbs.rexster.tests.bulbs_tests import rexster_bulbs_suite
+from bulbs.rexster.tests.bulbs_tests import test_suite as rexster_bulbs_suite
 from bulbs.rexster.tests.resource_tests import rexster_resource_suite
 
-from bulbs.neo4jserver.tests.bulbs_tests import neo4j_bulbs_suite
+from bulbs.neo4jserver.tests.bulbs_tests import test_suite as neo4j_bulbs_suite
 from bulbs.neo4jserver.tests.resource_tests import neo4j_resource_suite
 
 def suite():

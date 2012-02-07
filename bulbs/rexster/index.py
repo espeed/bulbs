@@ -133,7 +133,7 @@ class Index(object):
         return self.results.data['type']
 
     # TODO: change to lookup?
-    def get(self,key=None,value=None,**pair):
+    def lookup(self,key=None,value=None,**pair):
         """
         Return a generator containing all the elements with key property equal 
         to value in the index.
@@ -303,7 +303,7 @@ class ManualIndex(Index):
         return self.put_unique(_id,key,value,**pair)
 
          
-    def get_unique(self,key=None,value=None,**pair):
+    def lookup_unique(self,key=None,value=None,**pair):
         """
         Returns a max of 1 elements matching the key/value pair in the index.
 

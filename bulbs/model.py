@@ -30,8 +30,11 @@ class ModelMeta(type):
     def _get_initial_properties(cls):
         # Get Properties defined in the parent and inherit them.
         # Or if the Model doesn't have a parent Model, set it to an empty dict
-        properties = getattr(cls, '_properties', {})
-        return properties.copy()
+        properties = {}
+        parent_properties = getattr(cls, '_properties', None)
+        if parent_properties:
+            properties = parent_properties.copy() 
+        return properties
             
     def _register_properties(cls, namespace):
         # loop through the class namespace looking for database Property instances
@@ -106,9 +109,7 @@ class Model(object):
             # Notice that __setattr__ is overloaded
             setattr(self, key, value)
 
-    
-
-    def _set_property_data(self, result):
+    def _set_property_data(self):
         """
         Sets Property data when an element is being initialized, after it is
         retrieved from the DB -- we set it to None if it won't set.        
@@ -123,7 +124,7 @@ class Model(object):
             #    # for now, don't set read-only vars
             #    continue
             name = property_instance.name
-            value = result.data.get(key, None)
+            value = self._data.get(key, None)
             value = property_instance.convert_to_python(type_system, value)
             # TODO: think through this some more...
             if property_instance.fset is None:
@@ -234,7 +235,7 @@ class Node(Vertex,Model):
         # initialize all non-DB properties here
         Vertex._initialize(self,result)
         self._initialized = False
-        self._set_property_data(result)
+        self._set_property_data()
         self._initialized = True
         
     def save(self):
@@ -263,6 +264,7 @@ class Node(Vertex,Model):
         result = get_one_result(resp)  
         self._initialize(result)
         
+
 class Relationship(Edge,Model):
     """ 
     An abstract base class used to create classes that model domain objects. It is
@@ -328,7 +330,7 @@ class Relationship(Edge,Model):
         # initialize all non-DB properties here
         Edge._initialize(self,result)
         self._initialized = False
-        self._set_property_data(result)
+        self._set_property_data()
         self._initialized = True
 
     def save(self):
@@ -371,8 +373,9 @@ class NodeProxy(VertexProxy):
 
     def get_all(self):
         """Returns all the elements for the model type."""
-        type_var = self.resource.config.type_var
-        element_type = self.element_class.get_element_type(self.resource.config)
+        config = self.resource.config
+        type_var = config.type_var
+        element_type = self.element_class.get_element_type(config)
         return self.index.lookup(type_var,element_type)
 
 
@@ -390,7 +393,10 @@ class RelationshipProxy(EdgeProxy):
 
     def get_all(self):
         """Returns all the relationships for the label."""
-        # find a blueprints method that returns all edges for a given label
-        label_var = self.resource.config.label_var
-        label = self.element_class.get_label(self.resource.config)
+        # TODO: find a blueprints method that returns all edges for a given label
+        # because you many not want to index edges
+        config = self.resource.config
+        label_var = config.label_var
+        label = self.element_class.get_label(config)
         return self.index.lookup(label_var,label)
+        
