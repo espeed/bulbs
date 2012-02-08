@@ -1,10 +1,9 @@
 import unittest
 from bulbs.config import Config
 from bulbs.tests import BulbsTestCase, bulbs_test_suite
-from bulbs.tests import GremlinTestCase
 from bulbs.neo4jserver import Neo4jResource, NEO4J_URI, \
    VertexIndexProxy, EdgeIndexProxy, ExactIndex
-
+from bulbs.tests import GremlinTestCase
 
 config = Config(NEO4J_URI)
 BulbsTestCase.resource = Neo4jResource(config)

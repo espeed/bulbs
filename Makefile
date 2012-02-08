@@ -5,7 +5,7 @@ all: clean-pyc test
 $test_args = 
 
 ifneq ($(server), )
-	test_args = -m bulbs.$(server).tests.bulbs_tests
+	test_args = -m bulbs.$(server).tests
 endif
 
 

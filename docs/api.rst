@@ -10,12 +10,12 @@ provides access to any Blueprints-enabled graph database, including:
 TinkerGraph, Neo4j, OrientDB, Dex, and OpenRDF Sail.
 
 
-.. module:: bulbs.neo4jserver.graph
+.. module:: bulbs.graph
 
 Graph
 ^^^^^
 
-.. autoclass:: Neo4jGraph
+.. autoclass:: Graph
    :members:
    :inherited-members:
 

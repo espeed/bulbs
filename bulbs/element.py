@@ -420,7 +420,7 @@ class VertexProxy(object):
         Returns the vertex for the given ID.
 
         :param _id: The vertex ID.
-        :type _id" int or str
+        :type _id: int or str
 
         :rtype: Vertex
 

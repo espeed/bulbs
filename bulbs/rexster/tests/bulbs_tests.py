@@ -3,7 +3,7 @@ from bulbs.config import Config, DEBUG
 from bulbs.tests import BulbsTestCase, bulbs_test_suite
 from bulbs.rexster import RexsterResource, REXSTER_URI, \
     VertexIndexProxy, EdgeIndexProxy, ManualIndex
-
+from bulbs.tests import GremlinTestCase
 
 config = Config(REXSTER_URI)
 BulbsTestCase.resource = RexsterResource(config)
@@ -14,7 +14,7 @@ BulbsTestCase.index_class = ManualIndex
 def test_suite():
     suite = bulbs_test_suite()
     #suite.addTest(unittest.makeSuite(RestTestCase))
-    #suite.addTest(unittest.makeSuite(GremlinTestCase))
+    suite.addTest(unittest.makeSuite(GremlinTestCase))
     return suite
 
 if __name__ == '__main__':

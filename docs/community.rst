@@ -75,7 +75,7 @@ To get a feel for graphs, watch these videos by Marko:
 * `The Pathology of Graph Databases <http://vimeo.com/26377162>`_
 
 Neo4j
-----
+-----
 
 `Neo4j <http://neo4j.org/>`_ is one of the leading open-source graph
 databases. The `Community Edition is now free
