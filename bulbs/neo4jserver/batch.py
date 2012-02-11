@@ -1,8 +1,8 @@
 
 class Neo4jBatch(object):
     
-    def __init__(self,resource):
-        self.resource = resource
+    def __init__(self,client):
+        self.client = client
         self.messages = []
         self.message_id = 0
 
@@ -27,4 +27,4 @@ class Neo4jBatch(object):
         return self.messages
 
     def send(self):
-        return self.resource.batch(self.messages)
+        return self.client.batch(self.messages)

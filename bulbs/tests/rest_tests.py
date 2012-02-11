@@ -3,18 +3,18 @@ from bulbs.config import Config
 #from bulbs.rest import Request
 
 from bulbs.utils import build_path
-from bulbs.rexster.resource import RexsterRequest
+from bulbs.rexster.client import RexsterRequest
 
 class RestTestCase(unittest.TestCase):
     
     def setUp(self):
-        #self.resource = Resource(config.DATABASE_URL)
+        #self.client = Client(config.DATABASE_URL)
         config = Config(root_uri=None)
         self.request = RexsterRequest(config)
 
     def test_init(self):
         config = Config('http://localhost:8182/not-graphs/gratefulgraph')
-        #res = Resource(config)
+        #res = Client(config)
 
         print config.root_uri
         assert config.root_uri == 'http://localhost:8182/not-graphs/gratefulgraph'

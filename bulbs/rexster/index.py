@@ -13,36 +13,36 @@ from bulbs.utils import initialize_element, initialize_elements, get_one_result
 class IndexProxy(object):
     """Abstract base class the index proxies."""
 
-    def __init__(self,index_class,resource):        
+    def __init__(self,index_class,client):        
         #: The index class for this proxy, e.g. ExactIndex.
         self.index_class = index_class
 
-        #: The Resource object for the database.
-        self.resource = resource
+        #: The Client object for the database.
+        self.client = client
     
 
 class VertexIndexProxy(IndexProxy):
     """
     An interface for interacting with indices on Rexster.
 
-    :param resource: The Resource object for the database.
+    :param client: The Client object for the database.
     :param index_class: The index class for this proxy, e.g. RexsterIndex.
 
     """
                         
     def create(self,index_name,*args,**kwds):
         """Creates an an index and returns it."""
-        resp = self.resource.create_vertex_index(index_name,*args,**kwds)
-        index = self.index_class(self.resource,resp.results)
-        self.resource.registry.add_index(index_name,index)
+        resp = self.client.create_vertex_index(index_name,*args,**kwds)
+        index = self.index_class(self.client,resp.results)
+        self.client.registry.add_index(index_name,index)
         return index
 
     def get(self,index_name):
         """Returns the Index object with the specified name or None if not found."""
-        resp = self.resource.get_vertex_index(index_name)
+        resp = self.client.get_vertex_index(index_name)
         if resp.results:
-            index = self.index_class(self.resource,resp.results)
-            self.resource.registry.add_index(index_name,index)
+            index = self.index_class(self.client,resp.results)
+            self.client.registry.add_index(index_name,index)
             return index
 
     def get_or_create(self,index_name,*args,**kwds):
@@ -56,7 +56,7 @@ class VertexIndexProxy(IndexProxy):
     def delete(self,index_name):
         """Deletes/drops an index and returns the Rexster Response object."""
         try:
-            return self.resource.delete_vertex_index(index_name)
+            return self.client.delete_vertex_index(index_name)
         except LookupError:
             return None
 
@@ -64,7 +64,7 @@ class EdgeIndexProxy(IndexProxy):
     """
     An interface for interacting with indices on Rexster.
 
-    :param resource: The Resource object for the database.
+    :param client: The Client object for the database.
     :param index_class: The index class for this proxy, e.g. RexsterIndex.
 
     """
@@ -82,17 +82,17 @@ class EdgeIndexProxy(IndexProxy):
                             Either vertex or edge.
         
         """
-        resp = self.resource.create_edge_index(index_name,*args,**kwds)
-        index = self.index_class(self.resource,resp.results)
-        self.resource.registry.add_index(index_name,index)
+        resp = self.client.create_edge_index(index_name,*args,**kwds)
+        index = self.index_class(self.client,resp.results)
+        self.client.registry.add_index(index_name,index)
         return index
 
     def get(self,index_name):
         """Returns the Index object with the specified name or None if not found."""
-        resp = self.resource.get_edge_index(index_name)
+        resp = self.client.get_edge_index(index_name)
         if resp.results:
-            index = self.index_class(self.resource,resp.results)
-            self.resource.registry.add_index(index_name,index)
+            index = self.index_class(self.client,resp.results)
+            self.client.registry.add_index(index_name,index)
             return index
 
     def get_or_create(self,index_name,*args,**kwds):
@@ -106,15 +106,15 @@ class EdgeIndexProxy(IndexProxy):
     def delete(self,index_name):
         """Deletes/drops an index and returns the Rexster Response object."""
         try:
-            return self.resource.delete_edge_index(index_name)
+            return self.client.delete_edge_index(index_name)
         except LookupError:
             return None
 
 
 class Index(object):
 
-    def __init__(self,resource,results):
-        self.resource = resource
+    def __init__(self,client,results):
+        self.client = client
         self.results = results
 
     @property
@@ -152,8 +152,8 @@ class Index(object):
                        the form of name='James'.
         """
         key, value = self._parse_args(key,value,pair)
-        resp = self.resource.lookup_vertex(self.index_name,key,value)
-        return initialize_elements(self.resource,resp)
+        resp = self.client.lookup_vertex(self.index_name,key,value)
+        return initialize_elements(self.client,resp)
 
     def _parse_args(self,key,value,pair):
         if pair:
@@ -175,12 +175,12 @@ class Index(object):
                        the form of name='James'.
         """
         key, value = self._parse_args(key,value,pair)
-        resp = self.resource.index_count(self.index_name,key,value)
+        resp = self.client.index_count(self.index_name,key,value)
         return resp.content['totalSize']
 
     def keys(self):
         """Return the index's keys."""
-        resp = self.resource.index_keys(self.index_name)
+        resp = self.client.index_keys(self.index_name)
         return list(resp.results)
 
 
@@ -189,8 +189,8 @@ class AutomaticIndex(Index):
     def rebuild(self):
         # need class_map b/c the Blueprints need capitalized class names, 
         # but Rexster returns lower-case class names for index_class
-        method_map = dict(vertex=self.resource.rebuild_vertex_index,
-                          edge=self.resource.rebuild_edge_index)
+        method_map = dict(vertex=self.client.rebuild_vertex_index,
+                          edge=self.client.rebuild_edge_index)
         rebuild_method = method_map.get(self.index_class)
         resp = rebuild_method(self.index_name)
         return list(resp.results)
@@ -203,7 +203,7 @@ class ManualIndex(Index):
     Use this class to get, put, and update items in an index.
     
 
-    :param resource: The Resource object for the database.
+    :param client: The Client object for the database.
 
     :param results: The results list returned by Rexster.
 
@@ -248,8 +248,8 @@ class ManualIndex(Index):
         """
         # NOTE: if you ever change the _id arg to element, change remove() too
         key, value = self._parse_args(key,value,pair)
-        method_map = dict(vertex=self.resource.put_vertex,
-                          edge=self.resource.put_edge)
+        method_map = dict(vertex=self.client.put_vertex,
+                          edge=self.client.put_edge)
         put_method = method_map.get(self.index_class)
         resp = put_method(self.index_name,key,value,_id)
         return resp
@@ -275,8 +275,8 @@ class ManualIndex(Index):
 
         """
         key, value = self._parse_args(key,value,pair)
-        method_map = dict(vertex=self.resource.remove_vertex,
-                          edge=self.resource.remove_edge)
+        method_map = dict(vertex=self.client.remove_vertex,
+                          edge=self.client.remove_edge)
         remove_method = method_map.get(self.index_type)
         for result in self.get(key,value):
             remove_method(self.index_name,result._id,key,value)
@@ -318,9 +318,9 @@ class ManualIndex(Index):
                        the form of name='James'.
         """
         key, value = self._parse_args(key,value,pair)
-        resp = self.resource.lookup_vertex(self.index_name,key,value)
+        resp = self.client.lookup_vertex(self.index_name,key,value)
         result = get_one_result(resp)
-        return initialize_element(self.resource,result)
+        return initialize_element(self.client,result)
 
     def remove(self,_id,key=None,value=None,**pair):
         """
@@ -339,8 +339,8 @@ class ManualIndex(Index):
                        the form of name='James'.
         """
         key, value = self._parse_args(key,value,pair)
-        method_map = dict(vertex=self.resource.remove_vertex,
-                          edge=self.resource.remove_edge)
+        method_map = dict(vertex=self.client.remove_vertex,
+                          edge=self.client.remove_edge)
         remove_method = method_map.get(self.index_class)
         return remove_method(self.index_name,_id,key,value)
 

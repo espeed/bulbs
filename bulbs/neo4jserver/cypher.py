@@ -13,12 +13,12 @@ from bulbs.utils import initialize_elements
 
 class Cypher(object):
 
-    def __init__(self,resource):
-        self.resource = resource
+    def __init__(self,client):
+        self.client = client
 
     def query(self, query, params=None):
-        resp = self.resource.cypher(query,params)
-        return initialize_elements(self.resource, resp)
+        resp = self.client.cypher(query,params)
+        return initialize_elements(self.client, resp)
 
 class ScriptError(Exception):
     pass

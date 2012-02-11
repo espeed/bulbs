@@ -14,7 +14,7 @@ from testcase import BulbsTestCase
 class VertexProxyTestCase(BulbsTestCase):
 
     def setUp(self):
-        self.vertices = VertexProxy(Vertex,self.resource)
+        self.vertices = VertexProxy(Vertex,self.client)
 
     def test_create(self):
         james = self.vertices.create({'name':'James'})
@@ -52,8 +52,8 @@ class VertexProxyTestCase(BulbsTestCase):
 class VertexTestCase(BulbsTestCase):
     
     def setUp(self):
-        self.vertices = VertexProxy(Vertex,self.resource)
-        self.edges = EdgeProxy(Edge,self.resource)
+        self.vertices = VertexProxy(Vertex,self.client)
+        self.edges = EdgeProxy(Edge,self.client)
         self.james = self.vertices.create({'name':'James'})
         self.julie = self.vertices.create({'name':'Julie'})
         self.edges.create(self.james,"test",self.julie)
@@ -92,8 +92,8 @@ class VertexTestCase(BulbsTestCase):
 class EdgeProxyTestCase(BulbsTestCase):
 
     def setUp(self):
-        self.vertices = VertexProxy(Vertex,self.resource)
-        self.edges = EdgeProxy(Edge,self.resource)
+        self.vertices = VertexProxy(Vertex,self.client)
+        self.edges = EdgeProxy(Edge,self.client)
         self.james = self.vertices.create({'name':'James'})
         self.julie = self.vertices.create({'name':'Julie'})
         

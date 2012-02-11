@@ -8,7 +8,7 @@ class GraphTestCase(unittest.TestCase):
         self.graph = Graph()
 
     def test_init(self):
-        assert config.DATABASE_URL == self.graph.resource.db_url
+        assert config.DATABASE_URL == self.graph.client.db_url
 
     def test_V(self):
         vertices = self.graph.V

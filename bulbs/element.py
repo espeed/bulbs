@@ -14,25 +14,33 @@ class Element(object):
     """
     An abstract base class for Vertex and Edge containers.
 
-    :param resource: The Resource object for the database.
-    :type resource: Resource
-
     """
-    _class_type = None
+    def __init__(self, client):
 
-    def __init__(self,resource):
-        self._resource = resource
+        #: Client object....
+        self._client = client
+
+        #: Property data
         self._data = {}
 
-    def _initialize(self,result):
+    def _initialize(self, result):
+        """
+        Initialize the element after its data has been returned by the database.
+
+        :param result: The Result object returned by the the Client request.
+        :param result: Result
+
+        
+
+        """
         # initialize all non-database properties here because
         # __setattr__ will assume all non-defined properties are database properties
         self._result = result
         self._data = result.get_map().copy() # Do we really need/want to make a copy?
-        self._set_pretty_id(self._resource)
+        self._set_pretty_id(self._client)
         # These vertex and edge proxies are only used for gets, not mutable stuff
-        self._vertices = VertexProxy(Vertex,self._resource)
-        self._edges = EdgeProxy(Edge,self._resource)
+        self._vertices = VertexProxy(Vertex,self._client)
+        self._edges = EdgeProxy(Edge,self._client)
         self._initialized = True
        
     @classmethod
@@ -76,7 +84,7 @@ class Element(object):
         """
         return self._result.get_type()
 
-    def _set_pretty_id(self, resource):
+    def _set_pretty_id(self, client):
         """
         Sets the ID var specified in Config as a Python property. Defaults to eid.
         
@@ -84,7 +92,7 @@ class Element(object):
         they are class vars so you set those when you create the Model.
 
         """
-        pretty_var = resource.config.id_var
+        pretty_var = client.config.id_var
         fget = lambda self: self._result.get_id()
         setattr(Element,pretty_var,property(fget))                    
 
@@ -164,40 +172,69 @@ class Element(object):
         return self._data
 
 
+#
+# Vertices
+#
+
 class Vertex(Element):
     """
-    A container for a Vertex returned by a resource proxy.
+    A container for a Vertex returned by a client proxy.
 
-    Example::
+    :param client: The Client object for the database.
+    :type client: Client
+
+    Example:
         
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()
-    >>> james = g.vertices.create({'name':'James'})
-    >>> julie = g.vertices.create({'name':'Julie'})
-    >>> g.edges.create(james,"knows",julie)
-    >>> james.outE()
-    >>> james.outE('knows')
-    >>> james.outV()
-    >>> james.outV('knows')
+    # Get a vertex from the database.
+    >>> james = g.vertices.get(3)
     >>> james.age = 34
     >>> james.save()
+    >>> james.map()
+    {'age': 34, 'name': 'James'}
+    >>> friends = james.outV("knows")
 
     """  
     @classmethod
     def get_base_type(cls):
+        """
+        Returns the base type, which is "vertex". Don't override this.
+        
+        :rtype: str
+        
+        """
         #: Don't override this
         return "vertex"
 
     @classmethod
     def get_element_key(cls, config):
+        """
+        Returns the element key. Defaults to "vertex". Override this in Model.
+
+        :rtype: str
+
+        """
         return "vertex"
 
     @classmethod 
     def get_index_name(cls, config):
+        """
+        Returns the index name. Defaults to the value of Config.vertex_index. 
+
+        :rtype: str
+
+        """
         return config.vertex_index
 
     @classmethod 
     def get_proxy_class(cls):
+        """
+        Returns the proxy class. Defaults to VertexProxy.
+
+        :rtype: class
+
+        """
         return VertexProxy
 
     def outE(self,label=None):
@@ -210,8 +247,8 @@ class Vertex(Element):
         :rtype: Edge generator
 
         """
-        resp = self._resource.outE(self._id,label)
-        return initialize_elements(self._resource,resp)
+        resp = self._client.outE(self._id,label)
+        return initialize_elements(self._client,resp)
 
     def inE(self,label=None):
         """
@@ -223,8 +260,8 @@ class Vertex(Element):
         :rtype: Edge generator
 
         """
-        resp = self._resource.inE(self._id,label)
-        return initialize_elements(self._resource,resp)
+        resp = self._client.inE(self._id,label)
+        return initialize_elements(self._client,resp)
 
     def bothE(self,label=None):
         """
@@ -236,8 +273,8 @@ class Vertex(Element):
         :rtype: Edge generator
 
         """
-        resp = self._resource.bothE(self._id,label)
-        return initialize_elements(self._resource,resp)
+        resp = self._client.bothE(self._id,label)
+        return initialize_elements(self._client,resp)
 
     def outV(self,label=None):
         """
@@ -249,8 +286,8 @@ class Vertex(Element):
         :rtype: Vertex generator
 
         """
-        resp = self._resource.outV(self._id,label)
-        return initialize_elements(self._resource,resp)
+        resp = self._client.outV(self._id,label)
+        return initialize_elements(self._client,resp)
 
     def inV(self,label=None):
         """
@@ -262,8 +299,8 @@ class Vertex(Element):
         :rtype: Vertex generator
 
         """
-        resp = self._resource.inV(self._id,label)
-        return initialize_elements(self._resource,resp)
+        resp = self._client.inV(self._id,label)
+        return initialize_elements(self._client,resp)
         
     def bothV(self,label=None):
         """
@@ -275,12 +312,12 @@ class Vertex(Element):
         :rtype: Vertex generator
 
         """
-        resp = self._resource.bothV(self._id,label)
-        return initialize_elements(self._resource,resp)
+        resp = self._client.bothV(self._id,label)
+        return initialize_elements(self._client,resp)
 
     def save(self):
         """
-        Saves the vertex on the resource.
+        Saves the vertex on the client.
 
         :rtype: Response
 
@@ -290,96 +327,26 @@ class Vertex(Element):
 
     #def _create(self,_data=None,**kwds):
     #    data = build_data(_data, kwds)
-    #    resp = self.resource.create_vertex(data)
+    #    resp = self.client.create_vertex(data)
     #    self._initialize(resp.results)
         
     #def _update(self,_id, _data=None, **kwds):
     #    data = build_data(_data, kwds)
-    #    resp = self.resource.update_vertex(_id,_data)
+    #    resp = self.client.update_vertex(_id,_data)
     #    # with Neo4j, there is nothting to initialize
     #    self._initialize(resp.results)
         
         
 
-class Edge(Element):
-    """
-    A container for an Edge returned by a resource proxy.
-
-    :param resource: The Resource object for the database.
-    :type resource: Resource
-
-    Example::
-        
-    >>> from bulbs.neo4jserver import Graph
-    >>> g = Graph()
-    >>> james = g.vertices.create({'name':'James'})
-    >>> julie = g.vertices.create({'name':'Julie'})
-    >>> knows = g.edges.create(james,"knows",julie)
-    >>> knows.outV()
-    >>> knows._outV
-    >>> knows.inv()
-    >>> knows._inV
-    >>> knows._label
-    >>> knows.weight = 0.5
-    >>> knows.save()
-    >>> knows.map()
-
-    """
-
-    @classmethod
-    def get_base_type(cls):
-        #: Don't override this
-        return "edge"
-
-    @classmethod
-    def get_element_key(cls, config):
-        return "edge"
-
-    @classmethod 
-    def get_index_name(cls, config):
-        return config.edge_index
-
-    @classmethod 
-    def get_proxy_class(cls):
-        return EdgeProxy
-
-    @property
-    def _outV(self):
-        """Returns the outgoing vertex ID of the edge."""
-        return self._result.get_outV()
-        
-    @property
-    def _inV(self):
-        """Returns the incoming vertex ID of the edge."""
-        return self._result.get_inV()
-        
-    @property
-    def _label(self):
-        """Returns the edge's label."""
-        return self._result.get_label()
-        
-    def outV(self):
-        """Returns the outgoing Vertex of the edge."""
-        return self._vertices.get(self._outV)
-    
-    def inV(self):
-        """Returns the incoming Vertex of the edge."""
-        return self._vertices.get(self._inV)
-
-    def save(self):
-        """Saves the edge on the resource."""
-        return self._edges.update(self._id, self._data)
-
-
 class VertexProxy(object):
     """ 
-    A proxy for interacting with vertices on the Resource. 
+    A proxy for interacting with vertices on the Client. 
 
     :param element_class: The element class to be managed by this proxy instance.
     :type element_class: Vertex or Edge class
 
-    :param resource: The Resource object for the database.
-    :type resource: Resource
+    :param client: The Client object for the database.
+    :type client: Client
 
     Example::
         
@@ -394,11 +361,11 @@ class VertexProxy(object):
 
     """
 
-    def __init__(self,element_class,resource):
+    def __init__(self,element_class,client):
         assert issubclass(element_class,Vertex)
         self.element_class = element_class
-        self.resource = resource
-        self.resource.registry.add_class(element_class)
+        self.client = client
+        self.client.registry.add_class(element_class)
         self.index = None
 
     def create(self,_data=None,**kwds):
@@ -412,8 +379,8 @@ class VertexProxy(object):
 
         """
         data = build_data(_data, kwds)
-        resp = self.resource.create_vertex(data)
-        return initialize_element(self.resource,resp.results)
+        resp = self.client.create_vertex(data)
+        return initialize_element(self.client,resp.results)
 
     def get(self,_id):
         """
@@ -426,8 +393,8 @@ class VertexProxy(object):
 
         """
         try:
-            resp = self.resource.get_vertex(_id)
-            return initialize_element(self.resource,resp.results)
+            resp = self.client.get_vertex(_id)
+            return initialize_element(self.client,resp.results)
         except LookupError:
             return None
         
@@ -439,8 +406,8 @@ class VertexProxy(object):
         :rtype: Vertex generator
  
         """
-        resp = self.resource.get_all()
-        return intialize_elements(self.resource,resp)
+        resp = self.client.get_all()
+        return intialize_elements(self.client,resp)
 
     def update(self,_id, _data=None, **kwds):
         """
@@ -453,9 +420,9 @@ class VertexProxy(object):
 
         """ 
         # NOTE: this no longer returns an initialized element because not all 
-        # Resources return element data, e.g. Neo4jServer retuns nothing.
+        # Clients return element data, e.g. Neo4jServer retuns nothing.
         data = build_data(_data, kwds)
-        self.resource.update_vertex(_id,_data)
+        self.client.update_vertex(_id,_data)
 
     # is this really needed?    
     def remove_properties(self,_id):
@@ -468,7 +435,7 @@ class VertexProxy(object):
         :rtype: Response
 
         """ 
-        return self.resource.remove_vertex_properties(_id)
+        return self.client.remove_vertex_properties(_id)
                     
     def delete(self,_id):
         """
@@ -480,12 +447,155 @@ class VertexProxy(object):
         :rtype: Response
         
         """
-        return self.resource.delete_vertex(_id)
+        return self.client.delete_vertex(_id)
+
+
+#
+# Edges
+#
+
+class Edge(Element):
+    """
+    A container for an Edge returned by a client proxy.
+
+    :param client: The Client object for the database.
+    :type client: Client
+
+    Example:
+        
+    >>> from bulbs.neo4jserver import Graph
+    >>> g = Graph()
+    # Get an edge from the database
+    >>> edge = g.edges.get(8)
+    >>> edge.label()
+    'knows'
+    >>> edge.outV()
+    <Vertex: http://localhost:7474/db/data/node/5629>
+    >>> edge._outV
+    5629
+    >>> edge.inV()
+    <Vertex: http://localhost:7474/db/data/node/5630>
+    >>> edge._inV
+    5630
+    >>> edge.weight = 0.5
+    >>> edge.save()
+    >>> edge.map()
+    {'weight': 0.5}
+
+    """
+
+    @classmethod
+    def get_base_type(cls):
+        """
+        Returns the base type, which is "edge". Don't override this.
+        
+        :rtype: str
+        
+        """
+        #: Don't override this
+        return "edge"
+
+    @classmethod
+    def get_element_key(cls, config):
+        """
+        Returns the element key. Defaults to "edge". Override this in Model.
+
+        :rtype: str
+
+        """
+        return "edge"
+
+    @classmethod 
+    def get_index_name(cls, config):
+        """
+        Returns the index name. Defaults to the value of Config.edge_index. 
+
+        :rtype: str
+
+        """
+        return config.edge_index
+
+    @classmethod 
+    def get_proxy_class(cls):
+        """
+        Returns the proxy class. Defaults to EdgeProxy.
+
+        :rtype: class
+
+        """
+        return EdgeProxy
+
+    @property
+    def _outV(self):
+        """
+        Returns the outgoing vertex ID of the edge.
+
+        :rtype: int
+
+        """
+        return self._result.get_outV()
+        
+    @property
+    def _inV(self):
+        """
+        Returns the incoming vertex ID of the edge.
+
+        :rtype: int
+
+        """
+        return self._result.get_inV()
+        
+    @property
+    def _label(self):
+        """
+        Returns the edge's label.
+
+        :rtype: str
+
+        """
+        return self._result.get_label()
+        
+    def outV(self):
+        """
+        Returns the outgoing Vertex of the edge.
+
+        :rtype: Vertex
+
+        """
+        return self._vertices.get(self._outV)
+    
+    def inV(self):
+        """
+        Returns the incoming Vertex of the edge.
+
+        :rtype: Vertex
+
+        """
+        return self._vertices.get(self._inV)
+
+    def label(self):
+        """
+        Returns the edge's label.
+
+        :rtype: str
+
+        """
+        return self._result.get_label()
+
+    def save(self):
+        """
+        Saves the edge on the client.
+
+        :rtype: Response
+
+        """
+        return self._edges.update(self._id, self._data)
+
 
     
 class EdgeProxy(object):
     """ 
-    A proxy for interacting with edges on the Resource. 
+    A proxy for interacting with edges on the Client. 
 
     Example::
         
@@ -502,11 +612,11 @@ class EdgeProxy(object):
 
     """
 
-    def __init__(self,element_class,resource):
+    def __init__(self,element_class,client):
         assert issubclass(element_class,Edge)
         self.element_class = element_class
-        self.resource = resource
-        self.resource.registry.add_class(element_class)
+        self.client = client
+        self.client.registry.add_class(element_class)
         self.index = None
 
     def create(self,outV,label,inV,_data=None,**kwds):
@@ -531,8 +641,8 @@ class EdgeProxy(object):
         assert label is not None
         data = build_data(_data, kwds)
         outV, inV = coerce_vertices(outV, inV)
-        resp = self.resource.create_edge(outV,label,inV,data)
-        return initialize_element(self.resource,resp.results)
+        resp = self.client.create_edge(outV,label,inV,data)
+        return initialize_element(self.client,resp.results)
 
     def get(self,_id):
         """
@@ -545,8 +655,8 @@ class EdgeProxy(object):
 
         """
         try:
-            resp = self.resource.get_edge(_id)
-            return initialize_element(self.resource,resp.results)
+            resp = self.client.get_edge(_id)
+            return initialize_element(self.client,resp.results)
         except LookupError:
             return None
 
@@ -564,9 +674,9 @@ class EdgeProxy(object):
 
         """
         # NOTE: this no longer returns an initialized element because 
-        # not all Resources return element data, e.g. Neo4jServer retuns nothing.
+        # not all Clients return element data, e.g. Neo4jServer retuns nothing.
         data = build_data(_data, kwds)
-        return self.resource.update_edge(_id, data)
+        return self.client.update_edge(_id, data)
                     
     def remove_properties(self,_id):
         """
@@ -578,7 +688,7 @@ class EdgeProxy(object):
         :rtype: Response
         
         """
-        return self.resource.remove_edge_properties(_id)
+        return self.client.remove_edge_properties(_id)
 
     def delete(self,_id):
         """
@@ -590,7 +700,7 @@ class EdgeProxy(object):
         :rtype: Response
 
         """
-        return self.resource.delete_edge(_id)
+        return self.client.delete_edge(_id)
 
 
 #

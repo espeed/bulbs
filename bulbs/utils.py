@@ -24,28 +24,28 @@ log = get_logger(__name__)
 # Element Utils
 #
 
-def initialize_elements(resource,response):
+def initialize_elements(client,response):
     # return None if there were no results; otherwise,
     # return a generator of initialized elements.
     if response.total_size > 0:
         for result in response.results:
-            yield initialize_element(resource,result)
+            yield initialize_element(client,result)
 
-def initialize_element(resource,result):
+def initialize_element(client,result):
     # result should be a single Result object, not a list or generator
-    element_class = get_element_class(resource,result)
-    element = element_class(resource)
+    element_class = get_element_class(client,result)
+    element = element_class(client)
     element._initialize(result)
     return element
 
-def get_element_class(resource,result):
-    element_key = get_element_key(resource,result)
-    element_class = resource.registry.get_class(element_key)
+def get_element_class(client,result):
+    element_key = get_element_key(client,result)
+    element_class = client.registry.get_class(element_key)
     return element_class
 
-def get_element_key(resource,result):
-    var_map = dict(vertex=resource.config.type_var,
-                   edge=resource.config.label_var)
+def get_element_key(client,result):
+    var_map = dict(vertex=client.config.type_var,
+                   edge=client.config.label_var)
     base_type = result.get_type()
     key_var = var_map[base_type]
     # if key_var not found, just return the generic type for the Vertex/Edge class
@@ -71,7 +71,7 @@ def get_one_result(resp):
 
 
 #
-# Resource Utils
+# Client Utils
 #
 
 def build_path(*args):

@@ -114,7 +114,7 @@ class Model(object):
         Sets Property data when an element is being initialized, after it is
         retrieved from the DB -- we set it to None if it won't set.        
         """
-        type_system = self._resource.type_system
+        type_system = self._client.type_system
         for key, property_instance in self._properties.items():
             # Convert the Properties to the defined data types and then 
             # update the self._data values that were initially set by Element._initialize()
@@ -136,8 +136,8 @@ class Model(object):
     def _get_property_data(self):
         """Returns validated Property data, ready to be saved in the DB."""
         data = self._get_initial_data()
-        type_var = self._resource.config.type_var
-        type_system = self._resource.type_system
+        type_var = self._client.config.type_var
+        type_system = self._client.type_system
         if hasattr(self, type_var):
             # add element_type to the database properties to be saved;
             # but don't worry about "label", it's always saved on the edge
@@ -161,7 +161,7 @@ class Model(object):
     def _get_index(self, index_name):
         """Returns an index for the given name if it's stored in the Registery."""
         try:
-            index = self._resource.registry.get_index(index_name)
+            index = self._client.registry.get_index(index_name)
         except KeyError:
             index = None
         return index
@@ -169,8 +169,8 @@ class Model(object):
 
 class Node(Vertex,Model):
     """ 
-    An abstract base class used to create classes that model domain objects. It is
-    not meant to be used directly
+    Node is a Vertex model. It's an abstract base class used to create classes 
+    that model domain objects. It's not meant to be used directly.
 
     To use this, create a subclass specific to the type of data you are storing. 
 
@@ -191,10 +191,10 @@ class Node(Vertex,Model):
         >>> from bulbs.neo4jserver import Graph
         >>> g = Graph()
 
-        # Add a proxy interface to the Graph object for the Person Model:
+        # Add a "people" proxy to the Graph object for the Person model:
         >>> g.add_proxy("people", Person)
 
-        # Create a Person node, which automatically saves it in the database:
+        # Use it to create a Person node, which also saves it in the database:
         >>> james = g.people.create(name="James Thornton")
         >>> james.eid
         3
@@ -208,7 +208,7 @@ class Node(Vertex,Model):
         >>> james.age = 34
         >>> james.save()
 
-        # Lookup people using the Person Model's primary index:
+        # Lookup people using the Person model's primary index:
         >>> nodes = g.people.index.lookup(name="James Thornton")
         
     """
@@ -241,8 +241,8 @@ class Node(Vertex,Model):
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()
-        index_name = self.get_index_name(self._resource.config)
-        return self._resource.update_indexed_vertex(self._id, data, index_name)
+        index_name = self.get_index_name(self._client.config)
+        return self._client.update_indexed_vertex(self._id, data, index_name)
         
     #:
     #: Override the _create and _update methods to cusomize behavior.
@@ -251,16 +251,16 @@ class Node(Vertex,Model):
     def _create(self, args, kwds):  
         self._instantiate(args, kwds)
         data = self._get_property_data()
-        index_name = self.get_index_name(self._resource.config)
-        resp = self._resource.create_indexed_vertex(data, index_name)
+        index_name = self.get_index_name(self._client.config)
+        resp = self._client.create_indexed_vertex(data, index_name)
         result = get_one_result(resp)  
         self._initialize(result)
         
     def _update(self, _id, kwds):
         self._instantiate(kwds)
         data = self._get_property_data()
-        index_name = self.get_index_name(self._resource.config)
-        resp = self._resource.update_indexed_vertex(data, index_name)
+        index_name = self.get_index_name(self._client.config)
+        resp = self._client.update_indexed_vertex(data, index_name)
         result = get_one_result(resp)  
         self._initialize(result)
         
@@ -336,7 +336,7 @@ class Relationship(Edge,Model):
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()      
-        return self._resource.update_edge(self._id, data)
+        return self._client.update_edge(self._id, data)
         
     #
     # Override the _create and _update methods to customize behavior.
@@ -344,17 +344,17 @@ class Relationship(Edge,Model):
 
     def _create(self, outV, inV, args, kwds):
         self._instantiate(args, kwds)
-        label = self.get_label(self._resource.config)
+        label = self.get_label(self._client.config)
         data = self._get_property_data()
         outV, inV = coerce_vertices(outV, inV)
-        resp = self._resource.create_edge(outV, label, inV, data)
+        resp = self._client.create_edge(outV, label, inV, data)
         result = get_one_result(resp)
         self._initialize(result)
         
     def _update(self, _id, data):
         self._instantiate(args, kwds)
         data = self._get_property_data()
-        resp = self._resource.update_edge(_id, data)
+        resp = self._client.update_edge(_id, data)
         result = get_one_result(resp)
         self._initialize(result)
 
@@ -362,18 +362,18 @@ class Relationship(Edge,Model):
 class NodeProxy(VertexProxy):
 
     def create(self, *args, **kwds):
-        node = self.element_class(self.resource)
+        node = self.element_class(self.client)
         node._create(args, kwds)
         return node
         
     def update(self, _id, *args, **kwds):
-        node = self.element_class(self.resource)
+        node = self.element_class(self.client)
         node._update(_id, args, kwds)
         return node
 
     def get_all(self):
         """Returns all the elements for the model type."""
-        config = self.resource.config
+        config = self.client.config
         type_var = config.type_var
         element_type = self.element_class.get_element_type(config)
         return self.index.lookup(type_var,element_type)
@@ -382,12 +382,12 @@ class NodeProxy(VertexProxy):
 class RelationshipProxy(EdgeProxy):
 
     def create(self, outV, inV, *args, **kwds):
-        relationship = self.element_class(self.resource)
+        relationship = self.element_class(self.client)
         relationship._create(outV, inV, args, kwds)
         return relationship
 
     def update(self, _id, *args, **kwds):
-        relationship = self.element_class(self.resource)
+        relationship = self.element_class(self.client)
         relationship._update(_id, args, kwds)
         return relationship
 
@@ -395,7 +395,7 @@ class RelationshipProxy(EdgeProxy):
         """Returns all the relationships for the label."""
         # TODO: find a blueprints method that returns all edges for a given label
         # because you many not want to index edges
-        config = self.resource.config
+        config = self.client.config
         label_var = config.label_var
         label = self.element_class.get_label(config)
         return self.index.lookup(label_var,label)

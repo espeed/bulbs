@@ -2,6 +2,6 @@ import unittest
 
 class BulbsTestCase(unittest.TestCase):
 
-    resource = None
+    client = None
     index_class = None
     

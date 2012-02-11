@@ -11,7 +11,7 @@
 // Gremlin Methods:  https://github.com/tinkerpop/gremlin/wiki/Gremlin-Methods 
 // Blueprints Wiki:  https://github.com/tinkerpop/blueprints/wiki
 //
-// Resource-specific methods are defined at the resource level.
+// Client-specific methods are defined at the client level.
 // e.g. neo4j/gremlin.groovy and rexster/gremlin.groovy
 //
 

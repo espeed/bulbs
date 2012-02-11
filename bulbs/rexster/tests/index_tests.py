@@ -9,27 +9,27 @@ from bulbs.tests.testcase import BulbsTestCase
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
 from bulbs.config import Config
     
-from bulbs.rexster import RexsterResource, REXSTER_URI
+from bulbs.rexster import RexsterClient, REXSTER_URI
 from bulbs.rexster.index import VertexIndexProxy, EdgeIndexProxy, ManualIndex
 
 config = Config(REXSTER_URI)
-BulbsTestCase.resource = RexsterResource(config)
+BulbsTestCase.client = RexsterClient(config)
 BulbsTestCase.index_class = ManualIndex
 
  
 class IndexTestCase(BulbsTestCase):
     
     def setUp(self):
-        self.indicesV = VertexIndexProxy(self.index_class,self.resource)
-        self.indicesE = EdgeIndexProxy(self.index_class,self.resource)
+        self.indicesV = VertexIndexProxy(self.index_class,self.client)
+        self.indicesE = EdgeIndexProxy(self.index_class,self.client)
 
         self.indicesV.delete("test_idxV")
         self.indicesE.delete("test_idxE")
 
-        self.vertices = VertexProxy(Vertex,self.resource)
+        self.vertices = VertexProxy(Vertex,self.client)
         self.vertices.index = self.indicesV.get_or_create("test_idxV")
 
-        self.edges = EdgeProxy(Edge,self.resource)
+        self.edges = EdgeProxy(Edge,self.client)
         self.edges.index = self.indicesE.get_or_create("test_idxE")
 
     def test_index(self):

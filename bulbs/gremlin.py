@@ -4,7 +4,7 @@
 # BSD License (see LICENSE for details)
 #
 """
-An interface for executing Gremlin scripts on the resource.
+An interface for executing Gremlin scripts on the client.
 
 """
 from utils import initialize_elements, get_one_result
@@ -12,27 +12,27 @@ from utils import initialize_elements, get_one_result
 
 class Gremlin(object):
     """
-    An interface for executing Gremlin scripts on the resource.
+    An interface for executing Gremlin scripts on the client.
     
-    :param resource: The Resource object for the database.
-    :type resource: Resource
+    :param client: The Client object for the database.
+    :type client: Client
 
     .. note:: To get the raw query results, use the lower-level method 
-              self.resource.gremlin(script, params)
+              self.client.gremlin(script, params)
            
               Use case: You are returning element IDs and the actual
               elements are cached in Redis or Membase.
 
     """
 
-    def __init__(self,resource):
-        self.resource = resource
+    def __init__(self,client):
+        self.client = client
 
     def command(self,script,params=None):
         """
         Returns the raw result of an arbitrary Gremlin command.
 
-        :param script: Gremlin script to execute on the resource.
+        :param script: Gremlin script to execute on the client.
         :type script: str
  
         :param params: Optional paramaters to bind to the Gremlin script. 
@@ -41,14 +41,14 @@ class Gremlin(object):
         :rtype: Result
 
         """
-        resp = self.resource.gremlin(script,params)
+        resp = self.client.gremlin(script,params)
         return get_one_result(resp)
 
     def query(self,script,params=None):
         """
         Returns initialized results of an arbitrary Gremlin query.
 
-        :param script: Gremlin script to execute on the resource.
+        :param script: Gremlin script to execute on the client.
         :type script: str
  
         :param params: Optional paramaters to bind to the Gremlin script. 
@@ -57,6 +57,6 @@ class Gremlin(object):
         :rtype: Generator of objects: Vertex, Edge, Node, or Relationship
 
         """
-        resp = self.resource.gremlin(script,params)
-        return initialize_elements(self.resource,resp)
+        resp = self.client.gremlin(script,params)
+        return initialize_elements(self.client,resp)
  

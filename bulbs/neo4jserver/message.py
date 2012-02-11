@@ -155,7 +155,7 @@ class RequestMessage(object):
 
     def get_vertex_index(self,index_name):
         """Returns the vertex index with the index_name."""
-        # This is implemented in the Resource class, but could be done in Gremlin.
+        # This is implemented in the Client class, but could be done in Gremlin.
         raise NotImplementedError
 
     def delete_vertex_index(self,name): 
@@ -180,7 +180,7 @@ class RequestMessage(object):
 
     def get_edge_index(self,index_name):
         """Returns the edge index with the index_name."""
-        # This is implemented in the Resource class, but could be done in Gremlin.
+        # This is implemented in the Client class, but could be done in Gremlin.
         raise NotImplementedError
 
     def delete_edge_index(self,name):

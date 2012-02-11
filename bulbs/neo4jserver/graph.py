@@ -15,7 +15,7 @@ from bulbs.factory import Factory
 from bulbs.graph import Graph as BaseGraph
 
 # Neo4j-specific imports
-from resource import Neo4jResource, NEO4J_URI
+from client import Neo4jClient, NEO4J_URI
 from index import ExactIndex, UniqueIndex, FulltextIndex
 
 
@@ -23,41 +23,45 @@ class Graph(BaseGraph):
     """
     The primary interface to graph databases on Neo4j Server.
 
-    Instantiates the database :class:`~bulbs.rest.Resource` object using 
+    Instantiates the database :class:`~bulbs.rest.Client` object using 
     the specified database URL and sets up proxy objects to the database.
 
-    :keyword root_uri: The URI to Neo4j Server. 
+    :param config: Optional. Defaults to the default config.
+    :type config: bulbs.config.Config
     
     Example::
 
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()
-    >>> james = g.vertices.create({'name':'James'})
-    >>> julie = g.vertices.create({'name':'Julie'})
-    >>> g.edges.create(james,"knows",julie)
-    >>> g.vertices.index.lookup(name="James")
+    >>> james = g.vertices.create(name="James")
+    >>> julie = g.vertices.create(name="Julie")
+    >>> g.edges.create(james, "knows", julie)
 
     """
+    #: The default root URI to use for the server Client.
     default_uri = NEO4J_URI
+
+    #: The default Index class.
     default_index = ExactIndex
-    resource_class = Neo4jResource
 
+    #: The Client class to use for this Graph.
+    client_class = Neo4jClient
 
-    def __init__(self, root_uri=None):
+    def __init__(self, config=None):
         # What happens if these REST init calls error on Heroku?    
-        super(Graph, self).__init__(root_uri)
+        super(Graph, self).__init__(config)
 
-        self.gremlin = Gremlin(self.resource)
+        self.gremlin = Gremlin(self.client)
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""
-        script = self.resource.scripts.get('load_graphml')
+        script = self.client.scripts.get('load_graphml')
         params = dict(uri=uri)
         return self.gremlin.command(script,params)
         
     def save_graphml(self):
         """Returns a GraphML file representing the entire database."""
-        script = self.resource.scripts.get('save_graphml')
+        script = self.client.scripts.get('save_graphml')
         return self.gremlin.command(script,params=None)
         
     def clear(self):
@@ -68,6 +72,6 @@ class Graph(BaseGraph):
            This will delete all your data!
 
         """
-        script = self.resource.scripts.get('clear')
+        script = self.client.scripts.get('clear')
         return self.gremlin.command(script,params=None)
         

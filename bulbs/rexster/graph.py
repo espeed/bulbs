@@ -11,33 +11,33 @@ from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
 
 # Rexster-specific imports
-from resource import Neo4jResource, NEO4J_URI
+from client import Neo4jClient, NEO4J_URI
 from index import ManualIndex, IndexProxy
 
 class Graph(object):
 
     def __init__(self,root_uri=REXSTER_URI):
         self.config = Config(root_uri)
-        self.resource = RexsterResource(self.config)
+        self.client = RexsterClient(self.config)
 
-        self.gremlin = Gremlin(self.resource)
-        self.indices = IndexProxy(RexsterIndex,resource)
+        self.gremlin = Gremlin(self.client)
+        self.indices = IndexProxy(RexsterIndex,client)
 
-        self.vertices = VertexProxy(Vertex,self.resource)
+        self.vertices = VertexProxy(Vertex,self.client)
         self.vertices.index = self.indices.get("vertices",Vertex)
  
-        self.edges = EdgeProxy(Edge,self.resource)
+        self.edges = EdgeProxy(Edge,self.client)
         self.edges.index = self.indices.get("edges",Edge)
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""
-        script = self.resource.scripts.get('load_graphml')
+        script = self.client.scripts.get('load_graphml')
         params = dict(uri=uri)
         return self.gremlin.execute(script,params)
         
     def save_graphml(self):
         """Returns a GraphML file representing the entire database."""
-        script = self.resource.scripts.get('save_graphml')
+        script = self.client.scripts.get('save_graphml')
         results = self.gremlin.execute(script,params=None)
         return results[0]
 
@@ -55,7 +55,7 @@ class Graph(object):
            g.clear() will delete all your data!
 
         """
-        return self.resource.clear()
+        return self.client.clear()
 
 
 class SailGraph(object):
@@ -63,31 +63,31 @@ class SailGraph(object):
 
     def __init__(self,root_uri=SAIL_URI):
         self.config = Config(root_uri)
-        self.resource = RexsterResource(self.config)
+        self.client = RexsterClient(self.config)
 
         # No indices on sail graphs
-        self.gremlin = Gremlin(self.resource)        
+        self.gremlin = Gremlin(self.client)        
 
-        self.vertices = VertexProxy(Vertex,self.resource)
-        self.edges = EdgeProxy(Edge,self.resource)
+        self.vertices = VertexProxy(Vertex,self.client)
+        self.edges = EdgeProxy(Edge,self.client)
 
     def add_prefix(self,prefix,namespace):
         params = dict(prefix=prefix,namespace=namespace)
-        resp = self.resource.post(self._base_target(),params)
+        resp = self.client.post(self._base_target(),params)
         return resp
 
     def get_all_prefixes(self):
-        resp = self.resource.get(self._base_target(),params=None)
+        resp = self.client.get(self._base_target(),params=None)
         return resp.results
 
     def get_prefix(self,prefix):
         target = "%s/%s" % (self._base_target(), prefix)
-        resp = self.resource.get(target,params=None)
+        resp = self.client.get(target,params=None)
         return resp.results
         
     def remove_prefix(self,prefix):
         target = "%s/%s" % (self._base_target(), prefix)
-        resp = self.resource.delete(target,params=None)
+        resp = self.client.delete(target,params=None)
         return resp
 
     def load_rdf(self,url):
@@ -100,10 +100,10 @@ class SailGraph(object):
         """
         script = "g.loadRDF('%s', 'n-triples')" % url
         params = dict(script=script)
-        resp = self.resource.get(self.base_target,params)
+        resp = self.client.get(self.base_target,params)
         return resp
 
     def _base_target(self):
         "Returns the base target URL path for vertices on Rexster."""
-        base_target = "%s/%s" % (self.resource.db_name,"prefixes")
+        base_target = "%s/%s" % (self.client.db_name,"prefixes")
         return base_target

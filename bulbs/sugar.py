@@ -2,8 +2,8 @@
 class Sugar(object):
     """Graph mixin containing some syntactic sugar."""
 
-    def __init__(self,resource):
-        self.resource = resource
+    def __init__(self,client):
+        self.client = client
 
 
     @property
@@ -19,7 +19,7 @@ class Sugar(object):
         :rtype: List of :class:`~bulbs.element.Vertex` objects. 
 
         """
-        resp = self.resource.gremlin("g.V")
+        resp = self.client.gremlin("g.V")
         return list(resp.results)
     
     @property
@@ -35,7 +35,7 @@ class Sugar(object):
         :rtype: List of :class:`~bulbs.element.Edge` objects.
 
         """
-        resp = self.resource.gremlin("g.E")
+        resp = self.client.gremlin("g.E")
         return list(resp.results)
 
     def idxV(self,**kwds):
@@ -62,9 +62,9 @@ class Sugar(object):
         """
         index_name = "vertices"
         key, value = kwds.popitem()
-        resp = self.resource.lookup_vertex(index_name,key,value)
+        resp = self.client.lookup_vertex(index_name,key,value)
         if resp.results:
-            return (Vertex(self.resource,result) for result in resp.results)
+            return (Vertex(self.client,result) for result in resp.results)
         
         
     def idxE(self,**kwds):
@@ -91,7 +91,7 @@ class Sugar(object):
         """
         index_name = "edges"
         key, value = kwds.popitem()
-        resp = self.resource.lookup_edge(index_name,key,value)
+        resp = self.client.lookup_edge(index_name,key,value)
         if resp.results:
-            return (Edge(self.resource,result) for result in resp.results)
+            return (Edge(self.client,result) for result in resp.results)
 

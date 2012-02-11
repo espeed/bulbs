@@ -11,7 +11,7 @@ Bulbs supports plugabble type systems.
 class TypeSystem(object):
     """Abstract base class for plugabble database type systems."""
 
-    #: The backend resource's content type.
+    #: The backend client's content type.
     content_type = None
 
     #: Converter object used to convert Python values to database values.

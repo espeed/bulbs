@@ -1,7 +1,7 @@
 Rexster
 -------
 
-Bulbs' Rexster Resource is a Python interface to the `Rexster API <https://github.com/tinkerpop/rexster/wiki/Basic-REST-API>`_. 
+Bulbs' Rexster client is a Python interface to the `Rexster REST API <https://github.com/tinkerpop/rexster/wiki/Basic-REST-API>`_. 
 
 Rexster is a REST server for graph databases with direct support for searching, ranking, scoring, and more specifically, recommendation. See the `Rexster documenation <https://github.com/tinkerpop/rexster/wiki/>`_ for details.
 

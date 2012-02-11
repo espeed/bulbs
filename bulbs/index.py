@@ -6,7 +6,7 @@
 """
 
 Bulbs supports pluggable backends. These are the abstract base classes that 
-provides the index interface for a resource. Implement these to create an index.
+provides the index interface for a client. Implement these to create an index.
 
 """
 from bulbs.utils import initialize_element, initialize_elements, get_one_result
@@ -15,12 +15,12 @@ from bulbs.utils import initialize_element, initialize_elements, get_one_result
 class VertexIndexProxy(object):
     """Abstract base class the vertex index proxy."""
 
-    def __init__(self,index_class,resource):        
+    def __init__(self,index_class,client):        
         #: The index class for this proxy, e.g. ExactIndex.
         self.index_class = index_class
 
-        #: The Resource object for the database.
-        self.resource = resource
+        #: The Client object for the database.
+        self.client = client
     
     def create(self,index_name):
         """Creates an an index and returns it."""
@@ -42,12 +42,12 @@ class VertexIndexProxy(object):
 class EdgeIndexProxy(object):
     """Abstract base class the edge index proxy."""
 
-    def __init__(self,index_class,resource):        
+    def __init__(self,index_class,client):        
         #: The index class for this proxy, e.g. ExactIndex.
         self.index_class = index_class
 
-        #: The Resource object for the database.
-        self.resource = resource
+        #: The Client object for the database.
+        self.client = client
     
     def create(self,index_name):
         """Creates an an index and returns it."""
@@ -69,10 +69,10 @@ class EdgeIndexProxy(object):
 class Index(object):
     """Abstract base class for the default index."""
 
-    def __init__(self,resource,results):
+    def __init__(self,client,results):
 
-        #: The Resource object for the database.
-        self.resource = resource
+        #: The Client object for the database.
+        self.client = client
 
         #: The index attributes returned by the proxy request.
         self.results = results

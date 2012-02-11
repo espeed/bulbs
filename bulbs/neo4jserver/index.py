@@ -13,12 +13,12 @@ from bulbs.utils import initialize_element, initialize_elements, get_one_result
 class IndexProxy(object):
     """Abstract base class the index proxies."""
 
-    def __init__(self,index_class,resource):        
+    def __init__(self,index_class,client):        
         #: The index class for this proxy, e.g. ExactIndex.
         self.index_class = index_class
 
-        #: The Resource object for the database.
-        self.resource = resource
+        #: The Client object for the database.
+        self.client = client
     
     def _build_index_config(self,index_class):
         assert self.index_class.blueprints_type is not "AUTOMATIC"
@@ -33,17 +33,17 @@ class VertexIndexProxy(IndexProxy):
     def create(self, index_name):
         """Creates an an index and returns it."""
         index_config = self._build_index_config(self.index_class)
-        resp = self.resource.create_vertex_index(index_name,index_config)
-        index = self.index_class(self.resource,resp.results)
-        self.resource.registry.add_index(index_name,index)
+        resp = self.client.create_vertex_index(index_name,index_config)
+        index = self.index_class(self.client,resp.results)
+        self.client.registry.add_index(index_name,index)
         return index
 
     def get(self, index_name):
         """Returns the Index object with the specified name or None if not found."""
-        resp = self.resource.get_vertex_index(index_name)
+        resp = self.client.get_vertex_index(index_name)
         if resp.results:
-            index = self.index_class(self.resource,resp.results)
-            self.resource.registry.add_index(index_name,index)
+            index = self.index_class(self.client,resp.results)
+            self.client.registry.add_index(index_name,index)
             return index
 
     def get_or_create(self, index_name):
@@ -55,7 +55,7 @@ class VertexIndexProxy(IndexProxy):
 
     def delete(self, index_name):
         """Deletes/drops an index and returns the Response."""
-        return self.resource.delete_vertex_index(index_name)
+        return self.client.delete_vertex_index(index_name)
 
 
 class EdgeIndexProxy(IndexProxy):
@@ -64,17 +64,17 @@ class EdgeIndexProxy(IndexProxy):
     def create(self, index_name):
         """Creates an an index and returns it."""
         index_config = self._build_index_config(self.index_class)
-        resp = self.resource.create_edge_index(index_name,index_config)
-        index = self.index_class(self.resource,resp.results)
-        self.resource.registry.add_index(index_name,index)
+        resp = self.client.create_edge_index(index_name,index_config)
+        index = self.index_class(self.client,resp.results)
+        self.client.registry.add_index(index_name,index)
         return index
 
     def get(self, index_name):
         """Returns the Index object with the specified name or None if not found."""
-        resp = self.resource.get_edge_index(index_name)
+        resp = self.client.get_edge_index(index_name)
         if resp.results:
-            index = self.index_class(self.resource,resp.results)
-            self.resource.registry.add_index(index_name,index)
+            index = self.index_class(self.client,resp.results)
+            self.client.registry.add_index(index_name,index)
             return index
 
     def get_or_create(self, index_name, *args, **kwds):
@@ -86,7 +86,7 @@ class EdgeIndexProxy(IndexProxy):
 
     def delete(self, index_name):
         """Deletes/drops an index and returns the Response."""
-        return self.resource.delete_edge_index(index_name)
+        return self.client.delete_edge_index(index_name)
 
 #
 # Index Containers (Exact, Unique, Fulltext, Automatic)
@@ -99,8 +99,8 @@ class Index(object):
     index_provider = None
     blueprints_type = None
 
-    def __init__(self,resource,results):
-        self.resource = resource
+    def __init__(self,client,results):
+        self.client = client
         self.results = results
 
     @classmethod 
@@ -121,9 +121,9 @@ class Index(object):
     def count(self, key=None, value=None, **pair):
         """Return the number of items in the index for the key and value."""
         key, value = self._get_key_value(key,value,pair)
-        script = self.resource.scripts.get('index_count')
+        script = self.client.scripts.get('index_count')
         params = dict(index_name=self.index_name,key=key,value=value)
-        resp = self.resource.gremlin(script,params)
+        resp = self.client.gremlin(script,params)
         total_size = int(resp.content)
         return total_size
 
@@ -135,8 +135,26 @@ class Index(object):
 
     def _get_method(self, **method_map):
         method_name = method_map[self.index_class]
-        method = getattr(self.resource, method_name)
+        method = getattr(self.client, method_name)
         return method
+
+class FulltextIndex(Index):
+    
+    index_type = "fulltext"
+    index_provider = "lucene"
+    blueprints_type = "MANUAL"
+
+    def query(self, query_string):
+        """
+        Return elements mathing the query.
+
+        :param query_string: The query formatted in the Lucene query language. 
+        
+        See http://lucene.apache.org/java/3_1_0/queryparsersyntax.html
+
+        """
+        resp = self.client.query_fulltext_index(self.index_name,query_string)
+        return initialize_elements(self.client,resp)
 
 class ExactIndex(Index):
 
@@ -163,7 +181,7 @@ class ExactIndex(Index):
         key, value = self._get_key_value(key,value,pair)
         lookup = self._get_method(vertex="lookup_vertex", edge="lookup_edge")
         resp = lookup(self.index_name,key,value)
-        return initialize_elements(self.resource,resp)
+        return initialize_elements(self.client,resp)
 
     def query(self, query_string):
         pass
@@ -174,7 +192,7 @@ class ExactIndex(Index):
         remove = self._get_method(vertex="remove_vertex", edge="remove_edge")
         return remove(self.index_name,_id,key,value)
 
-
+# uncdocumented -- experimental
 class UniqueIndex(ExactIndex):
 
     def put(self, _id, key=None, value=None, **pair):
@@ -193,27 +211,9 @@ class UniqueIndex(ExactIndex):
         resp = lookup(self.index_name,key,value)
         result = get_one_result(resp)
         if result:
-            return initialize_element(self.resource,result)
+            return initialize_element(self.client,result)
    
-
-class FulltextIndex(Index):
-    
-    index_type = "fulltext"
-    index_provider = "lucene"
-    blueprints_type = "MANUAL"
-
-    def query(self, query_string):
-        """
-        Return elements mathing the query.
-
-        :param query_string: The query formatted in the Lucene query language. 
-        
-        See http://lucene.apache.org/java/3_1_0/queryparsersyntax.html
-
-        """
-        resp = self.resource.query_fulltext_index(self.index_name,query_string)
-        return initialize_elements(self.resource,resp)
-
+# uncdocumented -- experimental
 class AutomaticIndex(ExactIndex):
 
     index_type = "exact"

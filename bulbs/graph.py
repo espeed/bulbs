@@ -5,57 +5,124 @@
 #
 from bulbs.config import Config
 from bulbs.factory import Factory
-from bulbs.resource import Resource
+from bulbs.client import Client
 from bulbs.element import Vertex, Edge
 from bulbs.model import Relationship
 from bulbs.index import Index
 
 
 class Graph(object):
-    """Abstract base class for the resource Graph implementataions."""
-    
+    """
+    Abstract base class for the Graph implementations. See the Bulbs 
+    Neo4j Server and Rexster documentation for server-specific 
+    implementations. 
+
+    :param config: Optional. Defaults to the default config.
+    :type config: Config
+        
+    Example:
+
+    >>> from bulbs.neo4jserver import Graph
+    >>> g = Graph()
+    >>> james = g.vertices.create(name="James")
+    >>> julie = g.vertices.create(name="Julie")
+    >>> g.edges.create(james, "knows", julie)
+
+    """
+
+    #: The default root URI to use for the server Client.
     default_uri = None
+
+    #: The Client class to use for this Graph.
+    client_class = Client
+
+    #: The default Index class.
     default_index = Index
-    resource_class = Resource
 
-    def __init__(self, root_uri=None):
-        root_uri = self.get_root_uri(root_uri)
+    def __init__(self, config=None):
+        
+        #: Config object.
+        self.config = self._get_config(config)
 
-        self.config = Config(root_uri)
-        self.resource = self.resource_class(self.config)
-        self.factory = Factory(self.resource)
+        #: Client object.
+        self.client = self.client_class(self.config)
 
-        self.vertices = self.build_proxy(Vertex)
-        self.edges = self.build_proxy(Edge)
+        self._factory = Factory(self.client)
 
-        #self.relationships = self.build_proxy(Relationship)
+        #: Generic VertexProxy object.
+        self.vertices = self._build_proxy(Vertex)
 
-    def get_root_uri(self, root_uri):
-        if not root_uri:
+        #: Generic EdgeProxy object.
+        self.edges = self._build_proxy(Edge)
+
+    def _get_config(self, config):
+        if config is None:
             root_uri = self.default_uri
-        return root_uri
+            config = Config(root_uri)
+        return config
 
     def add_proxy(self, proxy_name, element_class, index_class=None):
-        """Adds an element proxy to an existing Graph object."""
-        proxy = self.build_proxy(element_class, index_class)
+        """
+        Adds an element proxy to the Graph object for the element class.
+
+        :param proxy_name: Attribute name to use for the proxy.
+        :type proxy_name: str
+
+        :param element_class: Element class managed by this proxy.
+        :type element_class: Element
+
+        :param index_class: Index class used for Element's primary index. Defaults to default_index.
+        :type index_class: Index
+
+        :rtype: None
+
+        """
+        proxy = self._build_proxy(element_class, index_class)
         setattr(self, proxy_name, proxy)
     
     def build_proxy(self, element_class, index_class=None):
-        """Returns an element proxy built to specifications."""
+        """
+        Returns an element proxy built to specifications.
+
+        :param element_class: Element class managed by this proxy.
+        :type element_class: Element
+
+        :param index_class: Optional Index class used for Element's primary index. 
+            Defaults to default_index.
+        :type index_class: Index
+
+        :rtype: Element proxy
+
+        """
         if not index_class:
             index_class = self.default_index
-        return self.factory.build_element_proxy(element_class, index_class)
+        return self._factory.build_element_proxy(element_class, index_class)
 
-    def load_graphml(self,uri):
-        """Loads a GraphML file into the database and returns the response."""
+    def load_graphml(self, uri):
+        """
+        Loads a GraphML file into the database and returns the response.
+
+        :param uri: URI of the GraphML file.
+        :type uri: str
+
+        :rtype: Response
+
+        """
         raise NotImplementedError
         
     def save_graphml(self):
-        """Returns a GraphML file representing the entire database."""
+        """
+        Returns a GraphML file representing the entire database.
+
+        :rtype: Response
+
+        """
         raise NotImplementedError
 
     def clear(self):
         """Deletes all the elements in the graph.
+
+        :rtype: Response
 
         .. admonition:: WARNING 
 

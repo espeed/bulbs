@@ -13,7 +13,7 @@ import httplib2
 import ujson as json
 from pprint import pprint
 
-from resource import Response
+from client import Response
 from utils import get_logger
 
 log = get_logger(__name__)
@@ -75,7 +75,7 @@ class Request(object):
 
     def __init__(self, config, content_type):
         """
-        Initializes a resource object.
+        Initializes a client object.
 
         :param root_uri: the base URL of Rexster.
 
@@ -86,34 +86,34 @@ class Request(object):
         self._add_credentials(config.username, config.password)
     
     def get(self, path, params=None):
-        """Convenience method that sends GET requests to the resource.""" 
+        """Convenience method that sends GET requests to the client.""" 
         return self.request(GET, path, params)
 
     def put(self, path, params=None):
-        """Convenience method that sends PUT requests to the resource."""
+        """Convenience method that sends PUT requests to the client."""
         return self.request(PUT, path, params)
 
     def post(self, path, params=None):
-        """Convenience method that sends POST requests to the resource."""
+        """Convenience method that sends POST requests to the client."""
         return self.request(POST, path, params)
 
     def delete(self, path, params=None):
-        """Convenience method that sends DELETE requests to the resource."""
+        """Convenience method that sends DELETE requests to the client."""
         return self.request(DELETE, path, params)
     
     def send(self,message):
-        """Convenience method that sends message requests to the resource."""
+        """Convenience method that sends message requests to the client."""
         method, path, params = message
         return self.request(method, path, params)
 
     def request(self, method, path, params):
         """
-        Sends a request to the resource.
+        Sends a request to the client.
 
         :param method: either GET, PUT, POST, or DELETE.
         :param target: the URL path relative to the database URL you specified 
                        in either config.py or that you passed in as an argument
-                       when you instantiated the resource.
+                       when you instantiated the client.
         :param params: a dict of query-string parameters to include in the URL 
         """
         uri, method, body, headers = self._build_request_args(path, method, params)

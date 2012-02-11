@@ -13,16 +13,16 @@ from testcase import BulbsTestCase
 class IndexTestCase(BulbsTestCase):
     
     def setUp(self):
-        self.indicesV = self.vertex_index_proxy(self.index_class,self.resource)
-        self.indicesE = self.edge_index_proxy(self.index_class,self.resource)
+        self.indicesV = self.vertex_index_proxy(self.index_class,self.client)
+        self.indicesE = self.edge_index_proxy(self.index_class,self.client)
 
         self.indicesV.delete("test_idxV")
         self.indicesE.delete("test_idxE")
 
-        self.vertices = VertexProxy(Vertex,self.resource)
+        self.vertices = VertexProxy(Vertex,self.client)
         self.vertices.index = self.indicesV.get_or_create("test_idxV")
 
-        self.edges = EdgeProxy(Edge,self.resource)
+        self.edges = EdgeProxy(Edge,self.client)
         self.edges.index = self.indicesE.get_or_create("test_idxE")
                
     def test_index(self):
