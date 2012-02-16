@@ -61,6 +61,7 @@ class GroovyScripts(object):
 
     def _build_script(definition, signature): 
         # This method isn't be used right now...
+        # This method is not current (rework it to suit needs).
         script = """
         try {
           current_sha1 = methods[name]
@@ -70,10 +71,10 @@ class GroovyScripts(object):
           methods[name] = sha1
         }
         if (current_sha1 == sha1) 
-          return %s
+          %s
 
         try { 
-          %s
+          return %s
         } catch(e) {
 
           return %s 
