@@ -12,7 +12,7 @@ import utils
 # The scanner code came from the TED project.
 #
 
-# TODO: Simply this. You don't need group pattern detection.
+# TODO: Simplify this. You don't need group pattern detection.
 
 
 class GroovyScripts(object):
@@ -42,7 +42,7 @@ class GroovyScripts(object):
         self.methods.update(methods)
 
     def refresh(self):
-        """Refresh the stored templates from the YAML source."""
+        """Refresh the stored templates from the source."""
         for file_path in self.source_files:
             methods = self._get_methods(file_path)
             self.methods.update(methods)
@@ -70,10 +70,10 @@ class GroovyScripts(object):
           methods[name] = sha1
         }
         if (current_sha1 == sha1) 
-          %s
+          return %s
 
         try { 
-          return %s
+          %s
         } catch(e) {
 
           return %s 
