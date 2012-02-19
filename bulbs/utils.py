@@ -81,9 +81,6 @@ def build_path(*args):
     path = "/".join(segments)
     return path
 
-def get_file_path(dir_name,file_name):
-    return os.path.normpath(os.path.join(dir_name,file_name))
-
 
 #
 # Generic utils
@@ -93,4 +90,12 @@ def extract(desired_keys, bigdict):
     subset = dict([(i, bigdict[i]) for i in desired_keys if i in bigdict])
     return subset
 
+def get_file_path(current_filename, target_filename):
+    """
+    Returns the full file path for the target file.
+    
+    """
+    current_dir = os.path.dirname(current_filename)
+    file_path = os.path.normpath(os.path.join(current_dir, target_filename))
+    return file_path
 

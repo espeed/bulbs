@@ -7,14 +7,12 @@
 
 Bulbs supports pluggable backends. This is the Neo4j Server client.
 
-
-
-
 """
 import os
 import ujson as json
 from urlparse import urlsplit
 
+from bulbs.config import Config
 from bulbs.utils import get_file_path, get_logger
 from bulbs.registry import Registry
 from bulbs.config import DEBUG
@@ -206,7 +204,6 @@ class Neo4jResponse(Response):
     :ivar raw: Raw HTTP response. Only set when log_level is DEBUG.
 
     """
-    
     result_class = Neo4jResult
 
     def __init__(self, response, config):
@@ -295,17 +292,6 @@ class Neo4jResponse(Response):
             total_size = 0
         return results, total_size
 
-    def get(self, attribute):
-        """
-        Returns the value of a client-specific attribute.
-
-        :param attribute: Name of the attribute:
-        :type attribute: str
-
-        :rtype: str
-
-        """
-        return self.raw[attribute]
 
     def _set_index_name(self,index_name):
         """Sets the index name to the raw result."""
@@ -314,7 +300,7 @@ class Neo4jResponse(Response):
         
 
 class Neo4jRequest(Request):
-    """Makes requests to Neo4j Server and returns a Neo4jResponse.""" 
+    """Makes HTTP requests to Neo4j Server and returns a Neo4jResponse.""" 
     
     response_class = Neo4jResponse
 
@@ -323,40 +309,46 @@ class Neo4jClient(Client):
     """
     Low-level client that sends a request to Neo4j Server and returns a response.
 
-    :param config: Config object.
+    :param config: Optional Config object. Defaults to default Config.
     :type config: Config
 
     :ivar config: Config object.
-    :ivar registry: Registry object.
     :ivar scripts: GroovyScripts object.  
     :ivar type_system: JSONTypeSystem object.
     :ivar request: Neo4jRequest object.
     :ivar message: RequestMessage object.
 
+    Example:
+
+    >>> from bulbs.neo4jserver import Neo4jClient
+    >>> client = Neo4jClient()
+    >>> script = client.scripts.get("get_vertices")
+    >>> response = client.gremlin(script, params=None)
+    >>> result = response.results.next()
+
     """ 
+    #: Default URI for the database.
+    default_uri = NEO4J_URI
 
-    def __init__(self, config):
-        
-        # Config object.
-        self.config = config
+    def __init__(self, config=None):
 
-        # Registry object.
-        self.registry = Registry(config)
+        self.config = config or Config(self.default_uri)
+        self.registry = Registry(self.config)
 
-        # Scripts object.
+        # Neo4j supports Gremlin so include the Gremlin-Groovy script library
         self.scripts = GroovyScripts()
+        
+        # Also include the Neo4j Server-specific Gremlin-Groovy scripts
+        scripts_file = get_file_path(__file__, "gremlin.groovy")
+        self.scripts.update(scripts_file)
 
-        # TypeSystem object.
-        self.type_system = JSONTypeSystem()
-
-        # Neo4jRequest object.
-        self.request = Neo4jRequest(config,self.type_system.content_type)
-
-        # RequstMessage object.
-        self.message = RequestMessage(config, self.scripts)
-
-        self.scripts.update(self._get_scripts_file("gremlin.groovy"))
+        # Add it to the registry. This allows you to have more than one namespace.
         self.registry.add_scripts("gremlin",self.scripts)
+
+        self.type_system = JSONTypeSystem()
+        self.request = Neo4jRequest(self.config, self.type_system.content_type)
+        self.message = RequestMessage(self.config, self.scripts)
+
         
     #: Gremlin
 
@@ -1009,28 +1001,8 @@ class Neo4jClient(Client):
         message = self.message.update_indexed_edge(_id, data, index_name, keys)
         return self.request.send(message)
 
-    # Utils
-
-    def warm_cache(self):
-        """
-        Warms the server cache by loading elements into memory.
-
-        :rtype: Neo4jResponse
-
-        """
-        message = self.message.warm_cache()
-        return self.request.send(message)
 
     # Private 
-
-    def _get_scripts_file(self, file_name):
-        """
-        Returns the full file path for the scripts file.
-
-        """
-        dir_name = os.path.dirname(__file__)
-        file_path = get_file_path(dir_name,file_name)
-        return file_path
 
     def _get_index_results(self, index_name, resp):
         """
@@ -1040,6 +1012,4 @@ class Neo4jClient(Client):
         if resp.content and index_name in resp.content:
             result = resp.content[index_name]
             return Neo4jResult(result, self.config)
-
-
 

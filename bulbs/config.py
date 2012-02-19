@@ -9,9 +9,9 @@ from logging import StreamHandler, DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 class Config(object):
     """
-    Configuration options for the Graph object.
+    Configuration options for Bulbs
 
-    :param root_uri: Root URI of the server.
+    :param root_uri: Root URI of the database.
     :type root_uri: str
 
     :param username: Optional username. Defaults to None.
@@ -19,6 +19,19 @@ class Config(object):
 
     :param password: Optional password. Defaults to None.
     :type password: str
+
+    :ivar root_uri: Root URI of the server.
+    :ivar username: Optional username. Defaults to None.
+    :ivar password: Optional password. Defaults to None.
+    :ivar log_level: Python log level. Defaults to ERROR.
+    :ivar log_handler: Python log handler. Defaults to StreamHandler.
+    :ivar id_var: Name of the element ID variable. Defaults to "eid".
+    :ivar type_var: Name of the type variable. Defaults to "element_type".
+    :ivar label_var: Name of the label variable. Defaults to "label".
+    :ivar type_system: Name of the type system. Defaults to "json".
+    :ivar vertex_index: Name of the vertex index. Defaults to "vertex". 
+    :ivar edge_index: Name of the edge index. Defaults to "edge". 
+    :ivar autoindex: Enable auto indexing. Defaults to True.
 
     Example:
 
@@ -29,45 +42,25 @@ class Config(object):
     >>> g = Graph(config)
 
     """
+
     def __init__(self, root_uri, username=None, password=None):
-
-        #: Root URI of the server.
         self.root_uri = root_uri
-
-        #: Optional username. Defaults to None.
         self.username = username
-
-        #: Optional password. Defaults to None.
         self.password = password
-
-        #: Python log level. Defaults to ERROR.
         self.log_level = ERROR
-
-        #: Python log handler. Defaults to StreamHandler.
         self.log_handler = StreamHandler
-
-        #: Name of the element ID variable. Defaults to "eid".
         self.id_var = "eid"
-
-        #: Name of the type variable. Defaults to "element_type".
         self.type_var = "element_type"
-
-        #: Name of the label variable. Defaults to "label".
         self.label_var = "label"
-
-        #: Name of the type system. Defaults to "json".
         self.type_system = "json" 
-
-        #: Name of the vertex index. Defaults to "vertices".
-        self.vertex_index = "vertices"
-
-        #: Name of the edge index. Defaults to "edges".
-        self.edge_index = "edges"
-
-        #: Enable auto indexing. Defaults to True.
+        self.vertex_index = "vertex"
+        self.edge_index = "edge"
         self.autoindex = True
         
         self.set_logger(self.log_level, self.log_handler)
+
+        # Sanity checks...
+        assert self.root_uri is not None
 
     def set_logger(self, log_level, log_handler=None):
         """
@@ -84,7 +77,7 @@ class Config(object):
         """
         log = get_logger(__name__)
         log.root.setLevel(log_level)
+        self.log_level = log_level 
         if log_handler is not None:
             log.root.addHandler(log_handler())
 
- 

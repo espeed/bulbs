@@ -368,7 +368,7 @@ class VertexProxy(object):
         self.client.registry.add_class(element_class)
         self.index = None
 
-    def create(self,_data=None,**kwds):
+    def create(self, _data=None, **kwds):
         """
         Adds a vertex to the database and returns it.
 
@@ -382,7 +382,7 @@ class VertexProxy(object):
         resp = self.client.create_vertex(data)
         return initialize_element(self.client,resp.results)
 
-    def get(self,_id):
+    def get(self, _id):
         """
         Returns the vertex for the given ID.
 
@@ -398,6 +398,12 @@ class VertexProxy(object):
         except LookupError:
             return None
         
+    def get_or_create(self, key, value, _data=None, **kwds):
+        vertex = self.index.get_unique(key, value)
+        if vertex is None:
+            vertex = self.create(_data, **kwds)
+        return vertex
+
     # is this really needed?
     def get_all(self):
         """

@@ -86,23 +86,78 @@ class Request(object):
         self._add_credentials(config.username, config.password)
     
     def get(self, path, params=None):
-        """Convenience method that sends GET requests to the client.""" 
+        """
+        Convenience method that sends GET requests to the client.
+
+        :param path: Path to the server resource, relative to the root URI.
+        :type path: str
+
+        :param params: Optional URI params for the resource.
+        :type params: dict
+
+        :rtype: Response
+
+        """ 
         return self.request(GET, path, params)
 
     def put(self, path, params=None):
-        """Convenience method that sends PUT requests to the client."""
+        """
+        Convenience method that sends PUT requests to the client.
+
+        :param path: Path to the server resource, relative to the root URI.
+        :type path: str
+
+        :param params: Optional URI params for the resource.
+        :type params: dict
+
+        :rtype: Response
+
+        """
         return self.request(PUT, path, params)
 
     def post(self, path, params=None):
-        """Convenience method that sends POST requests to the client."""
+        """
+        Convenience method that sends POST requests to the client.
+
+        :param path: Path to the server resource, relative to the root URI.
+        :type path: str
+
+        :param params: Optional URI params for the resource.
+        :type params: dict
+
+        :rtype: Response
+
+        """
         return self.request(POST, path, params)
 
     def delete(self, path, params=None):
-        """Convenience method that sends DELETE requests to the client."""
+        """
+        Convenience method that sends DELETE requests to the client.
+
+        :param path: Path to the server resource, relative to the root URI.
+        :type path: str
+
+        :param params: Optional URI params for the resource.
+        :type params: dict
+
+        :rtype: Response
+
+        """
         return self.request(DELETE, path, params)
     
-    def send(self,message):
-        """Convenience method that sends message requests to the client."""
+    def send(self, message):
+        """
+        Convenience method that sends request messages to the client.
+
+        :param message: Tuple containing: (HTTP method, path, params)
+        :type path: tuple
+
+        :param params: Optional URI params for the resource.
+        :type params: dict
+
+        :rtype: Response
+
+        """
         method, path, params = message
         return self.request(method, path, params)
 
@@ -110,11 +165,17 @@ class Request(object):
         """
         Sends a request to the client.
 
-        :param method: either GET, PUT, POST, or DELETE.
-        :param target: the URL path relative to the database URL you specified 
-                       in either config.py or that you passed in as an argument
-                       when you instantiated the client.
-        :param params: a dict of query-string parameters to include in the URL 
+        :param method: HTTP method: GET, PUT, POST, or DELETE.
+        :type method: str
+
+        :param path: Path to the server resource, relative to the root URI.
+        :type path: str
+
+        :param params: Optional URI parameters for the resource.
+        :type params: dict
+
+        :rtype: Response
+
         """
         uri, method, body, headers = self._build_request_args(path, method, params)
 

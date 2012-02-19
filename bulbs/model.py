@@ -8,7 +8,7 @@ Base classes for modeling domain objects that wrap vertices and edges.
 
 """
 from bulbs.property import Property
-from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy, coerce_vertices
+from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy, coerce_vertices, build_data
 from bulbs.utils import initialize_element, get_one_result, get_logger, extract
 
 # Model Modes
@@ -95,8 +95,9 @@ class Model(object):
         else:
             Element.__setattr__(self, key, value)
 
-    def _instantiate(self, args, kwds):
-        self._set_keyword_attributes(kwds)
+    def _instantiate(self, _data, kwds):
+        data = build_data(_data, kwds)
+        self._set_keyword_attributes(data)
 
     def _coerce_property_value(self, key, value):
         if value is not None:
@@ -127,12 +128,19 @@ class Model(object):
             value = self._data.get(key, None)
             value = property_instance.convert_to_python(type_system, value)
             # TODO: think through this some more...
-            if property_instance.fset is None:
-                self._data[key] = value
-            else:
-                # Notice that __setattr__ is overloaded so bypassing it
-                object.__setattr__(self, key, value)
-        
+            # yeah, you need to set the actual Python property else 
+            # it will have the property instance as the value and getattr won't work
+            # TODO: clean this up
+            # You don't need to set _data, just the Python property because
+            # get_property_data will override the values in _data before saved
+            #if property_instance.fset is None:
+            #    self._data[key] = value
+            #    # so you want to set this regardless
+            #else:
+            #    # Notice that __setattr__ is overloaded so bypassing it
+            #    object.__setattr__(self, key, value)
+            object.__setattr__(self, key, value)
+                    
     def _get_property_data(self):
         """Returns validated Property data, ready to be saved in the DB."""
         data = self._get_initial_data()
@@ -212,6 +220,24 @@ class Node(Vertex,Model):
         >>> nodes = g.people.index.lookup(name="James Thornton")
         
     """
+    def __getattr__(self,name):
+        """
+        Returns the value of the database property for the given name.
+
+        :param name: The name of the data property.
+        :type name: str
+
+        :raises: AttributeError
+
+        :rtype: str, int, long, float, list, dict, or None 
+        
+        """
+        try:
+            return self._data[name]
+        except:
+            raise AttributeError(name)
+
+
     @classmethod
     def get_element_type(cls, config):
         element_type = getattr(cls, config.type_var)
@@ -248,16 +274,16 @@ class Node(Vertex,Model):
     #: Override the _create and _update methods to cusomize behavior.
     #:
         
-    def _create(self, args, kwds):  
-        self._instantiate(args, kwds)
+    def _create(self, _data, kwds):  
+        self._instantiate(_data, kwds)
         data = self._get_property_data()
         index_name = self.get_index_name(self._client.config)
         resp = self._client.create_indexed_vertex(data, index_name)
         result = get_one_result(resp)  
         self._initialize(result)
         
-    def _update(self, _id, kwds):
-        self._instantiate(kwds)
+    def _update(self, _id, _data, kwds):
+        self._instantiate(_data, kwds)
         data = self._get_property_data()
         index_name = self.get_index_name(self._client.config)
         resp = self._client.update_indexed_vertex(data, index_name)
@@ -342,8 +368,8 @@ class Relationship(Edge,Model):
     # Override the _create and _update methods to customize behavior.
     #
 
-    def _create(self, outV, inV, args, kwds):
-        self._instantiate(args, kwds)
+    def _create(self, outV, inV, _data, kwds):
+        self._instantiate(_data, kwds)
         label = self.get_label(self._client.config)
         data = self._get_property_data()
         outV, inV = coerce_vertices(outV, inV)
@@ -351,8 +377,8 @@ class Relationship(Edge,Model):
         result = get_one_result(resp)
         self._initialize(result)
         
-    def _update(self, _id, data):
-        self._instantiate(args, kwds)
+    def _update(self, _id, _data, kwds):
+        self._instantiate(_data, kwds)
         data = self._get_property_data()
         resp = self._client.update_edge(_id, data)
         result = get_one_result(resp)
@@ -361,14 +387,16 @@ class Relationship(Edge,Model):
 
 class NodeProxy(VertexProxy):
 
-    def create(self, *args, **kwds):
+    # make these have the same signature as VertexProxy
+
+    def create(self, _data=None, **kwds):
         node = self.element_class(self.client)
-        node._create(args, kwds)
+        node._create(_data, kwds)
         return node
         
-    def update(self, _id, *args, **kwds):
+    def update(self, _id, _data=None, **kwds):
         node = self.element_class(self.client)
-        node._update(_id, args, kwds)
+        node._update(_id, _data, kwds)
         return node
 
     def get_all(self):
@@ -381,14 +409,14 @@ class NodeProxy(VertexProxy):
 
 class RelationshipProxy(EdgeProxy):
 
-    def create(self, outV, inV, *args, **kwds):
+    def create(self, outV, inV, _data=None, **kwds):
         relationship = self.element_class(self.client)
-        relationship._create(outV, inV, args, kwds)
+        relationship._create(outV, inV, _data, kwds)
         return relationship
 
-    def update(self, _id, *args, **kwds):
+    def update(self, _id, _data=None, **kwds):
         relationship = self.element_class(self.client)
-        relationship._update(_id, args, kwds)
+        relationship._update(_id, _data, kwds)
         return relationship
 
     def get_all(self):

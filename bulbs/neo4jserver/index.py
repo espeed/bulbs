@@ -183,6 +183,28 @@ class ExactIndex(Index):
         resp = lookup(self.index_name,key,value)
         return initialize_elements(self.client,resp)
 
+    #put_unique = update
+    def put_unique(self, _id, key=None, value=None, **pair):
+        """
+        Put an element into the index at key/value and overwrite it if an 
+        element already exists at that key and value; thus, there will be a max
+        of 1 element returned for that key/value pair. Return Rexster's 
+        response.
+        """
+        return self.update(_id, key, value, **pair)
+
+    # maybe a putIfAbsent method too
+
+    def get_unique(self, key=None, value=None, **pair):
+        """Returns a max of 1 elements matching the key/value pair in the index."""
+        key, value = self._get_key_value(key,value,pair)
+        lookup = self._get_method(vertex="lookup_vertex", edge="lookup_edge")
+        resp = lookup(self.index_name,key,value)
+        if resp.total_size > 0:
+            result = get_one_result(resp)
+            return initialize_element(self.client,result)
+
+
     def query(self, query_string):
         pass
 
@@ -194,24 +216,7 @@ class ExactIndex(Index):
 
 # uncdocumented -- experimental
 class UniqueIndex(ExactIndex):
-
-    def put(self, _id, key=None, value=None, **pair):
-        """
-        Put an element into the index at key/value and overwrite it if an 
-        element already exists at that key and value; thus, there will be a max
-        of 1 element returned for that key/value pair. Return Rexster's 
-        response.
-        """
-        return self.update(_id, key, value, **pair)
-
-    def lookup(self, key=None, value=None, **pair):
-        """Returns a max of 1 elements matching the key/value pair in the index."""
-        key, value = self._get_key_value(key,value,pair)
-        lookup = self._get_method(vertex="lookup_vertex", edge="lookup_edge")
-        resp = lookup(self.index_name,key,value)
-        result = get_one_result(resp)
-        if result:
-            return initialize_element(self.client,result)
+    pass
    
 # uncdocumented -- experimental
 class AutomaticIndex(ExactIndex):

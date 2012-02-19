@@ -55,8 +55,7 @@ class GroovyScripts(object):
         return Parser(file_path).get_methods()
 
     def _get_default_file(self):
-        dir_name = os.path.dirname(__file__)
-        file_path = utils.get_file_path(dir_name,self.default_file)
+        file_path = utils.get_file_path(__file__, self.default_file)
         return file_path
 
     def _build_script(definition, signature): 

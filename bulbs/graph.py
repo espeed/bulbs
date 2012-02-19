@@ -28,11 +28,7 @@ class Graph(object):
     >>> julie = g.vertices.create(name="Julie")
     >>> g.edges.create(james, "knows", julie)
 
-    """
-
-    #: The default root URI to use for the server Client.
-    default_uri = None
-
+    """    
     #: The Client class to use for this Graph.
     client_class = Client
 
@@ -40,26 +36,21 @@ class Graph(object):
     default_index = Index
 
     def __init__(self, config=None):
-        
-        #: Config object.
-        self.config = self._get_config(config)
 
         #: Client object.
-        self.client = self.client_class(self.config)
+        self.client = self.client_class(config)
 
         self._factory = Factory(self.client)
 
         #: Generic VertexProxy object.
-        self.vertices = self._build_proxy(Vertex)
+        self.vertices = self.build_proxy(Vertex)
 
         #: Generic EdgeProxy object.
-        self.edges = self._build_proxy(Edge)
+        self.edges = self.build_proxy(Edge)
 
-    def _get_config(self, config):
-        if config is None:
-            root_uri = self.default_uri
-            config = Config(root_uri)
-        return config
+        #: Config object for convienence
+        self.config = self.client.config
+
 
     def add_proxy(self, proxy_name, element_class, index_class=None):
         """
@@ -77,7 +68,7 @@ class Graph(object):
         :rtype: None
 
         """
-        proxy = self._build_proxy(element_class, index_class)
+        proxy = self.build_proxy(element_class, index_class)
         setattr(self, proxy_name, proxy)
     
     def build_proxy(self, element_class, index_class=None):
@@ -113,6 +104,15 @@ class Graph(object):
     def save_graphml(self):
         """
         Returns a GraphML file representing the entire database.
+
+        :rtype: Response
+
+        """
+        raise NotImplementedError
+
+    def warm_cache(self):
+        """
+        Warms the server cache by loading elements into memory.
 
         :rtype: Response
 
