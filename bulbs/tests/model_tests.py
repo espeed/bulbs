@@ -1,6 +1,5 @@
 import unittest
-from testcase import BulbsTestCase
-#from bulbs.index import IndexProxy
+from .testcase import BulbsTestCase
 from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
 from bulbs.property import Integer, String, Float
 

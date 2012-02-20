@@ -1,7 +1,7 @@
 import os
 import yaml 
 from string import Template
-from utils import get_file_path
+from .utils import get_file_path
 
 # You only need this for Gremlin scripts if the server doesn't implement param 
 # bindings; otherwise, use groovy.py with gremlin.groovy -- it's several 
@@ -39,7 +39,8 @@ class Yaml(object):
         templates = dict()
         f = open(file_name)
         yaml_map = yaml.load(f)    
-        for name, template in yaml_map.items():
+        for name in yaml_map: # Python 3
+            template = yaml_map[name] 
             templates[name] = Template(template)
         return templates
 

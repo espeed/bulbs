@@ -4,33 +4,9 @@
 # BSD License (see LICENSE for details)
 #
 import os
-import sys
 import inspect
 import logging
-
-
-#
-# Python 3 
-#
-
-try:
-    from urllib.parse import quote
-    from urllib.parse import urlencode
-    from urllib.parse import urlsplit
-except:
-    from urllib import quote
-    from urllib import urlencode
-    from urlparse import urlsplit
-
-
-# unicode
-if sys.version < '3':
-    import codecs
-    def u(x):
-        return codecs.unicode_escape_decode(x)[0]
-else:
-    def u(x):
-        return x
+import urllib
 
 #
 # Logging
@@ -87,7 +63,7 @@ def get_one_result(resp):
         log.error('resp.results contains more than one item.')
         raise ValueError
     if inspect.isgenerator(resp.results):
-        result = next(resp.results)
+        result = resp.results.next()
     else:
         result = resp.results
     return result
@@ -122,5 +98,4 @@ def get_file_path(current_filename, target_filename):
     current_dir = os.path.dirname(current_filename)
     file_path = os.path.normpath(os.path.join(current_dir, target_filename))
     return file_path
-
 

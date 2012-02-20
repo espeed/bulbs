@@ -10,10 +10,9 @@ Bulbs supports pluggable backends. This is the Neo4j Server client.
 """
 import os
 import ujson as json
-from urlparse import urlsplit
 
 from bulbs.config import Config
-from bulbs.utils import get_file_path, get_logger
+from bulbs.utils import get_file_path, get_logger, urlsplit
 from bulbs.registry import Registry
 from bulbs.config import DEBUG
 
@@ -22,7 +21,7 @@ from bulbs.client import Client, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
-from message import RequestMessage
+from .message import RequestMessage
 
 # The default URI
 NEO4J_URI = "http://localhost:7474/db/data/"

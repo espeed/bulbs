@@ -96,7 +96,7 @@ class RexsterAutomaticIndexTestCase(unittest.TestCase):
         element_class = "TestVertex"
         self._delete_vertex_index(index_name)
         resp = self.client.create_automatic_vertex_index(index_name,element_class)
-        print "RAW", resp.raw
+        
 
     def test_create_automatic_indexed_vertex(self):
         index_name = "test_automatic_idxV"
@@ -104,11 +104,7 @@ class RexsterAutomaticIndexTestCase(unittest.TestCase):
         timestamp = 12345
         data = dict(name="James",age=34,timestamp=timestamp)
         resp = self.client.create_indexed_vertex_automatic(data,index_name)
-        #print resp.raw
         resp = self.client.lookup_vertex(index_name,"timestamp",timestamp)
-        print "RAW2", resp.raw
-
-
 
 def rexster_client_suite():
     suite = unittest.TestSuite()

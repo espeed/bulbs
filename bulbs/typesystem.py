@@ -7,6 +7,10 @@
 Bulbs supports plugabble type systems.
 
 """
+# Python 3
+import sys
+if sys.version > '3':
+    long = int
 
 class TypeSystem(object):
     """Abstract base class for plugabble database type systems."""

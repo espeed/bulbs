@@ -4,7 +4,7 @@ import sre_parse
 import sre_compile
 from sre_constants import BRANCH, SUBPATTERN
 import hashlib
-import utils
+from . import utils
 
 # GroovyScripts is the only public class
 
@@ -106,7 +106,7 @@ class Scanner:
         while not re.search("^}",next_line):
             content.append(next_line)
             try:
-                next_line = f.next()    
+                next_line = next(f)    
             except StopIteration:
                 # This will happen at end of file
                 next_line = None

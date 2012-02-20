@@ -1,11 +1,13 @@
 import unittest
 
-from rest_tests import RestTestCase
-from element_tests import VertexTestCase, VertexProxyTestCase, EdgeProxyTestCase
-#from graph_tests import GraphTestCase
-from index_tests import IndexTestCase
-from model_tests import NodeTestCase, RelationshipTestCase
-from gremlin_tests import GremlinTestCase
+from .rest_tests import RestTestCase
+from .element_tests import VertexTestCase, VertexProxyTestCase, EdgeProxyTestCase
+from .graph_tests import GraphTestCase
+from .index_tests import IndexTestCase
+from .model_tests import NodeTestCase, RelationshipTestCase
+from .gremlin_tests import GremlinTestCase
+
+# TODO: Add GraphTestCase back in.
 
 
 def bulbs_test_suite():

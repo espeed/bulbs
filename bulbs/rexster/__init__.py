@@ -5,7 +5,7 @@
 #
 
 #from graph import RexsterGraph
-from client import RexsterClient, REXSTER_URI, SAIL_URI
-from index import ManualIndex, AutomaticIndex, \
+from .client import RexsterClient, REXSTER_URI, SAIL_URI
+from .index import ManualIndex, AutomaticIndex, \
     VertexIndexProxy, EdgeIndexProxy
 

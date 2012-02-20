@@ -15,8 +15,8 @@ from bulbs.graph import Graph as BaseGraph
 from bulbs.factory import Factory
 
 # Neo4j-specific imports
-from client import Neo4jClient
-from index import ExactIndex
+from .client import Neo4jClient
+from .index import ExactIndex
 
 class Graph(BaseGraph):
     """

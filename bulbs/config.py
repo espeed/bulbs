@@ -3,7 +3,7 @@
 # Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
-from utils import get_logger
+from .utils import get_logger
 from logging import StreamHandler, DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 

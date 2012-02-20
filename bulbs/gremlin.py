@@ -7,7 +7,7 @@
 An interface for executing Gremlin scripts on the client.
 
 """
-from utils import initialize_elements, get_one_result
+from .utils import initialize_elements, get_one_result
 
 
 class Gremlin(object):

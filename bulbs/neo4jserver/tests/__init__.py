@@ -1,6 +1,6 @@
 import unittest
-from client_tests import neo4j_client_suite
-from bulbs_tests import test_suite as bulbs_test_suite
+from .client_tests import neo4j_client_suite
+from .bulbs_tests import test_suite as bulbs_test_suite
 
 
 def test_suite():

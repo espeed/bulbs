@@ -7,6 +7,8 @@
 Base classes for modeling domain objects that wrap vertices and edges.
 
 """
+from six import with_metaclass  # Python 3
+ 
 from bulbs.property import Property
 from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy, coerce_vertices, build_data
 from bulbs.utils import initialize_element, get_one_result, get_logger, extract
@@ -39,7 +41,8 @@ class ModelMeta(type):
     def _register_properties(cls, namespace):
         # loop through the class namespace looking for database Property instances
         # e.g. age = Integer()
-        for key, value in namespace.items():
+        for key in namespace: # Python 3
+            value = namespace[key]
             assert key not in cls._properties, "Can't redefine Property '%s'" % key
             if isinstance(value, Property):
                 property_instance = value  # for clarity
@@ -79,9 +82,7 @@ class ModelMeta(type):
         return default_value
 
 
-class Model(object):
-
-    __metaclass__ = ModelMeta
+class Model(with_metaclass(ModelMeta, object)):  # Python 3
 
     _mode = DEFAULT
 
@@ -106,7 +107,8 @@ class Model(object):
         return value
 
     def _set_keyword_attributes(self, kwds):
-        for key, value in kwds.iteritems():
+        for key in kwds: # Python 3
+            value = kwds[key]
             # Notice that __setattr__ is overloaded
             setattr(self, key, value)
 
@@ -116,7 +118,7 @@ class Model(object):
         retrieved from the DB -- we set it to None if it won't set.        
         """
         type_system = self._client.type_system
-        for key, property_instance in self._properties.items():
+        for key in self._properties: # Python 3
             # Convert the Properties to the defined data types and then 
             # update the self._data values that were initially set by Element._initialize()
             # Actually, no we're not, we're bypassing setattr, but will this work for 
@@ -124,6 +126,7 @@ class Model(object):
             #if property_instance.default is not None:
             #    # for now, don't set read-only vars
             #    continue
+            property_instance = self._properties[key]
             name = property_instance.name
             value = self._data.get(key, None)
             value = property_instance.convert_to_python(type_system, value)
@@ -150,7 +153,8 @@ class Model(object):
             # add element_type to the database properties to be saved;
             # but don't worry about "label", it's always saved on the edge
             data[type_var] = getattr(self, type_var)
-        for key, property_instance in self._properties.items():
+        for key in self._properties: # Python 3
+            property_instance = self._properties[key]
             value = getattr(self, key)
             property_instance.validate(key, value)
             name = property_instance.name
@@ -263,7 +267,22 @@ class Node(Vertex,Model):
         self._initialized = False
         self._set_property_data()
         self._initialized = True
+    
+    def get_index_keys(self):
+        # Defaults to None (index all keys)
+        return None
+    
+    def get_bundle(self, _data=None, **kwds):
+        self._instantiate(_data, kwds)
+        data = self._get_property_data()
+        index_name = self.get_index_name(self._client.config)
+        keys = self.get_index_keys()
+        bundle = dict(data=data, index_name=index_name, keys=keys)
+        return bundle
         
+
+    
+
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()

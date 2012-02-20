@@ -6,6 +6,7 @@ Bulbs is a Python persistence framework for graph databases that
 connects to Neo4j Server, Rexster, OrientDB, Lightsocket, and more.
 
 """
+import sys
 from setuptools import Command, setup, find_packages
 
 class run_audit(Command):
@@ -51,6 +52,13 @@ def run_tests():
     from bulbs_tests import suite
     return suite()
 
+# Python 3
+install_requires = ['httplib2>=0.7.2', 'pyyaml>=3.10', 'six']
+if sys.version < '3':
+    install_requires.append('ujson>=1.15')
+else:
+    install_requires.append('simplejson')
+
 setup (
     name = 'bulbs',
     version = '0.3d',
@@ -66,11 +74,7 @@ setup (
     include_package_data=True,
     zip_safe=False,
     platforms='any',
-    install_requires=[
-        'httplib2>=0.7.2',
-        'ujson>=1.15',
-        'pyyaml>=3.10',
-        ],
+    install_requires=install_requires, 
     classifiers = [
         "Programming Language :: Python",
         "Development Status :: 3 - Alpha",

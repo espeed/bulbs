@@ -11,8 +11,8 @@ from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
 
 # Rexster-specific imports
-from client import Neo4jClient, NEO4J_URI
-from index import ManualIndex, IndexProxy
+from .client import Neo4jClient, NEO4J_URI
+from .index import ManualIndex, IndexProxy
 
 class Graph(object):
 

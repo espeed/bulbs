@@ -12,7 +12,8 @@ class RexsterTransaction(object):
 
     def build_action(self,_action,_type,data={}):
         action = {'_action':_action,'_type':_type}
-        for key, value in data.items():
+        for key in data:  # Python 3
+            value = data[key]
             action.update({key:value})
         return action              
           
@@ -31,6 +32,7 @@ class Neo4jTransaction(object):
         if request_id is not None:
             action.update({'id':request_id})
         
-        for key, value in data.items():
+        for key in data:  # Python 3
+            value = data[key]
             action.update({key:value})
         return action              

@@ -7,7 +7,12 @@
 Interface for interacting with a graph database through Rexster.
 
 """
-from utils import get_logger
+# Python 3
+import sys
+if sys.version > '3':
+    long = int
+
+from .utils import get_logger
 
 log = get_logger(__name__)
 

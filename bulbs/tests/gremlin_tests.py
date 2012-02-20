@@ -1,5 +1,5 @@
 import unittest
-from testcase import BulbsTestCase
+from .testcase import BulbsTestCase
 
 class GremlinTestCase(BulbsTestCase):
 

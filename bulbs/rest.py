@@ -8,13 +8,16 @@ Low-level module for connecting to the Rexster REST server and
 returning a Response object.
 
 """
-import urllib
 import httplib2
-import ujson as json
-from pprint import pprint
 
-from client import Response
-from utils import get_logger
+try: 
+    # ujson is faster but hasn't been ported to Python 3 yet
+    import ujson as json
+except:
+    import simplejson as json
+
+from .client import Response
+from .utils import get_logger, quote, urlencode
 
 log = get_logger(__name__)
 
@@ -22,20 +25,6 @@ GET = "GET"
 PUT = "PUT"
 POST = "POST"
 DELETE = "DELETE"
-
-def get_error(http_resp):
-    """Returns the HTTP status, message, and error."""
-    header, content = http_resp
-    content = json.loads(content)
-    status = header.get('status')
-    message = content.get('message')
-    error = content.get('error')
-    return status, message, error 
-
-def print_error(http_resp):
-    """Pretty prints the error."""
-    status, message, error = get_error(http_resp)
-    pprint(error)
 
 # HTTP Response Handlers
 def ok(http_resp):
@@ -193,11 +182,11 @@ class Request(object):
         headers = {'Accept': 'application/json'}
         body = None
 
-        path = urllib.quote(path)
+        path = quote(path)
         uri = "%s/%s" % (self.config.root_uri.rstrip("/"), path.lstrip("/"))
 
         if params and method is GET:
-            uri = "%s?%s" % (uri, urllib.urlencode(params))
+            uri = "%s?%s" % (uri, urlencode(params))
         
         if params and (method in [PUT, POST, DELETE]):
             body = json.dumps(params)

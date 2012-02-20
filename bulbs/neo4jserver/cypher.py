@@ -55,7 +55,8 @@ class YamlScripts(object):
         templates = dict()
         f = open(file_name)
         yaml_map = yaml.load(f)    
-        for name, template in yaml_map.items():
+        for name in yaml_map: # Python 3
+            template = yaml_map[name]
             #template = ';'.join(lines.split('\n'))
             method_signature = self._get_method_signature(template)
             templates[name] = Template(template)
@@ -72,14 +73,14 @@ class YamlScripts(object):
             raise ScriptError("Each Gremln script in the YAML file must be defined as a Groovy method.")
 
     def _quote_params(self,params):
-        quoted_tuple = map(self._quote,params.items())
-        params = dict(quoted_tuple)
+        for key in params:   # Python 3
+            value = params[key]
+            params[key] = self._quote(value)
         return params
 
-    def _quote(self,pair):
-        key, value = pair
+    def _quote(self, value):
         if type(value) == str:
             value = "'%s'" % value
         elif value is None:
             value = ""
-        return key, value
+        return value

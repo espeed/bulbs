@@ -9,9 +9,8 @@ Bulbs supports pluggable clients. This is the Rexster client.
 """
 import os
 import ujson as json
-from urlparse import urlsplit
 
-from bulbs.utils import build_path, get_file_path, get_logger
+from bulbs.utils import build_path, get_file_path, get_logger, urlsplit
 from bulbs.registry import Registry
 from bulbs.config import DEBUG
 
@@ -61,10 +60,10 @@ class RexsterResult(Result):
         
     def get_map(self):
         """Returns the element's property map."""
-        print type(self.data), self.data
         property_map = dict()
         private_keys = ['_id','_type','_outV','_inV','_label']
-        for key, value in self.data.items():
+        for key in self.data: # Python 3
+            value = self.data[key]
             if key not in private_keys:
                 property_map.update({key:value})
         return property_map
@@ -486,6 +485,6 @@ class RexsterClient(Client):
         """Removes null property values because they aren't valid in Neo4j."""
         # Neo4j Server uses PUTs to overwrite all properties so no need
         # to worry about deleting props that are being set to null.
-        clean_data = [(k, v) for k, v in data.items() if v is not None]
+        clean_data = [(k, data[k]) for k in data if data[k] is not None]  # Python 3
         return dict(clean_data)
 

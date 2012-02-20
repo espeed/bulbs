@@ -290,7 +290,7 @@ class RequestMessage(object):
         """Removes null property values because they aren't valid in Neo4j."""
         # Neo4j Server uses PUTs to overwrite all properties so no need
         # to worry about deleting props that are being set to null.
-        clean_data = [(k, v) for k, v in data.items() if v is not None]
+        clean_data = [(k, data[k]) for k in data if data[k] is not None] # Python 3
         return dict(clean_data)
 
     def _placeholder(self,_id):

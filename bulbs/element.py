@@ -7,8 +7,10 @@
 Vertex and Edge container classes and associated proxy classes.
 
 """
-from utils import initialize_element, initialize_elements
 
+
+from .utils import initialize_element, initialize_elements
+from .utils import u  # Python 3 unicode
 
 class Element(object):
     """
@@ -160,7 +162,7 @@ class Element(object):
     
     def __unicode__(self):
         """Returns the unicode representation of the attribute."""
-        return u"<%s: %s>" % (self.__class__.__name__,self._result.get_uri())
+        return u("<%s: %s>" % (self.__class__.__name__,self._result.get_uri()))  # Python 3
 
     def map(self):
         """

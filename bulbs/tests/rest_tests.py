@@ -14,11 +14,7 @@ class RestTestCase(unittest.TestCase):
 
     def test_init(self):
         config = Config('http://localhost:8182/not-graphs/gratefulgraph')
-        #res = Client(config)
-
-        print config.root_uri
         assert config.root_uri == 'http://localhost:8182/not-graphs/gratefulgraph'
-        #assert res.db_name == 'gratefulgraph'
 
     def test_post(self):
         name_in = "james"
