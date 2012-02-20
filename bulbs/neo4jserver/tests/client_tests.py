@@ -1,10 +1,11 @@
 import unittest
 from bulbs.config import Config
+from bulbs.utils import json
 from bulbs.neo4jserver import Neo4jClient, NEO4J_URI
 from bulbs.tests.client_tests import ClientTestCase
 
 import time
-import ujson as json
+
 
 class Neo4jClientTestCase(ClientTestCase):
 

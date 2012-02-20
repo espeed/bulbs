@@ -13,22 +13,22 @@ import logging
 # Python 3 
 #
 
-try:
-    from urllib.parse import quote
-    from urllib.parse import urlencode
-    from urllib.parse import urlsplit
-except:
+if sys.version < '3':
+    import codecs
+    import ujson as json
     from urllib import quote
     from urllib import urlencode
     from urlparse import urlsplit
 
-
-# unicode
-if sys.version < '3':
-    import codecs
     def u(x):
         return codecs.unicode_escape_decode(x)[0]
 else:
+    # ujson is faster but hasn't been ported to Python 3 yet
+    import json
+    from urllib.parse import quote
+    from urllib.parse import urlencode
+    from urllib.parse import urlsplit
+
     def u(x):
         return x
 

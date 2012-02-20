@@ -8,9 +8,8 @@ Bulbs supports pluggable clients. This is the Rexster client.
 
 """
 import os
-import ujson as json
 
-from bulbs.utils import build_path, get_file_path, get_logger, urlsplit
+from bulbs.utils import json, build_path, get_file_path, get_logger, urlsplit
 from bulbs.registry import Registry
 from bulbs.config import DEBUG
 
@@ -134,7 +133,7 @@ class RexsterResponse(Response):
         headers, content = response
 
         if content:
-            content = json.loads(content)
+            content = json.loads(content.decode('utf-8'))
             return content
 
     def get_results(self):

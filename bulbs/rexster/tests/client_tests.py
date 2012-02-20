@@ -70,7 +70,7 @@ class RexsterIndexTestCase(unittest.TestCase):
         self.client.put_vertex(index_name,key,value,_id)
         resp = self.client.lookup_vertex(index_name,key,value)
         assert resp.total_size == 1
-        assert resp.results.next().get("name") == "James"
+        assert next(resp.results).get("name") == "James"
         
     def test_remove_vertex(self):
         name = "test_idxV"

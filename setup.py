@@ -28,7 +28,7 @@ class run_audit(Command):
         try:
             import pyflakes.scripts.pyflakes as flakes
         except ImportError:
-            print "Audit requires PyFlakes installed in your system."""
+            print("Audit requires PyFlakes installed in your system.")
             sys.exit(-1)
 
         dirs = ['bulbs', 'tests']
@@ -42,9 +42,9 @@ class run_audit(Command):
                 if filename.endswith('.py') and filename != '__init__.py':
                     warns += flakes.checkPath(os.path.join(dir, filename))
         if warns > 0:
-            print ("Audit finished with total %d warnings." % warns)
+            print(("Audit finished with total %d warnings." % warns))
         else:
-            print ("No problems found in sourcecode.")
+            print("No problems found in sourcecode.")
 
 def run_tests():
     import os, sys
@@ -56,8 +56,6 @@ def run_tests():
 install_requires = ['httplib2>=0.7.2', 'pyyaml>=3.10', 'six']
 if sys.version < '3':
     install_requires.append('ujson>=1.15')
-else:
-    install_requires.append('simplejson')
 
 setup (
     name = 'bulbs',

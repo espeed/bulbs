@@ -10,14 +10,8 @@ returning a Response object.
 """
 import httplib2
 
-try: 
-    # ujson is faster but hasn't been ported to Python 3 yet
-    import ujson as json
-except:
-    import simplejson as json
-
 from .client import Response
-from .utils import get_logger, quote, urlencode
+from .utils import json, get_logger, quote, urlencode
 
 log = get_logger(__name__)
 

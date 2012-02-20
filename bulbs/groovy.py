@@ -86,10 +86,10 @@ class Scanner:
     def __init__(self, lexicon, flags=0):
         self.lexicon = lexicon
         self.group_pattern = self._get_group_pattern(flags)
-
+        
     def _get_group_pattern(self,flags):
         # combine phrases into a compound pattern
-	patterns = []
+        patterns = []
         sub_pattern = sre_parse.Pattern()
         sub_pattern.flags = flags
         for phrase, action in self.lexicon:

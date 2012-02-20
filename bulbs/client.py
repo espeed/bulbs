@@ -9,9 +9,7 @@ Bulbs supports pluggable backends. These are the abstract base classes that
 provides the server-client interface. Implement these to create a new client. 
 
 """
-import ujson as json
-
-from bulbs.utils import build_path, get_file_path, get_logger
+from bulbs.utils import json, build_path, get_file_path, get_logger
 from bulbs.registry import Registry
 from bulbs.config import DEBUG
 
