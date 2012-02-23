@@ -11,7 +11,7 @@ import os
 
 from bulbs.utils import json, build_path, get_file_path, get_logger, urlsplit
 from bulbs.registry import Registry
-from bulbs.config import DEBUG
+from bulbs.config import Config, DEBUG
 
 # specific to this client
 from bulbs.client import Client, Response, Result 
@@ -159,6 +159,9 @@ class RexsterRequest(Request):
 class RexsterClient(Client):
     """Low-level client that connects to Neo4j Server and returns a response.""" 
     
+    #: Default URI for the database.
+    default_uri = REXSTER_URI
+
     vertex_path = "vertices"
     edge_path = "edges"
     index_path = "indices"
@@ -166,14 +169,31 @@ class RexsterClient(Client):
     transaction_path = "tp/batch/tx"
     multi_get_path = "tp/batch"
 
-    def __init__(self,config):
-        self.config = config
-        self.registry = Registry(config)
+    def __init__(self, config=None, db_name=None):
+
+        # This makes is easy to test different DBs 
+        uri = self._get_uri(db_name) or self.default_uri
+
+        self.config = config or Config(uri)
+        self.registry = Registry(self.config)
+
+        # Rexster supports Gremlin so include the Gremlin-Groovy script library
         self.scripts = GroovyScripts() 
-        self.scripts.update(self._get_scripts_file("gremlin.groovy"))
-        self.registry.add_scripts("gremlin",self.scripts)
+
+        # Also include the Rexster-specific Gremlin-Groovy scripts
+        scripts_file = get_file_path(__file__, "gremlin.groovy")
+        self.scripts.update(scripts_file)
+
+        # Add it to the registry. This allows you to have more than one scripts namespace.
+        self.registry.add_scripts("gremlin", self.scripts)
+
         self.type_system = JSONTypeSystem()
-        self.request = RexsterRequest(config,self.type_system.content_type)
+        self.request = RexsterRequest(self.config, self.type_system.content_type)
+
+    def _get_uri(self, db_name):
+        if db_name is not None:
+            uri = "http://localhost:8182/graphs/%s" % db_name
+            return uri
 
     # Gremlin
 
@@ -474,11 +494,6 @@ class RexsterClient(Client):
     def execute_transaction(self,transaction):
         params = dict(tx=transaction.actions)
         return self.request.post(self.transction_path,params)
-
-    def _get_scripts_file(self,file_name):
-        dir_name = os.path.dirname(__file__)
-        file_path = get_file_path(dir_name,file_name)
-        return file_path
 
     def _remove_null_values(self,data):
         """Removes null property values because they aren't valid in Neo4j."""

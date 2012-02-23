@@ -340,8 +340,8 @@ class Neo4jClient(Client):
         scripts_file = get_file_path(__file__, "gremlin.groovy")
         self.scripts.update(scripts_file)
 
-        # Add it to the registry. This allows you to have more than one namespace.
-        self.registry.add_scripts("gremlin",self.scripts)
+        # Add it to the registry. This allows you to have more than one scripts namespace.
+        self.registry.add_scripts("gremlin", self.scripts)
 
         self.type_system = JSONTypeSystem()
         self.request = Neo4jRequest(self.config, self.type_system.content_type)

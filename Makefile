@@ -8,6 +8,10 @@ ifneq ($(server), )
 	test_args = -m bulbs.$(server).tests
 endif
 
+ifneq ($(db), )
+	test_args = -m bulbs.rexster.tests $(db)
+endif
+
 
 test:
 	python setup.py test $(test_args)

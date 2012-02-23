@@ -56,6 +56,9 @@ def run_tests():
 install_requires = ['httplib2>=0.7.2', 'pyyaml>=3.10', 'six']
 if sys.version < '3':
     install_requires.append('ujson>=1.15')
+else:
+    # argparse is in 3.2 but not 3.1
+    install_requires.append('argparse')
 
 setup (
     name = 'bulbs',

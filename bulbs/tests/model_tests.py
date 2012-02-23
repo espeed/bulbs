@@ -61,7 +61,6 @@ class RelationshipTestCase(BulbsTestCase):
         self.people.index = indices.get_or_create("people")
         self.james = self.people.create(name="James", age=34)
         self.julie = self.people.create(name="Julie", age=28)
-        #self.relationship = Relationship.create(self.james,"knows",self.julie)
         
     def test_properties(self):
         self.relationship = self.knows.create(self.james,self.julie)

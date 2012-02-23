@@ -1,3 +1,6 @@
+import sys
+import argparse
+
 import unittest
 from bulbs.config import Config
 from bulbs.tests.client_tests import ClientTestCase
@@ -5,17 +8,19 @@ from bulbs.rexster.client import RexsterClient, REXSTER_URI
 
 import time
 
+# Default database. You can override this with the command line:
+# $ python client_tests.py --db mydb
+db_name = "tinkergraph"
+
 class RexsterClientTestCase(ClientTestCase):
 
     def setUp(self):
-        config = Config(REXSTER_URI)
-        self.client = RexsterClient(config)
+        self.client = RexsterClient(db_name=db_name)
 
 class RexsterIndexTestCase(unittest.TestCase):
 
     def setUp(self):
-        config = Config(REXSTER_URI)
-        self.client = RexsterClient(config)
+        self.client = RexsterClient(db_name=db_name)
 
     def _delete_vertex_index(self,index_name):
         try:
@@ -85,11 +90,9 @@ class RexsterIndexTestCase(unittest.TestCase):
  
 
 class RexsterAutomaticIndexTestCase(unittest.TestCase):
-    
+
     def setUp(self):
-        config = Config(REXSTER_URI)
-        config.debug = True
-        self.client = RexsterClient(config)
+        self.client = RexsterClient(db_name=db_name)
 
     def test_create_automatic_vertex_index(self):
         index_name = "test_automatic_idxV"
@@ -113,4 +116,14 @@ def rexster_client_suite():
     return suite
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--db', default=None)
+    args = parser.parse_args()
+    
+    db_name = args.db
+
+    # Now set the sys.argv to the unittest_args (leaving sys.argv[0] alone)
+    sys.argv[1:] = []
+    
     unittest.main(defaultTest='rexster_client_suite')

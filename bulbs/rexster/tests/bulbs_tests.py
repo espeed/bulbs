@@ -1,24 +1,38 @@
+import sys
 import unittest
+import argparse
 from bulbs.config import Config, DEBUG
 from bulbs.tests import BulbsTestCase, bulbs_test_suite
 from bulbs.rexster import RexsterClient, REXSTER_URI, \
     VertexIndexProxy, EdgeIndexProxy, ManualIndex
 from bulbs.tests import GremlinTestCase
 
-config = Config(REXSTER_URI)
-BulbsTestCase.client = RexsterClient(config)
-BulbsTestCase.vertex_index_proxy = VertexIndexProxy
-BulbsTestCase.edge_index_proxy = EdgeIndexProxy
-BulbsTestCase.index_class = ManualIndex
+
+# http://eli.thegreenplace.net/2011/08/02/python-unit-testing-parametrized-test-cases/
+
+db_name = "tinkergraph"
 
 def test_suite():
+    # pass in a db_name to test a specific database
+    BulbsTestCase.client = RexsterClient(db_name=db_name)
+    BulbsTestCase.vertex_index_proxy = VertexIndexProxy
+    BulbsTestCase.edge_index_proxy = EdgeIndexProxy
+    BulbsTestCase.index_class = ManualIndex
+
     suite = bulbs_test_suite()
     #suite.addTest(unittest.makeSuite(RestTestCase))
     suite.addTest(unittest.makeSuite(GremlinTestCase))
     return suite
 
 if __name__ == '__main__':
-    #suite = bulbs_test_suite()
-    #suite.addTest(unittest.makeSuite(RestTestCase))
-    #suite.addTest(unittest.makeSuite(GremlinTestCase))
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--db', default="tinkergraph")
+    args = parser.parse_args()
+    
+    db_name = args.db
+
+    # Now set the sys.argv to the unittest_args (leaving sys.argv[0] alone)
+    sys.argv[1:] = []
+
     unittest.main(defaultTest='test_suite')
