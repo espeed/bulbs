@@ -9,7 +9,7 @@ Vertex and Edge container classes and associated proxy classes.
 """
 
 
-from .utils import initialize_element, initialize_elements
+from .utils import initialize_element, initialize_elements, coerce_id
 from .utils import u  # Python 3 unicode
 
 class Element(object):
@@ -744,19 +744,5 @@ def coerce_vertex(vertex):
         vertex_id = coerce_id(vertex)
     return vertex_id
 
-def coerce_id(_id):
-    """
-    Tries to coerce a vertex ID into an integer and returns it.
 
-    :param v: The vertex ID we want to coerce into an integer.
-    :type v: int or str
-
-    :rtype: int or str
-
-    """
-    try:
-        return int(_id)
-    except:
-        # some DBs, such as OrientDB, use string IDs
-        return _id
 

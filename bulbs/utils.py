@@ -123,4 +123,21 @@ def get_file_path(current_filename, target_filename):
     file_path = os.path.normpath(os.path.join(current_dir, target_filename))
     return file_path
 
+def coerce_id(_id):
+    """
+    Tries to coerce a vertex ID into an integer and returns it.
+
+    :param v: The vertex ID we want to coerce into an integer.
+    :type v: int or str
+
+    :rtype: int or str
+
+    """
+    try:
+        return int(_id)
+    except:
+        # some DBs, such as OrientDB, use string IDs
+        return _id
+
+
 

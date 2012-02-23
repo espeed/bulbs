@@ -18,6 +18,7 @@ from bulbs.client import Client, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
+from bulbs.utils import coerce_id
 
 # The default URIs
 REXSTER_URI = "http://localhost:8182/graphs/tinkergraph"
@@ -51,7 +52,9 @@ class RexsterResult(Result):
     def get_id(self):
         """Returns the element ID."""
         _id = self.data['_id']
-        return int(_id)
+
+        # OrientDB uses string IDs
+        return coerce_id(_id)
                
     def get_type(self):
         """Returns the element's base type, either vertex or edge."""
