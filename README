@@ -39,7 +39,7 @@ Where are the docs?
 There have been a few API changes in 0.3, but the code is commented. Start at the 
 bottom and work your way up:
 
-1. https://github.com/espeed/bulbs/blob/master/bulbs/neo4jserver/resource.py
+1. https://github.com/espeed/bulbs/blob/master/bulbs/neo4jserver/client.py
 2. https://github.com/espeed/bulbs/blob/master/bulbs/model.py
 3. https://github.com/espeed/bulbs/blob/master/bulbs/neo4jserver/graph.py
 
