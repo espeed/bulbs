@@ -8,9 +8,14 @@ Bulbs supports plugabble type systems.
 
 """
 # Python 3
+import six
 import sys
 if sys.version > '3':
     long = int
+    unicode = str
+
+from .utils import to_timestamp, to_datetime
+
 
 class TypeSystem(object):
     """Abstract base class for plugabble database type systems."""
@@ -23,15 +28,6 @@ class TypeSystem(object):
 
     #: Converter object used to covert database values to Python values.
     python = None
-
-    #def to_db(self,property_instance,value):
-    #    """Returns a database-property value coerced to its database type."""
-    #    return property_instance.to_db(self,value)
-
-    #def to_python(self,property_instance,value):
-    #    """Returns a database-property value coerced to its Python type."""
-    #    # TODO: warn or log errors
-    #    return property_instance.to_python(self,value)
 
 
 class Converter(object):
@@ -69,7 +65,8 @@ class Database(Converter):
     # The JSON type system is just a simple pass through.
 
     def to_string(self,value):
-        return value
+        # Using unicode instead of str
+        return unicode(value)
 
     def to_integer(self,value):
         return value
@@ -85,6 +82,10 @@ class Database(Converter):
 
     def to_dictionary(self,value):
         return value
+
+    def to_datetime(self, value):
+        if value is not None:
+            return to_timestamp(value)
 
     def to_null(self,value):
         return value
@@ -92,37 +93,40 @@ class Database(Converter):
 
 class Python(Converter):
     """Converts database values to Python values."""
+
+    # Conversion exceptions are now handled in Property.convert_to_python() 
     
     def to_string(self,value):
-        return self._coerce(str,value)
+        # Converting everything to unicode in Python 2.x 
+        return unicode(value)
 
     def to_integer(self,value):
-        return self._coerce(int,value)
+        return int(value)
 
     def to_long(self,value):
-        return self._coerce(long,value)
+        return long(value)
 
     def to_float(self,value):
-        return self._coerce(float,value)              
+        return float(value)              
 
     def to_list(self,value):
-        return self._coerce(list,value)
+        return list(value)
 
     def to_dictionary(self,value):
-        return self._coerce(dict,value)
+        return dict(value)
 
     def to_null(self,value):
         return None
 
-    def _coerce(self,datatype,value):
-        # TODO: warn or log conversion errors
-        try: return datatype(value)
-        except: return None
+    def to_datetime(self, value):
+        if value is not None:
+            return to_datetime(value)
 
 
 class JSONTypeSystem(TypeSystem):
 
     content_type = "application/json"
+
     database = Database()
     python = Python()
     

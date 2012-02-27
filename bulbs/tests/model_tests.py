@@ -1,12 +1,13 @@
 import unittest
 from .testcase import BulbsTestCase
 from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
-from bulbs.property import Integer, String, Float
+from bulbs.property import Integer, String, DateTime
+from bulbs.utils import current_datetime
 
 class Knows(Relationship):
 
     label = "knows"
-    timestamp = Float()
+    timestamp = DateTime(default=current_datetime)
 
 class Person(Node):
 

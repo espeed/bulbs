@@ -9,9 +9,12 @@ Bulbs supports pluggable backends. These are the abstract base classes that
 provides the server-client interface. Implement these to create a new client. 
 
 """
+import inspect
+
 from bulbs.utils import json, build_path, get_file_path, get_logger
 from bulbs.registry import Registry
 from bulbs.config import DEBUG
+
 
 log = get_logger(__name__)
 
@@ -112,6 +115,25 @@ class Response(object):
     def get(self, attribute):
         """Return a client-specific attribute."""
         return self.content[attribute]
+
+    def one(self):
+        """Returns one result"""
+        # If you're using this utility, that means the results attribute in the 
+        # Response object should always contain a single result object,
+        # not multiple items. But gremlin returns all results as a list
+        # even if the list contains only one element. And the Response class
+        # converts all lists to a generator of Result objects. Thus in that case,
+        # we need to grab the single Result object out of the list/generator.
+        if self.total_size > 1:
+            log.error('resp.results contains more than one item.')
+            raise ValueError
+        if inspect.isgenerator(self.results):
+            result = next(self.results)
+        else:
+            result = self.results
+        return result
+        
+
 
 class Client(object):
     """

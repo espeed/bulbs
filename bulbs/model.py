@@ -7,17 +7,27 @@
 Base classes for modeling domain objects that wrap vertices and edges.
 
 """
-from six import with_metaclass  # Python 3
- 
+import six   # Python 3
+import inspect
+import types
+from collections import OrderedDict, Callable
+
 from bulbs.property import Property
 from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy, coerce_vertices, build_data
 from bulbs.utils import initialize_element, get_one_result, get_logger, extract
+import bulbs.utils as utils
 
 # Model Modes
 DEFAULT = 1
 STRICT = 2
 
 log = get_logger(__name__)
+
+
+class Bundle(OrderedDict):
+    
+    def as_tuple(self):
+        return tuple(self.values())
 
 
 class ModelMeta(type):
@@ -48,21 +58,19 @@ class ModelMeta(type):
                 property_instance = value  # for clarity
                 cls._properties[key] = property_instance
                 cls._set_property_name(key,property_instance)
-                cls._set_property_attribute(key,property_instance)
+                cls._initialize_property(key,property_instance)
                 # not doing this b/c some Properties are calculated at savetime
                 #delattr(cls, key) 
-                
+                            
     def _set_property_name(cls, key, property_instance):
         """Set the Property name; use the attribute name unless explicitly set via kwd param."""
         if property_instance.name is None:
             property_instance.name = key
-            
-    def _set_property_attribute(cls, key, property_instance):
+
+    def _initialize_property(cls, key, property_instance):
         """Set the Model class attribute based on the Property definition."""
-        if property_instance.default is not None:
-            # The value entered could be a scalar or a method name in the model
-            property_value = cls._get_property_default(key, property_instance)
-        elif property_instance.fget:
+        if property_instance.fget:
+            # this is a calculated property (should it persist?) -- TODO: make this configurable
             # wrapped fset and fdel in str() to make the default None work with getattr
             fget = getattr(cls, property_instance.fget)
             fset = getattr(cls, str(property_instance.fset), None)
@@ -72,17 +80,8 @@ class ModelMeta(type):
             property_value = None
         setattr(cls, key, property_value)
 
-    def _get_property_default(cls, key, property_instance):
-        # The value entered could be a scalar or a method name in the model
-        default_value = property_instance.default
-        fget = getattr(cls, default_value, None)
-        if fget is not None:
-            # The default_value is the name of a method defined in the Model
-            default_value = property(fget)
-        return default_value
 
-
-class Model(with_metaclass(ModelMeta, object)):  # Python 3
+class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
 
     _mode = DEFAULT
 
@@ -96,21 +95,35 @@ class Model(with_metaclass(ModelMeta, object)):  # Python 3
         else:
             Element.__setattr__(self, key, value)
 
-    def _instantiate(self, _data, kwds):
-        data = build_data(_data, kwds)
-        self._set_keyword_attributes(data)
-
     def _coerce_property_value(self, key, value):
         if value is not None:
             property_instance = self._properties[key]
             value = property_instance.coerce(key, value)
         return value
 
-    def _set_keyword_attributes(self, kwds):
-        for key in kwds: # Python 3
-            value = kwds[key]
+    def _set_property_defaults(self):
+        for key in self._properties:
+            default_value = self._get_property_default(key)     
+            Model.__setattr__(self, key, default_value)
+            
+    def _get_property_default(self, key):
+        # The value entered could be a scalar or a function name
+        # TODO: make this work for model methods?
+        # defer the call until all properties are set? Or only for calculated properties?
+        property_instance = self._properties[key]
+        default_value = property_instance.default
+        if isinstance(default_value, Callable):
+            default_value = default_value()
+        return default_value
+
+    def _set_keyword_attributes(self, _data, kwds):
+        # may have passed in keys that are not defined as Properties
+        data = build_data(_data, kwds)
+        for key in data: # Python 3
+            value = data[key]  # 
             # Notice that __setattr__ is overloaded
-            setattr(self, key, value)
+            # Must explicitly use Model's setattr because of multiple inheritence 
+            Model.__setattr__(self, key, value)
 
     def _set_property_data(self):
         """
@@ -119,31 +132,14 @@ class Model(with_metaclass(ModelMeta, object)):  # Python 3
         """
         type_system = self._client.type_system
         for key in self._properties: # Python 3
-            # Convert the Properties to the defined data types and then 
-            # update the self._data values that were initially set by Element._initialize()
-            # Actually, no we're not, we're bypassing setattr, but will this work for 
-            # Python properties that don't have an fset?
-            #if property_instance.default is not None:
-            #    # for now, don't set read-only vars
-            #    continue
             property_instance = self._properties[key]
             name = property_instance.name
             value = self._data.get(key, None)
-            value = property_instance.convert_to_python(type_system, value)
-            # TODO: think through this some more...
-            # yeah, you need to set the actual Python property else 
-            # it will have the property instance as the value and getattr won't work
-            # TODO: clean this up
-            # You don't need to set _data, just the Python property because
-            # get_property_data will override the values in _data before saved
-            #if property_instance.fset is None:
-            #    self._data[key] = value
-            #    # so you want to set this regardless
-            #else:
-            #    # Notice that __setattr__ is overloaded so bypassing it
-            #    object.__setattr__(self, key, value)
+            # what about fset and fget values?
+            value = property_instance.convert_to_python(type_system, key, value)
+            # TODO: Maybe need to wrap this in try/catch too
             object.__setattr__(self, key, value)
-                    
+            
     def _get_property_data(self):
         """Returns validated Property data, ready to be saved in the DB."""
         data = self._get_initial_data()
@@ -153,30 +149,67 @@ class Model(with_metaclass(ModelMeta, object)):  # Python 3
             # add element_type to the database properties to be saved;
             # but don't worry about "label", it's always saved on the edge
             data[type_var] = getattr(self, type_var)
-        for key in self._properties: # Python 3
+        for key in self._properties:  # Python 3
             property_instance = self._properties[key]
-            value = getattr(self, key)
+            value = self._get_property_value(key)
             property_instance.validate(key, value)
-            name = property_instance.name
+            #name = property_instance.name
             value = property_instance.convert_to_db(type_system, value)
             data[key] = value
         return data
 
+    def _get_property_value(self, key):
+        value = getattr(self, key)
+        if isinstance(value, Callable):
+            return value()
+        return value
+
     def _get_initial_data(self):
         """Returns empty dict if mode is set to strict, else return the existing _data."""
-        if self._mode == STRICT:
-            data = {}
-        else:
-            data = self._data.copy()
+        data = {} if self._mode == STRICT else self._data.copy()
         return data
 
-    def _get_index(self, index_name):
-        """Returns an index for the given name if it's stored in the Registery."""
+    def get_index(self, index_name):
+        """Returns an Index in the Registery or None."""
         try:
             index = self._client.registry.get_index(index_name)
         except KeyError:
             index = None
         return index
+
+    def get_index_keys(self):
+        # Defaults to None (index all keys)
+        return None
+
+    def get_bundle(self, _data=None, **kwds):
+        # It's just on save that you don't set Property defaults.
+        # You can here because they will be overridden by set_keyword_attributes.
+        self._set_property_defaults()   
+        self._set_keyword_attributes(_data, kwds)
+        data = self._get_property_data()
+        index_name = self.get_index_name(self._client.config)
+        keys = self.get_index_keys()
+        pairs = [('data', data), ('index_name', index_name), ('keys', keys)]
+        return Bundle(pairs)
+
+    def get_property_keys(self):
+        return self._properties.keys()
+
+    def map(self):
+        """
+        Returns the Model's property data.
+
+        :rtype: dict
+
+        """
+        # Overloading map() here so calculated props are returned properly. 
+        # Calculated props shouldn't be stored, but their components should be.
+        data = dict()
+        # Iterating over self._properties instead of _data like in Element
+        # in case new props have been set but not saved   
+        for key in self._properties: 
+            data[key] = getattr(self, key)
+        return data
 
 
 class Node(Vertex,Model):
@@ -267,46 +300,27 @@ class Node(Vertex,Model):
         self._initialized = False
         self._set_property_data()
         self._initialized = True
-    
-    def get_index_keys(self):
-        # Defaults to None (index all keys)
-        return None
-    
-    def get_bundle(self, _data=None, **kwds):
-        self._instantiate(_data, kwds)
-        data = self._get_property_data()
-        index_name = self.get_index_name(self._client.config)
-        keys = self.get_index_keys()
-        bundle = dict(data=data, index_name=index_name, keys=keys)
-        return bundle
-        
-
-    
-
+         
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()
         index_name = self.get_index_name(self._client.config)
-        return self._client.update_indexed_vertex(self._id, data, index_name)
+        keys = self.get_index_keys()
+        return self._client.update_indexed_vertex(self._id, data, index_name, keys)
         
     #:
     #: Override the _create and _update methods to cusomize behavior.
     #:
-        
+    
     def _create(self, _data, kwds):  
-        self._instantiate(_data, kwds)
-        data = self._get_property_data()
-        index_name = self.get_index_name(self._client.config)
-        resp = self._client.create_indexed_vertex(data, index_name)
-        result = get_one_result(resp)  
+        # bundle is an OrderedDict containing data, index_name, and keys
+        data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
+        result = self._client.create_indexed_vertex(data, index_name, keys).one()
         self._initialize(result)
         
     def _update(self, _id, _data, kwds):
-        self._instantiate(_data, kwds)
-        data = self._get_property_data()
-        index_name = self.get_index_name(self._client.config)
-        resp = self._client.update_indexed_vertex(data, index_name)
-        result = get_one_result(resp)  
+        data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
+        result = self._client.update_indexed_vertex(_id, data, index_name, keys).one()
         self._initialize(result)
         
 
@@ -357,8 +371,6 @@ class Relationship(Edge,Model):
 
     @classmethod
     def get_element_key(cls, config):
-        #if cls.__name__ == "Relationship":
-        #    return "relationship"
         return cls.get_label(config)
 
     @classmethod 
@@ -382,25 +394,21 @@ class Relationship(Edge,Model):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()      
         return self._client.update_edge(self._id, data)
-        
+
     #
     # Override the _create and _update methods to customize behavior.
     #
 
     def _create(self, outV, inV, _data, kwds):
-        self._instantiate(_data, kwds)
         label = self.get_label(self._client.config)
-        data = self._get_property_data()
         outV, inV = coerce_vertices(outV, inV)
-        resp = self._client.create_edge(outV, label, inV, data)
-        result = get_one_result(resp)
+        data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
+        result = self._client.create_edge(outV, label, inV, data).one()
         self._initialize(result)
         
     def _update(self, _id, _data, kwds):
-        self._instantiate(_data, kwds)
-        data = self._get_property_data()
-        resp = self._client.update_edge(_id, data)
-        result = get_one_result(resp)
+        data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
+        result = self._client.update_edge(_id, data).one()
         self._initialize(result)
 
 
@@ -425,6 +433,8 @@ class NodeProxy(VertexProxy):
         element_type = self.element_class.get_element_type(config)
         return self.index.lookup(type_var,element_type)
 
+    def get_property_keys(self):
+        return self.element_class._properties.keys()
 
 class RelationshipProxy(EdgeProxy):
 
@@ -446,4 +456,7 @@ class RelationshipProxy(EdgeProxy):
         label_var = config.label_var
         label = self.element_class.get_label(config)
         return self.index.lookup(label_var,label)
+
+    def get_property_keys(self):
+        return self.element_class._properties.keys()
         

@@ -7,9 +7,7 @@ from bulbs.rexster import RexsterClient, REXSTER_URI, \
     VertexIndexProxy, EdgeIndexProxy, ManualIndex
 from bulbs.tests import GremlinTestCase
 
-
-# http://eli.thegreenplace.net/2011/08/02/python-unit-testing-parametrized-test-cases/
-
+# Setting a module var looks to be the easiest way to do this
 db_name = "tinkergraph"
 
 def test_suite():
@@ -25,6 +23,10 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
+
+    # TODO: Bubble up the command line option to python setup.py test.
+    # http://eli.thegreenplace.net/2011/08/02/python-unit-testing-parametrized-test-cases/
+    # http://www.doughellmann.com/PyMOTW/argparse/
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--db', default="tinkergraph")

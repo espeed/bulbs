@@ -8,6 +8,10 @@ import sys
 import inspect
 import logging
 
+import time
+import datetime
+import calendar
+import pytz
 
 #
 # Python 3 
@@ -76,6 +80,7 @@ def get_element_key(client,result):
     element_key = result.data.get(key_var,base_type)
     return element_key
 
+# Deprecated in favor of resp.one()
 def get_one_result(resp):
     # If you're using this utility, that means the results attribute in the 
     # Response object should always contain a single result object,
@@ -104,6 +109,62 @@ def build_path(*args):
     segments = [str(segment) for segment in args if segment]
     path = "/".join(segments)
     return path
+
+#
+# Time Utils
+#
+
+def current_timestamp():
+    # Return the unix UTC time 
+    # TODO: should we cast this to an int for consistency?
+    return int(time.time())
+
+def current_datetime():
+    # Returns a UTC datetime object
+    # return datetime.datetime.utcnow()
+    now =  current_timestamp()
+    #return datetime.datetime.utcfromtimestamp(now).replace(tzinfo=pytz.utc)
+    return datetime.datetime.utcfromtimestamp(now)
+
+def to_timestamp(datetime):
+    # Converts a datetime object to unix UTC time
+    return calendar.timegm(datetime.utctimetuple()) 
+
+def to_datetime(timestamp):
+    # Converts unix UTC time into a UTC datetime object
+    #return datetime.datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.utc)
+    return datetime.datetime.utcfromtimestamp(timestamp)
+
+
+
+# Exaplanations on dealing with time...
+
+    # http://unix4lyfe.org/time/
+    # http://lucumr.pocoo.org/2011/7/15/eppur-si-muove/
+    # http://nvie.com/posts/introducing-times/
+    # http://news.ycombinator.com/item?id=3545935
+    # http://labix.org/python-dateutil
+    # http://docs.python.org/library/time.html#module-time
+    # http://code.davidjanes.com/blog/2008/12/22/working-with-dates-times-and-timezones-in-python/
+
+    # for historical dates, see:
+    # http://www.egenix.com/products/python/mxBase/mxDateTime/
+
+    # Always store UTC
+
+    # One way (I think dateutils requires this)
+    # t = time.time()  # unix utc timestamp
+    # dt = datetime.datetime.utcfromtimestamp(t) 
+    # ut = calendar.timegm(dt.utctimetuple()) 
+
+    # Simpler way?
+    # t = time.time()  # unix utc timestamp
+    # dt = time.gmtime(t)
+    # t = calendar.timegm(dt)
+
+    # Both ways lose subsecond precision going from datetime object to unixtime    
+    # t = time.mktime(dt)  # back to unix timestamp # don't use this, this is the inverse of localtime()
+
 
 
 #
@@ -138,6 +199,7 @@ def coerce_id(_id):
     except:
         # some DBs, such as OrientDB, use string IDs
         return _id
+
 
 
 
