@@ -71,7 +71,7 @@ class ModelMeta(type):
         """Set the Model class attribute based on the Property definition."""
         if property_instance.fget:
             # this is a calculated property (should it persist?) -- TODO: make this configurable
-            # wrapped fset and fdel in str() to make the default None work with getattr
+            # wrapped fset and fdel in str() to make the default None not error on getattr
             fget = getattr(cls, property_instance.fget)
             fset = getattr(cls, str(property_instance.fset), None)
             fdel = getattr(cls, str(property_instance.fdel), None)
@@ -169,6 +169,16 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         data = {} if self._mode == STRICT else self._data.copy()
         return data
 
+    def _map(self):
+        # map() is overloaded in Node and Relationship so calculated props are returned properly. 
+        # Calculated props shouldn't be stored, but their components should be.
+        data = dict()
+        # Iterating over self._properties instead of _data like in Element
+        # in case new props have been set but not saved   
+        for key in self._properties: 
+            data[key] = getattr(self, key)
+        return data
+
     def get_index(self, index_name):
         """Returns an Index in the Registery or None."""
         try:
@@ -180,6 +190,9 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
     def get_index_keys(self):
         # Defaults to None (index all keys)
         return None
+
+    def get_property_keys(self):
+        return self._properties.keys()
 
     def get_bundle(self, _data=None, **kwds):
         # It's just on save that you don't set Property defaults.
@@ -193,24 +206,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         bundle['keys'] = self.get_index_keys()
         return bundle
 
-    def get_property_keys(self):
-        return self._properties.keys()
-
-    def map(self):
-        """
-        Returns the Model's property data.
-
-        :rtype: dict
-
-        """
-        # Overloading map() here so calculated props are returned properly. 
-        # Calculated props shouldn't be stored, but their components should be.
-        data = dict()
-        # Iterating over self._properties instead of _data like in Element
-        # in case new props have been set but not saved   
-        for key in self._properties: 
-            data[key] = getattr(self, key)
-        return data
+        
 
 
 class Node(Vertex,Model):
@@ -292,6 +288,16 @@ class Node(Vertex,Model):
     @classmethod 
     def get_proxy_class(cls):
         return NodeProxy
+
+    def map(self):
+        """
+        Returns the Model's property data.
+
+        :rtype: dict
+
+        """
+        return self._map()
+
 
     def save(self):
         """Saves/updates the element's data in the database."""
@@ -381,6 +387,16 @@ class Relationship(Edge,Model):
     @classmethod 
     def get_proxy_class(cls):
         return RelationshipProxy
+
+    def map(self):
+        """
+        Returns the Model's property data.
+
+        :rtype: dict
+
+        """
+        return self._map()
+
 
     def save(self):
         """Saves/updates the element's data in the database."""
