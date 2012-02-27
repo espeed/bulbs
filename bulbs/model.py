@@ -186,11 +186,12 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         # You can here because they will be overridden by set_keyword_attributes.
         self._set_property_defaults()   
         self._set_keyword_attributes(_data, kwds)
-        data = self._get_property_data()
-        index_name = self.get_index_name(self._client.config)
-        keys = self.get_index_keys()
-        pairs = [('data', data), ('index_name', index_name), ('keys', keys)]
-        return Bundle(pairs)
+        # Bundle is an OrderedDict with a custom as_tuple() method, so order matters
+        bundle = Bundle()
+        bundle['data'] = self._get_property_data()
+        bundle['index_name'] = self.get_index_name(self._client.config)
+        bundle['keys'] = self.get_index_keys()
+        return bundle
 
     def get_property_keys(self):
         return self._properties.keys()
@@ -292,21 +293,12 @@ class Node(Vertex,Model):
     def get_proxy_class(cls):
         return NodeProxy
 
-    def _initialize(self, result):
-        # this is called by the initialize_element util; 
-        # putting it here to ensure method resolution order.
-        # initialize all non-DB properties here
-        Vertex._initialize(self,result)
-        self._initialized = False
-        self._set_property_data()
-        self._initialized = True
-         
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()
         index_name = self.get_index_name(self._client.config)
         keys = self.get_index_keys()
-        return self._client.update_indexed_vertex(self._id, data, index_name, keys)
+        self._client.update_indexed_vertex(self._id, data, index_name, keys)
         
     #:
     #: Override the _create and _update methods to cusomize behavior.
@@ -323,6 +315,15 @@ class Node(Vertex,Model):
         result = self._client.update_indexed_vertex(_id, data, index_name, keys).one()
         self._initialize(result)
         
+    def _initialize(self, result):
+        # this is called by the initialize_element util; 
+        # putting it here to ensure method resolution order.
+        # initialize all non-DB properties here
+        Vertex._initialize(self,result)
+        self._initialized = False
+        self._set_property_data()
+        self._initialized = True
+
 
 class Relationship(Edge,Model):
     """ 
@@ -381,19 +382,10 @@ class Relationship(Edge,Model):
     def get_proxy_class(cls):
         return RelationshipProxy
 
-    def _initialize(self,result):
-        # this is called by initialize_element; 
-        # putting it here to ensure method resolution order
-        # initialize all non-DB properties here
-        Edge._initialize(self,result)
-        self._initialized = False
-        self._set_property_data()
-        self._initialized = True
-
     def save(self):
         """Saves/updates the element's data in the database."""
         data = self._get_property_data()      
-        return self._client.update_edge(self._id, data)
+        self._client.update_edge(self._id, data)
 
     #
     # Override the _create and _update methods to customize behavior.
@@ -410,6 +402,15 @@ class Relationship(Edge,Model):
         data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
         result = self._client.update_edge(_id, data).one()
         self._initialize(result)
+
+    def _initialize(self,result):
+        # this is called by initialize_element; 
+        # putting it here to ensure method resolution order
+        # initialize all non-DB properties here
+        Edge._initialize(self,result)
+        self._initialized = False
+        self._set_property_data()
+        self._initialized = True
 
 
 class NodeProxy(VertexProxy):
