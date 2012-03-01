@@ -205,6 +205,7 @@ class Neo4jResponse(Response):
     result_class = Neo4jResult
 
     def __init__(self, response, config):
+        print response
         self.config = config
         self.handle_response(response)
         self.headers = self.get_headers(response)
@@ -999,6 +1000,13 @@ class Neo4jClient(Client):
         message = self.message.update_indexed_edge(_id, data, index_name, keys)
         return self.request.send(message)
 
+
+    # Batch
+
+    def batch(self, messages):
+        path = "batch"
+        params = messages
+        return self.request.post(path, params)
 
     # Metadata
 

@@ -10,8 +10,8 @@ class Neo4jBatch(object):
         self.add(message)
 
     def next_id(self):
-        job_id = self.job_id =+ 1
-        return job_id
+        self.message_id = self.message_id + 1
+        return self.message_id
 
     def placeholder(self,message_id):
         return "{%d}" % message_id
