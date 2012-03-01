@@ -106,3 +106,42 @@ def update_indexed_edge(_id, data, index_name, keys) {
     return e
   }
 }
+
+
+// Metadata
+
+def get_metadata(key, default_value) {
+  neo4j = g.getRawGraph();
+  properties = neo4j.getKernelData().properties();
+  return properties.getProperty(key, default_value);
+}
+
+def set_metadata(key, value) {  
+  g.setMaxBufferSize(0)
+  g.startTransaction()
+  try {
+    neo4j = g.getRawGraph();
+    properties = neo4j.getKernelData().properties();
+    resp = properties.setProperty(key, value);
+    g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
+    return resp
+  } catch (e) { 
+    g.stopTransaction(TransactionalGraph.Conclusion.FAILURE)
+    return e
+  }
+}
+
+def remove_metadata(key) {
+  g.setMaxBufferSize(0)
+  g.startTransaction()
+  try {
+    neo4j = g.getRawGraph();
+    properties = neo4j.getKernelData().properties();
+    resp = properties.removeProperty(key);
+    g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
+    return resp
+  } catch (e) { 
+    g.stopTransaction(TransactionalGraph.Conclusion.FAILURE)
+    return e
+  }
+}

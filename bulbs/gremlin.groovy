@@ -1,5 +1,5 @@
 // 
-// Copyright 2011 James Thornton (http://jamesthornton.com)
+// Copyright 2012 James Thornton (http://jamesthornton.com)
 // BSD License (see LICENSE for details)
 //
 // Gremlin scripts in Gremlin-Groovy v1.3

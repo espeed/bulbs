@@ -11,6 +11,10 @@ from bulbs.model import Relationship
 from bulbs.index import Index
 
 
+# A framework is an understanding of how things could fit together.
+## It's important to design with the understanding that your understanding is incomplete.
+# When designing these things, it's important to remember that your understanding is incomplete.
+
 class Graph(object):
     """
     Abstract base class for the Graph implementations. See the Bulbs 

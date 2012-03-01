@@ -164,6 +164,9 @@ class Element(object):
         """Returns the unicode representation of the attribute."""
         return u("<%s: %s>" % (self.__class__.__name__,self._result.get_uri()))  # Python 3
 
+    def get(self, name):
+        return getattr(self, name, None)
+
     def map(self):
         """
         Returns the element's property data.
@@ -401,6 +404,9 @@ class VertexProxy(object):
             return None
         
     def get_or_create(self, key, value, _data=None, **kwds):
+        # TODO: This will only index for non-models if autoindex is True.
+        # Relationship Models are set to index by default, but 
+        # EdgeProxy doesn't have this method anyway.
         vertex = self.index.get_unique(key, value)
         if vertex is None:
             vertex = self.create(_data, **kwds)

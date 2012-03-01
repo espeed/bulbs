@@ -51,6 +51,15 @@ class Graph(BaseGraph):
         self.gremlin = Gremlin(self.client)
         self.scripts = self.client.scripts    # for convienience 
 
+    def set_metadata(self, key, value):
+        return self.client.set_metadata(key, value).one()
+
+    def get_metadata(self, key, default_value=None):
+        return self.client.get_metadata(key, default_value).one()
+
+    def remove_metadata(self, key):
+        return self.client.remove_metadata(key)
+        
     def load_graphml(self, uri):
         """
         Loads a GraphML file into the database and returns the response.

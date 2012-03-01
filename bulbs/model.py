@@ -84,9 +84,15 @@ class ModelMeta(type):
 class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
 
     _mode = DEFAULT
-
+    
+    # TODO: Why must this be here and in Node?
     def __setattr__(self, key, value):
+        return self._setattr(key, value)
+
+    # overloaded in Node and Relationship to deal with multiple inheritence
+    def _setattr(self, key, value):
         if key in self._properties:
+            #print "KEY", key
             # we want Model Properties to be set be set as actual attributes
             # because they can be real Python propertes or calculated values,
             # which are calcualted/set upon each save().
@@ -94,6 +100,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
             object.__setattr__(self, key, value)
         else:
             Element.__setattr__(self, key, value)
+
 
     def _coerce_property_value(self, key, value):
         if value is not None:
@@ -254,6 +261,10 @@ class Node(Vertex,Model):
         >>> nodes = g.people.index.lookup(name="James Thornton")
         
     """
+    def __setattr__(self, key, value):
+        Model._setattr(self, key, value)
+
+    # TODO: Sure we want this?
     def __getattr__(self,name):
         """
         Returns the value of the database property for the given name.
@@ -371,6 +382,10 @@ class Relationship(Edge,Model):
           >>> friends = james.outV('knows')
 
     """
+    def __setattr__(self, key, value):
+        Model._setattr(self, key, value)
+
+
     @classmethod
     def get_label(cls, config):
         label = getattr(cls, config.label_var)

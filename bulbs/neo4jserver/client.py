@@ -1000,6 +1000,24 @@ class Neo4jClient(Client):
         return self.request.send(message)
 
 
+    # Metadata
+
+    def get_metadata(self, key, default_value=None):
+        script = self.scripts.get("get_metadata")
+        params = dict(key=key, default_value=default_value)
+        return self.gremlin(script, params)
+
+    def set_metadata(self, key, value):
+        script = self.scripts.get("set_metadata")
+        params = dict(key=key, value=value)
+        return self.gremlin(script, params)
+
+    def remove_metadata(self, key):
+        script = self.scripts.get("remove_metadata")
+        params = dict(key=key)
+        return self.gremlin(script, params)
+
+
     # Private 
 
     def _get_index_results(self, index_name, resp):

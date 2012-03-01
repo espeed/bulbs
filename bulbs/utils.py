@@ -108,7 +108,8 @@ def build_path(*args):
     # don't include segment if it's None
     segments = [str(segment) for segment in args if segment]
     path = "/".join(segments)
-    return path
+    # would change this to quoteplus for plus signs, but doesn't work for Neo4j
+    return quote(path) 
 
 #
 # Time Utils

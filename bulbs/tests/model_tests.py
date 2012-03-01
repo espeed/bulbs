@@ -9,6 +9,7 @@ class Knows(Relationship):
     label = "knows"
     timestamp = DateTime(default=current_datetime)
 
+# Lightbulb Person model doesn't have age so it breaks get_all() when in use
 class Person(Node):
 
     element_type = "person"

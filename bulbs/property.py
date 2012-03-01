@@ -206,7 +206,6 @@ class DateTime(Property):
         # Not using parse -- let the client code do that. Expect a UTC dateime object here.
         # How you going to handle asserts? It's easy with ints.
         
-        print type(value), value
         if isinstance(value, Number):
             # catches unix timestamps
             dt = to_datetime(value)
