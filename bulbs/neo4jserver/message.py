@@ -8,7 +8,7 @@ Build the messages sent in single and batch requests.
 
 """
 import re
-from bulbs.utils import build_path
+from bulbs.utils import build_path, quote_plus
 from bulbs.rest import GET, PUT, POST, DELETE
 
 import urllib
@@ -201,6 +201,7 @@ class RequestMessage(object):
 
     def lookup_vertex(self,name,key,value):
         """Returns the vertices indexed with the key and value."""
+        key, value = quote_plus(key), quote_plus(value)
         path = build_path(index_path,"node",name,key,value)
         params = None
         return GET, path, params
@@ -228,6 +229,7 @@ class RequestMessage(object):
 
     def lookup_edge(self,name,key,value):
         """Looks up an edge in the index and returns the Response."""
+        key, value = quote_plus(key), quote_plus(value)
         path = build_path(index_path,edge_path,name,key,value)
         params = None
         return GET, path, params
