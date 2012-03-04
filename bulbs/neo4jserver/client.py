@@ -204,6 +204,7 @@ class Neo4jResponse(Response):
     result_class = Neo4jResult
 
     def __init__(self, response, config):
+
         self.config = config
         self.handle_response(response)
         self.headers = self.get_headers(response)
