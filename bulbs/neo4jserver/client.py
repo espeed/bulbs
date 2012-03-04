@@ -169,7 +169,6 @@ class Neo4jResult(Result):
         """Parses the type ouf of a normal URI."""
         if uri:
             root_uri = uri.rpartition('/')[0]
-            #print root_uri
             neo4j_type = root_uri.rpartition('/')[-1]
             return neo4j_type
     
@@ -205,7 +204,6 @@ class Neo4jResponse(Response):
     result_class = Neo4jResult
 
     def __init__(self, response, config):
-        print response
         self.config = config
         self.handle_response(response)
         self.headers = self.get_headers(response)

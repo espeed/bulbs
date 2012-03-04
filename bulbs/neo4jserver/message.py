@@ -11,6 +11,7 @@ import re
 from bulbs.utils import build_path
 from bulbs.rest import GET, PUT, POST, DELETE
 
+import urllib
 
 vertex_path = "node"
 edge_path = "relationship"
@@ -200,6 +201,7 @@ class RequestMessage(object):
 
     def lookup_vertex(self,name,key,value):
         """Returns the vertices indexed with the key and value."""
+        print "VALUE", value
         path = build_path(index_path,"node",name,key,value)
         params = None
         return GET, path, params

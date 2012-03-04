@@ -176,7 +176,8 @@ class Request(object):
         headers = {'Accept': 'application/json'}
         body = None
 
-        path = quote(path)
+        # not quoting here b/c each path segment is quoted in the client via build_path
+        #path = quote(path) 
         uri = "%s/%s" % (self.config.root_uri.rstrip("/"), path.lstrip("/"))
 
         if params and method is GET:

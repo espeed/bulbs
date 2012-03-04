@@ -20,8 +20,7 @@ import pytz
 if sys.version < '3':
     import codecs
     import ujson as json
-    from urllib import quote
-    from urllib import urlencode
+    from urllib import quote, quote_plus, urlencode
     from urlparse import urlsplit
 
     def u(x):
@@ -29,8 +28,7 @@ if sys.version < '3':
 else:
     # ujson is faster but hasn't been ported to Python 3 yet
     import json
-    from urllib.parse import quote
-    from urllib.parse import urlencode
+    from urllib.parse import quote, quote_plus, urlencode
     from urllib.parse import urlsplit
 
     def u(x):
@@ -106,10 +104,10 @@ def get_one_result(resp):
 def build_path(*args):
     #path = "/".join(map(str,args))
     # don't include segment if it's None
-    segments = [str(segment) for segment in args if segment]
+    segments = [quote_plus(str(segment)) for segment in args if segment]
     path = "/".join(segments)
     # would change this to quoteplus for plus signs, but doesn't work for Neo4j
-    return quote(path) 
+    return path
 
 #
 # Time Utils
