@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
@@ -176,8 +176,6 @@ class Request(object):
         headers = {'Accept': 'application/json'}
         body = None
 
-        # not quoting here b/c each path segment is quoted in the client via build_path
-        #path = quote(path) 
         uri = "%s/%s" % (self.config.root_uri.rstrip("/"), path.lstrip("/"))
 
         if params and method is GET:

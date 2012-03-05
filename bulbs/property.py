@@ -26,7 +26,7 @@ log = get_logger(__name__)
 class Property(object):
     """Container for a graph-database property used to create Models."""
 
-    def __init__(self, name=None, fget=None, fset=None, fdel=None, \
+    def __init__(self, fget=None, fset=None, fdel=None, name=None, \
                      default=None, onupdate=None, constraint=None, \
                      nullable=True, unique=False, index=False):
 

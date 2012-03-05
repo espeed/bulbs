@@ -92,7 +92,8 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
     # overloaded in Node and Relationship to deal with multiple inheritence
     def _setattr(self, key, value):
         if key in self._properties:
-            #print "KEY", key
+            if self._is_calculated_property(key):
+                return 
             # we want Model Properties to be set be set as actual attributes
             # because they can be real Python propertes or calculated values,
             # which are calcualted/set upon each save().
@@ -101,6 +102,10 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         else:
             Element.__setattr__(self, key, value)
 
+    def _is_calculated_property(self, key):
+        # TODO: fget works, but fset, fdel have not been tested
+        property_instance = self._properties[key]
+        return (property_instance.fget is not None)
 
     def _coerce_property_value(self, key, value):
         if value is not None:
@@ -139,6 +144,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         """
         type_system = self._client.type_system
         for key in self._properties: # Python 3
+            if self._is_calculated_property(key): continue
             property_instance = self._properties[key]
             name = property_instance.name
             value = self._data.get(key, None)
