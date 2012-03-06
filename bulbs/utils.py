@@ -21,14 +21,14 @@ if sys.version < '3':
     import codecs
     import ujson as json
     from urllib import quote, quote_plus, urlencode
-    from urlparse import urlsplit
+    from urlparse import urlsplit, urlparse
 
     def u(x):
         return codecs.unicode_escape_decode(x)[0]
 else:
     # ujson is faster but hasn't been ported to Python 3 yet
     import json
-    from urllib.parse import quote, quote_plus, urlencode
+    from urllib.parse import quote, quote_plus, urlencode, urlparse
     from urllib.parse import urlsplit
 
     def u(x):

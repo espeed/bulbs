@@ -3,7 +3,8 @@
 # Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
-from .utils import get_logger
+import os
+from .utils import get_logger, urlparse
 from logging import StreamHandler, DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 
@@ -81,3 +82,24 @@ class Config(object):
         if log_handler is not None:
             log.root.addHandler(log_handler())
 
+    def set_neo4j_heroku(self, log_level=ERROR, log_handler=None):
+        """
+        Sets credentials if using the Neo4j Heroku Add On.
+
+        :param log_level: Python log level.
+        :type log_level: int
+
+        :param log_handler: Python log handler. Defaults to log_handler.
+        :type log_handler: logging.Handler
+
+        :rtype: Nnone
+
+        """
+        url = os.environ.get('NEO4J_REST_URL', None)
+        if url is not None:
+            parsed =  urlparse(url)
+            pieces = (parsed.scheme, parsed.hostname, parsed.port, parsed.path)
+            self.root_uri = "%s://%s:%s%s" % pieces
+            self.username = parsed.username
+            self.password = parsed.password
+            self.set_logger(log_level, log_handler)

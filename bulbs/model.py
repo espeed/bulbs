@@ -24,10 +24,10 @@ STRICT = 2
 log = get_logger(__name__)
 
 
-class Bundle(OrderedDict):
+#class Bundle(OrderedDict):
     
-    def as_tuple(self):
-        return tuple(self.values())
+#    def as_tuple(self):
+#        return tuple(self.values())
 
 
 class ModelMeta(type):
@@ -213,11 +213,11 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         self._set_property_defaults()   
         self._set_keyword_attributes(_data, kwds)
         # Bundle is an OrderedDict with a custom as_tuple() method, so order matters
-        bundle = Bundle()
-        bundle['data'] = self._get_property_data()
-        bundle['index_name'] = self.get_index_name(self._client.config)
-        bundle['keys'] = self.get_index_keys()
-        return bundle
+        #bundle = Bundle()
+        data = self._get_property_data()
+        index_name = self.get_index_name(self._client.config)
+        keys = self.get_index_keys()
+        return data, index_name, keys
 
         
 
@@ -329,12 +329,12 @@ class Node(Vertex,Model):
     
     def _create(self, _data, kwds):  
         # bundle is an OrderedDict containing data, index_name, and keys
-        data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
+        data, index_name, keys = self.get_bundle(_data, **kwds)
         result = self._client.create_indexed_vertex(data, index_name, keys).one()
         self._initialize(result)
         
     def _update(self, _id, _data, kwds):
-        data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
+        data, index_name, keys = self.get_bundle(_data, **kwds)
         result = self._client.update_indexed_vertex(_id, data, index_name, keys).one()
         self._initialize(result)
         
@@ -431,12 +431,12 @@ class Relationship(Edge,Model):
     def _create(self, outV, inV, _data, kwds):
         label = self.get_label(self._client.config)
         outV, inV = coerce_vertices(outV, inV)
-        data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
+        data, index_name, keys = self.get_bundle(_data, **kwds)
         result = self._client.create_edge(outV, label, inV, data).one()
         self._initialize(result)
         
     def _update(self, _id, _data, kwds):
-        data, index_name, keys = self.get_bundle(_data, **kwds).as_tuple()
+        data, index_name, keys = self.get_bundle(_data, **kwds)
         result = self._client.update_edge(_id, data).one()
         self._initialize(result)
 

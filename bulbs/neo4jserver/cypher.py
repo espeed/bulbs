@@ -20,11 +20,12 @@ class Cypher(object):
         resp = self.client.cypher(query,params)
         return initialize_elements(self.client, resp)
 
+
 class ScriptError(Exception):
     pass
 
 
-class YamlScripts(object):
+class Yaml(object):
     """Load Gremlin scripts from a YAML source file."""
 
     def __init__(self,file_name=None):
