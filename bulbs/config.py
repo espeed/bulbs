@@ -7,6 +7,8 @@ import os
 from .utils import get_logger, urlparse
 from logging import StreamHandler, DEBUG, INFO, WARNING, ERROR, CRITICAL
 
+log = get_logger(__name__)
+
 
 class Config(object):
     """
@@ -96,6 +98,8 @@ class Config(object):
 
         """
         url = os.environ.get('NEO4J_REST_URL', None)
+        log.debug("NEORJ_REST_URL", url)
+
         if url is not None:
             parsed =  urlparse(url)
             pieces = (parsed.scheme, parsed.hostname, parsed.port, parsed.path)
@@ -103,3 +107,7 @@ class Config(object):
             self.username = parsed.username
             self.password = parsed.password
             self.set_logger(log_level, log_handler)
+            log.debug("ROOT_URI", self.root_uri)
+            log.debug("USERNAME", self.username)
+            log.debug("PASSWROD", self.password)
+
