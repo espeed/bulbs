@@ -98,7 +98,7 @@ class Config(object):
 
         """
         url = os.environ.get('NEO4J_REST_URL', None)
-        log.debug("NEORJ_REST_URL", url)
+        log.debug("NEORJ_REST_URL: %s", url)
 
         if url is not None:
             parsed =  urlparse(url)
@@ -107,7 +107,6 @@ class Config(object):
             self.username = parsed.username
             self.password = parsed.password
             self.set_logger(log_level, log_handler)
-            log.debug("ROOT_URI", self.root_uri)
-            log.debug("USERNAME", self.username)
-            log.debug("PASSWROD", self.password)
-
+            log.debug("ROOT_URI: %s", self.root_uri)
+            log.debug("USERNAME: %s", self.username)
+            log.debug("PASSWORD: %s", self.password)
