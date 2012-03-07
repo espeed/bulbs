@@ -23,7 +23,6 @@ from bulbs.client import Client, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
-from .message import RequestMessage
 
 # The default URI
 NEO4J_URI = "http://localhost:7474/db/data/"
@@ -325,7 +324,6 @@ class Neo4jClient(Client):
     :ivar scripts: GroovyScripts object.  
     :ivar type_system: JSONTypeSystem object.
     :ivar request: Neo4jRequest object.
-    :ivar message: RequestMessage object.
 
     Example:
 
