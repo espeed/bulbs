@@ -8,7 +8,7 @@ from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
 from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
 
 from .graph import Graph
-from .batch import Neo4jBatch
+#from .batch import Neo4jBatch
 from .client import Neo4jClient, RequestMessage, NEO4J_URI
 from .index import ExactIndex, FulltextIndex, AutomaticIndex, \
     VertexIndexProxy, EdgeIndexProxy

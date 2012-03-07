@@ -9,11 +9,14 @@ Bulbs supports pluggable backends. This is the Neo4j Server client.
 
 """
 import os
+import re
+import urllib
 
-from bulbs.config import Config
-from bulbs.utils import json, get_file_path, get_logger, urlsplit
+from bulbs.config import Config, DEBUG
+from bulbs.rest import GET, PUT, POST, DELETE
+from bulbs.utils import json, urlsplit, quote_plus
+from bulbs.utils import get_file_path, get_logger, build_path
 from bulbs.registry import Registry
-from bulbs.config import DEBUG
 
 # specific to this client
 from bulbs.client import Client, Response, Result
@@ -27,6 +30,13 @@ NEO4J_URI = "http://localhost:7474/db/data/"
 
 # The logger defined in Config
 log = get_logger(__name__)
+
+# Neo4j Server Resource Paths
+vertex_path = "node"
+edge_path = "relationship"
+index_path = "index"
+gremlin_path = "ext/GremlinPlugin/graphdb/execute_script"
+cypher_path = "ext/CypherPlugin/graphdb/execute_query"
 
 
 class Neo4jResult(Result):
@@ -303,6 +313,7 @@ class Neo4jRequest(Request):
     response_class = Neo4jResponse
 
 
+
 class Neo4jClient(Client):
     """
     Low-level client that sends a request to Neo4j Server and returns a response.
@@ -327,6 +338,7 @@ class Neo4jClient(Client):
     """ 
     #: Default URI for the database.
     default_uri = NEO4J_URI
+    request_class = Neo4jRequest
 
     def __init__(self, config=None):
 
@@ -344,9 +356,7 @@ class Neo4jClient(Client):
         self.registry.add_scripts("gremlin", self.scripts)
 
         self.type_system = JSONTypeSystem()
-        self.request = Neo4jRequest(self.config, self.type_system.content_type)
-        self.message = RequestMessage(self.config, self.scripts)
-
+        self.request = self.request_class(self.config, self.type_system.content_type)
         
     #: Gremlin
 
@@ -363,8 +373,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.gremlin(script,params)
-        return self.request.send(message)
+        path = gremlin_path
+        params = dict(script=script, params=params)
+        return self.request.post(path, params)
 
     # Cypher
 
@@ -381,8 +392,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.cypher(query,params)
-        resp = self.request.send(message)
+        path = cypher_path
+        params = dict(query=query,params=params)
+        resp = self.request.post(path, params)
+
         # Cypher data hack
         resp.results = (self.result_class(result[0], self.config) for result in resp.results.data)
         resp.total_size = len(resp.results.data)
@@ -402,9 +415,10 @@ class Neo4jClient(Client):
         """
         if self.config.autoindex is True:
             index_name = self.config.vertex_index
-            return self.create_indexed_vertex(data,index_name,keys=None)
-        message = self.message.create_vertex(data)
-        return self.request.send(message)
+            return self.create_indexed_vertex(data, index_name, keys=None)
+        path = vertex_path
+        params = self._remove_null_values(data)
+        return self.request.post(path, params)
 
     def get_vertex(self, _id):
         """
@@ -416,8 +430,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.get_vertex(_id)
-        return self.request.send(message)
+        path = build_path(vertex_path, _id)
+        params = None
+        return self.request.get(path, params)
         
     def update_vertex(self, _id, data):
         """
@@ -435,8 +450,9 @@ class Neo4jClient(Client):
         if self.config.autoindex is True:
             index_name = self.config.vertex_index
             return self.update_indexed_vertex(_id,data,index_name,keys=None)
-        message = self.message.update_vertex(_id,data)
-        return self.request.send(message)
+        path = self._build_vertex_path(_id,"properties")
+        params = self._remove_null_values(data)
+        return self.request.put(path, params)
 
     def delete_vertex(self, _id):
         """
@@ -448,8 +464,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.delete_vertex(_id)
-        return self.request.send(message)
+        script = self.scripts.get("delete_vertex")
+        params = dict(_id=_id)
+        return self.gremlin(script,params)
         
     #: Edge Proxy
 
@@ -475,8 +492,11 @@ class Neo4jClient(Client):
         if self.config.autoindex is True:
             index_name = self.config.edge_index
             return self.create_indexed_edge(outV,label,inV,data,index_name,keys=None)
-        message = self.message.create_edge(outV,label,inV,data)
-        return self.request.send(message)
+        data = self._remove_null_values(data)
+        inV_uri = self._build_vertex_uri(inV)
+        path = build_path(vertex_path, outV, "relationships")
+        params = {'to':inV_uri, 'type':label, 'data':data}
+        return self.request.post(path, params)
 
     def get_edge(self, _id):
         """
@@ -488,8 +508,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.get_edge(_id)
-        return self.request.send(message)
+        path = build_path(edge_path,_id)
+        params = None
+        return self.request.get(path, params)
         
     def update_edge(self, _id, data):
         """
@@ -507,8 +528,9 @@ class Neo4jClient(Client):
         if self.config.autoindex is True:
             index_name = self.config.edge_index
             return self.update_indexed_edge(_id,data,index_name,keys=None)
-        message = self.message.update_edge(_id, data)
-        return self.request.send(message)
+        path = build_path(edge_path,_id,"properties")
+        params = self._remove_null_values(data)
+        return self.request.put(path, params)
 
     def delete_edge(self, _id):
         """
@@ -520,8 +542,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.delete_edge(_id)
-        return self.request.send(message)
+        path = build_path(edge_path,_id)
+        params = None
+        return self.request.delete(path, params)
 
     # Vertex Container
 
@@ -538,8 +561,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
         
         """
-        message = self.message.outE(_id,label)
-        return self.request.send(message)
+        script = self.scripts.get('outE')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
 
     def inE(self, _id, label=None):
         """
@@ -554,8 +578,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.inE(_id,label)
-        return self.request.send(message)
+        script = self.scripts.get('inE')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
 
     def bothE(self, _id, label=None):
         """
@@ -570,8 +595,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
         
         """
-        message = self.message.bothE(_id,label)
-        return self.request.send(message)
+        script = self.scripts.get('bothE')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
 
     def outV(self, _id, label=None):
         """
@@ -586,8 +612,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.outV(_id,label)
-        return self.request.send(message)
+        script = self.scripts.get('outV')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
         
     def inV(self, _id, label=None):
         """
@@ -602,8 +629,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.inV(_id,label)
-        return self.request.send(message)
+        script = self.scripts.get('inV')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
         
     def bothV(self, _id, label=None):
         """
@@ -618,8 +646,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.bothV(_id,label)
-        return self.request.send(message)
+        script = self.scripts.get('bothV')
+        params = dict(_id=_id,label=label)
+        return self.gremlin(script,params)
 
     #: Index Proxy - Vertex
 
@@ -633,8 +662,14 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.create_vertex_index(index_name,*args,**kwds)
-        resp = self.request.send(message)
+        index_type = kwds.pop("index_type", "exact")
+        provider = kwds.pop("provider", "lucene")
+        #keys = kwds.pop("keys",None)
+        #config = {'type':index_type,'provider':provider,'keys':str(keys)}
+        config = {'type':index_type, 'provider':provider}
+        path = build_path(index_path, "node")
+        params = dict(name=index_name, config=config)
+        resp = self.request.post(path, params)
         resp._set_index_name(index_name)        
         return resp
 
@@ -645,8 +680,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.get_vertex_indices()
-        return self.request.send(message)
+        path = build_path(index_path,"node")
+        params = None
+        return self.request.get(path, params)
 
     def get_vertex_index(self, index_name):
         """
@@ -674,8 +710,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.delete_vertex_index(index_name)
-        return self.request.send(message)
+        path = build_path(index_path, "node", index_name)
+        params = None
+        return self.request.delete(path, params)
 
     # Index Proxy - Edge
 
@@ -689,8 +726,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.create_edge_index(index_name,*args,**kwds)
-        resp = self.request.send(message)
+        path = build_path(index_path, edge_path)
+        params = dict(name=index_name)
+        resp = self.request.post(path, params)
         resp._set_index_name(index_name)
         return resp
 
@@ -701,8 +739,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.get_edge_indices()
-        return self.request.send(message)
+        path = build_path(index_path,edge_path)
+        params = None
+        return self.request.get(path, params)
 
     def get_edge_index(self, index_name):
         """
@@ -730,8 +769,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.delete_edge_index(index_name)
-        return self.request.send(message)
+        path = build_path(index_path, edge_path, index_name)
+        params = None
+        return self.request.delete(path, params)
 
     # Index Container - Vertex
 
@@ -754,8 +794,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.put_vertex(index_name,key,value,_id)
-        return self.request.send(message)
+        uri = "%s/%s/%d" % (self.config.root_uri, "node", _id)
+        path = build_path(index_path, "node", index_name)
+        params = dict(key=key, value=value, uri=uri)
+        return self.request.post(path, params)
 
     def lookup_vertex(self, index_name, key, value):
         """
@@ -773,8 +815,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.lookup_vertex(index_name,key,value)
-        return self.request.send(message)
+        key, value = quote_plus(key), quote_plus(value)
+        path = build_path(index_path, "node", index_name, key, value)
+        params = None
+        return self.request.get(path, params)
 
     def query_vertex(self, index_name, params):
         """
@@ -789,8 +833,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.query_vertex(index_name,params)
-        return self.request.send(message)
+        path = build_path(index_path,"node",name)
+        params = params
+        return self.request.get(path, params)
 
     def remove_vertex(self, index_name, _id, key=None, value=None):
         """
@@ -808,8 +853,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.remove_vertex(index_name,_id,key,value)
-        return self.request.send(message)
+        path = build_path("node",name,key,value,_id)
+        params = None
+        return self.request.delete(path, params)
 
     # Index Container - Edge
 
@@ -832,8 +878,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.put_edge(index_name,key,value,_id)
-        return self.request.send(message)
+        uri = "%s/%s/%d" % (self.config.root_uri,edge_path,_id)
+        path = build_path(index_path,edge_path,name)
+        params = dict(key=key,value=value,uri=uri)
+        return self.request.post(path, params)
 
     def lookup_edge(self, index_name, key, value):
         """
@@ -851,8 +899,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.lookup_edge(index_name,key,value)
-        return self.request.send(message)
+        key, value = quote_plus(key), quote_plus(value)
+        path = build_path(index_path,edge_path,name,key,value)
+        params = None
+        return self.request.get(path, params)
 
     def query_edge(self, index_name, params):
         """
@@ -867,8 +917,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.query_edge(index_name,params)
-        return self.request.send(message)
+        path = build_path(index_path,edge_path,name)
+        params = params
+        return self.request.get(path, params)
 
     def remove_edge(self, index_name, _id, key=None, value=None):
         """
@@ -889,8 +940,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.remove_edge(index_name,_id,key,value)
-        return self.request.send(message)
+        path = build_path(edge_path,name,key,value,_id)
+        params = None
+        return self.request.delete(path, params)
 
     # Model Proxy - Vertex
 
@@ -910,20 +962,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.create_indexed_vertex(data,index_name,keys)
-        return self.request.send(message)
-
-    # Batch try...
-    #def create_indexed_vertex(self,data,index_name,keys=None):
-    #    """Creates a vertex, indexes it, and returns the Response."""
-    #    batch = Neo4jBatch(self.client)
-    #    placeholder = batch.add(self.message.create_vertex(data))
-    #    for key in keys:
-    #        value = data.get(key)
-    #        if value is None: continue
-    #        batch.add(self.message.put_vertex(index_name,key,value,placeholder))
-    #    resp = batch.send()
-    #    #for result in resp.results:
+        data = self._remove_null_values(data)
+        params = dict(data=data,index_name=index_name,keys=keys)
+        script = self.scripts.get("create_indexed_vertex")
+        return self.gremlin(script,params)
     
     def update_indexed_vertex(self, _id, data, index_name, keys=None):
         """
@@ -944,8 +986,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.update_indexed_vertex(_id,data,index_name,keys)
-        return self.request.send(message)
+        data = self._remove_null_values(data)
+        params = dict(_id=_id,data=data,index_name=index_name,keys=keys)
+        script = self.scripts.get("update_indexed_vertex")
+        return self.gremlin(script,params)
 
     # Model Proxy - Edge
 
@@ -974,8 +1018,13 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.create_indexed_edge(outV,label,inV,data,index_name,keys)
-        return self.request.send(message)
+        data = self._remove_null_values(data)
+        edge_params = dict(outV=outV,label=label,inV=inV)
+        params = dict(data=data,index_name=index_name,keys=keys)
+        params.update(edge_params)
+        script = self.scripts.get("create_indexed_edge")
+        return self.gremlin(script,params)
+
 
     def update_indexed_edge(self, _id, data, index_name, keys=None):
         """
@@ -996,16 +1045,11 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        message = self.message.update_indexed_edge(_id, data, index_name, keys)
-        return self.request.send(message)
+        data = self._remove_null_values(data)
+        params = dict(_id=_id,data=data,index_name=index_name,keys=keys)
+        script = self.scripts.get("update_indexed_edge")
+        return self.gremlin(script,params)
 
-
-    # Batch
-
-    def batch(self, messages):
-        path = "batch"
-        params = messages
-        return self.request.post(path, params)
 
     # Metadata
 
@@ -1027,6 +1071,13 @@ class Neo4jClient(Client):
 
     # Private 
 
+    def _remove_null_values(self,data):
+        """Removes null property values because they aren't valid in Neo4j."""
+        # Neo4j Server uses PUTs to overwrite all properties so no need
+        # to worry about deleting props that are being set to null.
+        clean_data = [(k, data[k]) for k in data if data[k] is not None] # Python 3
+        return dict(clean_data)
+
     def _get_index_results(self, index_name, resp):
         """
         Returns the index from a map of indicies.
@@ -1035,4 +1086,42 @@ class Neo4jClient(Client):
         if resp.content and index_name in resp.content:
             result = resp.content[index_name]
             return Neo4jResult(result, self.config)
+
+
+    # Batch related
+    def _placeholder(self,_id):
+        pattern = "^{.*}$"
+        match = re.search(pattern,str(_id))
+        if match:
+            placeholder = match.group()
+            return placeholder
+
+    def _build_vertex_path(self,_id,*args):
+        # if the _id is a placeholder, return the placeholder;
+        # othewise, return a normal vertex path
+        placeholder = self._placeholder(_id) 
+        if placeholder:
+            segments = [placeholder]
+        else:
+            segments = [vertex_path,_id]
+        segments = segments + list(args)
+        return build_path(*segments)
+        
+    def _build_vertex_uri(self,_id,*args):
+        placeholder = self._placeholder(_id) 
+        if placeholder:
+            return placeholder
+        root_uri = self.config.root_uri.rstrip("/")
+        segments = [vertex_path, _id] + list(args)
+        path = build_path(*segments)
+        uri = "%s/%s" % (root_uri, path)
+        return uri
+
+    def _build_edge_path(self,_id):
+        # if the _id is a placeholder, return the placeholder;
+        # othewise, return a normal edge path
+        return self._placeholder(_id) or build_path(edge_path,_id)
+
+    def _build_edge_uri(self,_id):
+        pass
 

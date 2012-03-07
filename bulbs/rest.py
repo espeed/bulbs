@@ -67,6 +67,10 @@ class Request(object):
         self.content_type = content_type
         self.http = httplib2.Http()    
         self._add_credentials(config.username, config.password)
+        self._initialize()
+
+    def _initialize(self):
+        pass
     
     def get(self, path, params=None):
         """
@@ -191,4 +195,5 @@ class Request(object):
     def _add_credentials(self, username, password):
         if username and password:
             self.http.add_credentials(username, password)
+
 
