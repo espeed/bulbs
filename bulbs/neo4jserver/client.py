@@ -831,7 +831,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path(index_path,"node",name)
+        path = build_path(index_path,"node", index_name)
         params = params
         return self.request.get(path, params)
 
@@ -851,7 +851,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path("node",name,key,value,_id)
+        path = build_path("node", index_name ,key, value, _id)
         params = None
         return self.request.delete(path, params)
 
@@ -877,7 +877,7 @@ class Neo4jClient(Client):
 
         """
         uri = "%s/%s/%d" % (self.config.root_uri,edge_path,_id)
-        path = build_path(index_path,edge_path,name)
+        path = build_path(index_path, edge_path, index_name)
         params = dict(key=key,value=value,uri=uri)
         return self.request.post(path, params)
 
@@ -898,7 +898,7 @@ class Neo4jClient(Client):
 
         """
         key, value = quote_plus(key), quote_plus(value)
-        path = build_path(index_path,edge_path,name,key,value)
+        path = build_path(index_path, edge_path, index_name, key, value)
         params = None
         return self.request.get(path, params)
 
@@ -915,7 +915,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path(index_path,edge_path,name)
+        path = build_path(index_path, edge_path, index_name)
         params = params
         return self.request.get(path, params)
 
@@ -938,7 +938,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path(edge_path,name,key,value,_id)
+        path = build_path(edge_path, index_name, key, value, _id)
         params = None
         return self.request.delete(path, params)
 

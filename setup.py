@@ -53,7 +53,7 @@ def run_tests():
     return suite()
 
 # Python 3
-install_requires = ['httplib2>=0.7.2', 'pyyaml>=3.10', 'six']
+install_requires = ['httplib2>=0.7.2', 'pyyaml>=3.10', 'six', 'pytz']
 if sys.version < '3':
     install_requires.append('ujson>=1.15')
     install_requires.append('python-dateutil==1.5')
@@ -65,7 +65,7 @@ else:
 
 setup (
     name = 'bulbs',
-    version = '0.3d',
+    version = '0.3',
     url = 'http://bulbflow.com',
     license = 'BSD',
     author = 'James Thornton',
