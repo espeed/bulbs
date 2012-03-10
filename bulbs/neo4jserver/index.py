@@ -210,7 +210,7 @@ class ExactIndex(Index):
 
     def remove(self, _id, key=None, value=None, **pair):
         """Remove the element from the index located by key/value."""
-        key, value = self._get_key_value(key,value,pair)
+        key, value = self._get_key_value(key, value, pair)
         remove = self._get_method(vertex="remove_vertex", edge="remove_edge")
         return remove(self.index_name,_id,key,value)
 

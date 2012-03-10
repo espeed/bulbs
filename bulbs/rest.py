@@ -172,6 +172,7 @@ class Request(object):
 
         return self.response_class(http_resp, self.config)
 
+
     def _display_debug(self, uri, method, body):
         log.debug("%s url:  %s  ", method, uri)
         log.debug("%s body: %s ", method, body)

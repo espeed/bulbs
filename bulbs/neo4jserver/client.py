@@ -851,9 +851,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path("node", index_name ,key, value, _id)
+        path = build_path(index_path, "node", index_name ,key, value, _id)
         params = None
-        return self.request.delete(path, params)
+        resp = self.request.delete(path, params)
+        return resp
 
     # Index Container - Edge
 
