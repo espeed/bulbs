@@ -44,15 +44,9 @@ class IndexTestCase(BulbsTestCase):
         i2 = self.indicesV.get(index_name)
         assert self.vertices.index.index_name == i2.index_name
         
-        #self.client.config.set_logger(DEBUG)
-
-        # remove vertex is bugged
         self.vertices.index.remove(james._id,'name','James')
-        #james = self.vertices.index.get_unique('name','James')
-        #assert james is None
-
-        #self.client.config.set_logger(ERROR)
-
+        james = self.vertices.index.get_unique('name','James')
+        assert james is None
   
         self.indicesV.delete(index_name)
 
