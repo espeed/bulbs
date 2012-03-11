@@ -432,6 +432,11 @@ class Neo4jClient(Client):
         params = None
         return self.request.get(path, params)
         
+    def get_all_vertices(self):
+        script = self.scripts.get("get_vertices")
+        params = None
+        return self.gremlin(script, params)
+
     def update_vertex(self, _id, data):
         """
         Updates the vertex with the _id and returns the Response.
@@ -510,6 +515,11 @@ class Neo4jClient(Client):
         params = None
         return self.request.get(path, params)
         
+    def get_all_edges(self):
+        script = self.scripts.get("get_edges")
+        params = None
+        return self.gremlin(script, params)
+
     def update_edge(self, _id, data):
         """
         Updates the edge with the _id and returns the Response.

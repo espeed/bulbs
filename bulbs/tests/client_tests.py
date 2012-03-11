@@ -36,6 +36,10 @@ class ClientTestCase(unittest.TestCase):
         resp2 = self.client.get_vertex(resp1.results.get_id())
         assert resp1.results.data == resp2.results.data
 
+    def test_get_all_vertices(self):
+        resp = self.client.get_all_vertices()
+        assert resp.total_size > 1
+
     def test_update_vertex(self):
         name1, age1 = "James", 34
         data1 = dict(name=name1, age=age1)
@@ -95,6 +99,10 @@ class ClientTestCase(unittest.TestCase):
         assert resp3.results.get_id() == resp4.results.get_id()
         assert resp3.results.get_type() == resp4.results.get_type()
         assert resp3.results.get_map() == resp4.results.get_map()
+
+    def test_get_all_edges(self):
+        resp = self.client.get_all_edges()
+        assert resp.total_size > 1
 
     def test_update_edge(self):
         resp1 = self.client.create_vertex({'name':'James','age':34})
@@ -195,7 +203,7 @@ class ClientTestCase(unittest.TestCase):
         keys1 = ['name']
         self.client.create_indexed_vertex(data1, index_name, keys1)
         
-        # Get/Lookup Vertex
+        # Lookup Vertex
         resp1 = self.client.lookup_vertex(index_name, "name", name1)
         results1 = resp1.results.next()
 
@@ -212,7 +220,7 @@ class ClientTestCase(unittest.TestCase):
         keys2 = None
         self.client.update_indexed_vertex(_id, data2, index_name, keys2)
 
-        # Get/Lookup Vertex
+        # Lookup Vertex
         resp2 = self.client.lookup_vertex(index_name, "name", name2)
         result2 = resp2.results.next()
 
@@ -221,7 +229,7 @@ class ClientTestCase(unittest.TestCase):
         assert result2.data.get('name') == name2
         assert result2.data.get('age') == age2
 
-        # Delete an Indexed Vertex
+        # Remove a vertex from the index
         self.client.remove_vertex(index_name, _id, "name", name2)
         
         resp3 = self.client.lookup_vertex(index_name, "name", name2)
@@ -244,14 +252,13 @@ class ClientTestCase(unittest.TestCase):
         keys1 = ['city']
         self.client.create_indexed_edge(V1_id, "knows", V2_id, data1, index_name, keys1)
         
-        # Get/Lookup Edge
+        # Lookup Edge
         resp1 = self.client.lookup_edge(index_name, "city", city1)
         results1 = resp1.results.next()
 
         assert results1.get_type() == "edge"
         assert results1.get_map() == data1  
         assert results1.data.get('city') == city1
-
 
         # Update and Index Edge (update doesn't return data)
         _id = results1.get_id()
@@ -260,7 +267,7 @@ class ClientTestCase(unittest.TestCase):
         keys2 = ['city']
         self.client.update_indexed_edge(_id, data2, index_name, keys2)
 
-        # Get/Lookup Edge
+        # Lookup Edge
         resp2 = self.client.lookup_edge(index_name, "city", city2)
         result2 = resp2.results.next()
 
@@ -268,7 +275,7 @@ class ClientTestCase(unittest.TestCase):
         assert result2.get_map() == data2
         assert result2.data.get('city') == city2
 
-        # Delete an Indexed Edge
+        # Remove and edge from the index
         self.client.remove_edge(index_name, _id, "city", city2)
         
         resp3 = self.client.lookup_edge(index_name, "city", city2)

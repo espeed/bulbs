@@ -420,8 +420,8 @@ class VertexProxy(object):
         :rtype: Vertex generator
  
         """
-        resp = self.client.get_all()
-        return intialize_elements(self.client,resp)
+        resp = self.client.get_all_vertices()
+        return initialize_elements(self.client, resp)
 
     def update(self,_id, _data=None, **kwds):
         """
@@ -673,6 +673,18 @@ class EdgeProxy(object):
             return initialize_element(self.client,resp.results)
         except LookupError:
             return None
+
+    # is this really needed?
+    def get_all(self):
+        """
+        Returns all the vertices in the graph.
+        
+        :rtype: Vertex generator
+ 
+        """
+        resp = self.client.get_all_edges()
+        return initialize_elements(self.client, resp)
+
 
     def update(self,_id,_data=None,**kwds):
         """ 
