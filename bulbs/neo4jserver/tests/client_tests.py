@@ -19,56 +19,11 @@ class Neo4jIndexTestCase(unittest.TestCase):
         config = Config(NEO4J_URI)
         self.client = Neo4jClient(config)
 
-    #
-    # Index Controller Tests
-    #
+    def test_gremlin(self):
+        # limiting return count so we don't exceed heap size
+        resp = self.client.gremlin("g.V[0..9]")
+        assert resp.total_size > 5
 
-    def test_create_vertex_index(self):
-        index_name = "test_idxV"
-        #keys = ["name","age"]
-        self.client.delete_vertex_index(index_name)
-        resp = self.client.create_vertex_index(index_name)
-        #print resp.raw
-        # cool...keys of "null" come back as None
-        #new_keys = str(resp.results.get("keys"))
-        #new_keys = json.loads(new_keys)
-        #print type(new_keys), new_keys
-
-    def test_get_vertex_index(self):
-        index_name = "test_idxV"
-        resp = self.client.get_vertex_index(index_name)
-        #print "---------------------------"
-        #print "RAW", resp.raw
-
-    #
-    # Index Container Tests
-    #
-
-    def test_indexed_vertex_CRUD(self):
-        index_name = "test_idxV"
-        data = dict(name="James Thornton",age=34)
-        keys = ['name']
-        #self.client.delete_vertex_index(index_name)
-        resp = self.client.create_indexed_vertex(data,index_name,keys)
-        #print "RAW", resp.raw        
-
-        # update (update doesn't return data)
-        _id = resp.results.get_id()
-        #print "IDDDDDD", _id
-        data = dict(name="James Thornton",age=35)
-        keys = None
-        resp = self.client.update_indexed_vertex(_id,data,index_name,keys)
-        #print "RAW", resp.raw
-
-        # delete
-        resp = self.client.delete_vertex(_id)
-        #print "RAW", resp.raw
-        
-    # deleting a vertex evidently removes it from its indices as well
-    # maybe this is because you're using the Blueprints method
-    #def test_delete_vertex(self):
-    #    resp = self.client.delete_vertex(9)
-    #    print "RAW", resp.raw
 
 
 class CypherTestCase(unittest.TestCase):

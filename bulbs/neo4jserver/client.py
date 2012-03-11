@@ -14,7 +14,7 @@ import urllib
 
 from bulbs.config import Config, DEBUG
 from bulbs.rest import GET, PUT, POST, DELETE
-from bulbs.utils import json, urlsplit, quote_plus
+from bulbs.utils import json, urlsplit, quote
 from bulbs.utils import get_file_path, get_logger, build_path
 from bulbs.registry import Registry
 
@@ -813,7 +813,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        key, value = quote_plus(key), quote_plus(value)
+        key, value = quote(key), quote(value)
         path = build_path(index_path, "node", index_name, key, value)
         params = None
         return self.request.get(path, params)
@@ -851,11 +851,11 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
+        key, value = quote(key), quote(value)
         path = build_path(index_path, "node", index_name ,key, value, _id)
         params = None
-        resp = self.request.delete(path, params)
-        return resp
-
+        return self.request.delete(path, params)
+        
     # Index Container - Edge
 
     def put_edge(self, index_name, key, value, _id):
@@ -898,7 +898,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        key, value = quote_plus(key), quote_plus(value)
+        key, value = quote(key), quote(value)
         path = build_path(index_path, edge_path, index_name, key, value)
         params = None
         return self.request.get(path, params)
@@ -939,7 +939,8 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path(edge_path, index_name, key, value, _id)
+        key, value = quote(key), quote(value)
+        path = build_path(index_path, edge_path, index_name, key, value, _id)
         params = None
         return self.request.delete(path, params)
 
