@@ -677,9 +677,9 @@ class EdgeProxy(object):
     # is this really needed?
     def get_all(self):
         """
-        Returns all the vertices in the graph.
+        Returns all the edges in the graph.
         
-        :rtype: Vertex generator
+        :rtype: Edge generator
  
         """
         resp = self.client.get_all_edges()
