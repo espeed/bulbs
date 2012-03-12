@@ -26,7 +26,7 @@ class Registry(object):
                 self.class_map[element_key] = element_class
 
     def get_class(self,element_key):
-        return self.class_map[element_key]
+        return self.class_map.get(element_key)
 
     # Proxies
     def add_proxy(self,key,proxy):

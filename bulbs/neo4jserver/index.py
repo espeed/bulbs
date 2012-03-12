@@ -181,7 +181,7 @@ class ExactIndex(Index):
         key, value = self._get_key_value(key,value,pair)
         lookup = self._get_method(vertex="lookup_vertex", edge="lookup_edge")
         resp = lookup(self.index_name,key,value)
-        return initialize_elements(self.client,resp)
+        return initialize_elements(self.client, resp)
 
     #put_unique = update
     def put_unique(self, _id, key=None, value=None, **pair):
@@ -204,9 +204,11 @@ class ExactIndex(Index):
             result = get_one_result(resp)
             return initialize_element(self.client,result)
 
-
-    def query(self, query_string):
-        pass
+    def query(self, key, query_string):
+        script = self.client.scripts.get('query_exact_index')
+        params = dict(index_name=self.index_name, key=key, query_string=query_string)
+        resp = self.client.gremlin(script, params)
+        return initialize_elements(self.client, resp)       
 
     def remove(self, _id, key=None, value=None, **pair):
         """Remove the element from the index located by key/value."""

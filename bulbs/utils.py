@@ -67,6 +67,10 @@ def initialize_element(client,result):
 def get_element_class(client,result):
     element_key = get_element_key(client,result)
     element_class = client.registry.get_class(element_key)
+    if element_class is None:
+        # if element_class is not in registry, return the generic Vertex/Edge class
+        base_type = result.get_type()
+        element_class = client.registry.get_class(base_type)
     return element_class
 
 def get_element_key(client,result):

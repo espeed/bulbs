@@ -4,6 +4,10 @@ from bulbs.utils import json
 from bulbs.neo4jserver import Neo4jClient, NEO4J_URI
 from bulbs.tests.client_tests import ClientTestCase
 
+from bulbs.factory import Factory
+from bulbs.element import Vertex, Edge
+from bulbs.neo4jserver.index import ExactIndex
+
 import time
 
 
@@ -18,13 +22,22 @@ class Neo4jIndexTestCase(unittest.TestCase):
     def setUp(self):
         config = Config(NEO4J_URI)
         self.client = Neo4jClient(config)
+        self.factory = Factory(self.client)
 
     def test_gremlin(self):
         # limiting return count so we don't exceed heap size
         resp = self.client.gremlin("g.V[0..9]")
         assert resp.total_size > 5
 
+    def test_query_exact_vertex_index(self):
+        index = self.factory.get_index(Vertex, ExactIndex)
+        vertices = index.query("name", "Jam*")
+        assert list(vertices) > 1
 
+    def test_query_exact_edge_index(self):
+        index = self.factory.get_index(Edge, ExactIndex)
+        edges = index.query("timestamp", "1*")
+        assert list(edges) > 1
 
 class CypherTestCase(unittest.TestCase):
     

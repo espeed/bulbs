@@ -828,23 +828,6 @@ class Neo4jClient(Client):
         params = None
         return self.request.get(path, params)
 
-    def query_vertex(self, index_name, params):
-        """
-        Returns the vertices for the index query.
-
-        :param index_name: Name of the index.
-        :type index_name: str
-
-        :param params: Query params.
-        :type params: dict
-
-        :rtype: Neo4jResponse
-
-        """
-        path = build_path(index_path,"node", index_name)
-        params = params
-        return self.request.get(path, params)
-
     def remove_vertex(self, index_name, _id, key=None, value=None):
         """
         Removes a vertex from the index and returns the Response.
@@ -911,23 +894,6 @@ class Neo4jClient(Client):
         key, value = quote(key), quote(value)
         path = build_path(index_path, edge_path, index_name, key, value)
         params = None
-        return self.request.get(path, params)
-
-    def query_edge(self, index_name, params):
-        """
-        Queries for an edge in the index and returns the Response.
-
-        :param index_name: Name of the index.
-        :type index_name: str
-        
-        :param params: Query params.
-        :type params: dict
-
-        :rtype: Neo4jResponse
-
-        """
-        path = build_path(index_path, edge_path, index_name)
-        params = params
         return self.request.get(path, params)
 
     def remove_edge(self, index_name, _id, key=None, value=None):
