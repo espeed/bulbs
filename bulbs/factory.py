@@ -13,20 +13,6 @@ class Factory(object):
     def __init__(self, client):
         self.client = client
 
-    def build_model(self, element_class, index, kwds):
-        """Returns an instantiated Model with keyword attributes set."""
-        model = element_class(client)
-        model._set_keyword_attributes(kwds)
-        model._index = index
-        return model
-
-    def build_element(client,result):
-        # result should be a single Result object, not a list or generator
-        element_class = get_element_class(client,result)
-        element = element_class(client)
-        element._initialize(result)
-        return element
-
     def build_element_proxy(self, element_class, index_class, index_name=None):
         proxy_class = element_class.get_proxy_class()
         element_proxy = proxy_class(element_class, self.client)
