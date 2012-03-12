@@ -107,7 +107,7 @@ def update_indexed_edge(_id, data, index_name, keys) {
   }
 }
 
-// Incicies
+// Indices
 def query_exact_index(index_name, key, query_string) {
   // Neo4jTokens.QUERY_HEADER = "%query%"
   return g.idx(index_name).get(key, Neo4jTokens.QUERY_HEADER + query_string)

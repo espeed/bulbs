@@ -3,7 +3,7 @@
 # Copyright 2011 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
-
+import time
 import unittest
 
 from bulbs import config
@@ -98,21 +98,24 @@ class EdgeProxyTestCase(BulbsTestCase):
         self.julie = self.vertices.create({'name':'Julie'})
         
     def test_create(self):
-        edge = self.edges.create(self.james,"test",self.julie)
+        data = dict(timestamp=int(time.time()))
+        edge = self.edges.create(self.james, "test", self.julie, data)
         assert edge._outV == self.james._id
         assert edge._label == "test"
         assert edge._inV == self.julie._id
         
     def test_update_and_get(self):
-        e1 = self.edges.create(self.james,"test",self.julie,{'time':'today'})
-        assert e1.time == 'today'
-        self.edges.update(e1._id,{'time':'tomorrow'})
+        now = int(time.time())
+        e1 = self.edges.create(self.james,"test",self.julie, {'timestamp': now})
+        assert e1.timestamp == now
+        later = int(time.time())
+        self.edges.update(e1._id, {'timestamp': later})
         e2 = self.edges.get(e1._id)
         assert e1._id == e2._id
         assert e1._inV == e2._inV
         assert e1._label == e2._label
         assert e1._outV == e2._outV
-        assert e2.time == 'tomorrow'
+        assert e2.timestamp == later
 
 
     #def test_get_all(self):
