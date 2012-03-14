@@ -10,7 +10,7 @@ Base classes for modeling domain objects that wrap vertices and edges.
 import six   # Python 3
 import inspect
 import types
-from collections import OrderedDict, Callable
+from collections import Callable
 
 from bulbs.property import Property
 from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy, coerce_vertices, build_data

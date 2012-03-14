@@ -120,6 +120,10 @@ def clear() {
 // Tree Steps: inTree() and outTree()
 // See https://groups.google.com/d/topic/gremlin-users/iCPUifiU_wk/discussion
 
+
+// Obsoleted with the addition of the the TreePipe in Gremlin 1.6 
+// See https://groups.google.com/d/topic/gremlin-users/9s2YWsqK_Ro/discussion
+
 def define_tree_steps() {
   tree = { vertices ->
 
