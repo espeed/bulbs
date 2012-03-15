@@ -74,7 +74,7 @@ class RexsterResult(Result):
         """Returns the element URI."""
         path_map = dict(vertex="vertices",edge="edges")
         _id = self.get_id()
-        _type = self._get_type()
+        _type = self.get_type()
         element_path = path_map[_type]
         root_uri = self.config.root_uri
         uri = "%s/%s/%s" % (root_uri,element_path,_id)
@@ -93,6 +93,12 @@ class RexsterResult(Result):
     def get_label(self):
         """Returns the edge label (relationship type)."""
         return self.data.get('_label')
+
+    def get_index_name(self):
+        return self.data['name']
+
+    def get_index_class(self):
+        return self.data['class']
 
     def get(self,attribute):
         """Returns the value of a client-specific attribute."""
@@ -217,6 +223,11 @@ class RexsterClient(Client):
         path = build_path(self.vertex_path,_id)
         return self.request.get(path,params=None)
 
+    def get_all_vertices(self):
+        script = self.scripts.get("get_vertices")
+        params = None
+        return self.gremlin(script, params)
+
     def update_vertex(self,_id,data):
         """Updates the vertex with the _id and returns the Response."""
         data = self._remove_null_values(data)
@@ -241,6 +252,11 @@ class RexsterClient(Client):
         """Gets the edge with the _id and returns the Response."""
         path = build_path(self.edge_path,_id)
         return self.request.get(path,params=None)
+
+    def get_all_edges(self):
+        script = self.scripts.get("get_edges")
+        params = None
+        return self.gremlin(script, params)
 
     def update_edge(self,_id,data):
         """Updates the edge with the _id and returns the Response."""
@@ -441,13 +457,15 @@ class RexsterClient(Client):
 
     # Model Proxy - Edge
 
-    def create_indexed_edge(self,data,index_name,keys=None):
+    def create_indexed_edge(self, outV, label, inV, data, index_name, keys=None):
         """Creates a edge, indexes it, and returns the Response."""
         data = self._remove_null_values(data)
+        edge_params = dict(outV=outV,label=label,inV=inV)
         params = dict(data=data,index_name=index_name,keys=keys)
+        params.update(edge_params)
         script = self.scripts.get("create_indexed_edge")
         return self.gremlin(script,params)
-    
+        
     def update_indexed_edge(self,_id,data,index_name,keys=None):
         """Updates an indexed edge and returns the Response."""
         data = self._remove_null_values(data)

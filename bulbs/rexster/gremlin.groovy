@@ -120,6 +120,7 @@ def update_indexed_edge(_id, data, index_name, keys) {
       if (keys == null || keys.contains(entry.key))
 	index.put(entry.key,String.valueOf(entry.value),edge)
     return edge;
+    }
   }
   def transaction = { final Closure closure ->
     g.setMaxBufferSize(0);

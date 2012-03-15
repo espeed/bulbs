@@ -117,6 +117,11 @@ class Index(object):
         self.client = client
         self.results = results
 
+    @classmethod 
+    def get_proxy_class(cls, base_type=None):
+        class_map = dict(vertex=VertexIndexProxy, edge=EdgeIndexProxy)
+        return class_map[base_type]
+
     @property
     def index_name(self):
         """Returns the index name."""
@@ -132,7 +137,6 @@ class Index(object):
         """Returns the index type, which will either be automatic or manual."""
         return self.results.data['type']
 
-    # TODO: change to lookup?
     def lookup(self,key=None,value=None,**pair):
         """
         Return a generator containing all the elements with key property equal 
@@ -183,6 +187,16 @@ class Index(object):
         resp = self.client.index_keys(self.index_name)
         return list(resp.results)
 
+    def _get_key_value(self, key, value, pair):
+        """Return the key and value, regardless of how it was entered."""
+        if pair:
+            key, value = pair.popitem()
+        return key, value
+
+    def _get_method(self, **method_map):
+        method_name = method_map[self.index_class]
+        method = getattr(self.client, method_name)
+        return method
 
 class AutomaticIndex(Index):
     
@@ -248,11 +262,32 @@ class ManualIndex(Index):
         """
         # NOTE: if you ever change the _id arg to element, change remove() too
         key, value = self._parse_args(key,value,pair)
-        method_map = dict(vertex=self.client.put_vertex,
-                          edge=self.client.put_edge)
-        put_method = method_map.get(self.index_class)
-        resp = put_method(self.index_name,key,value,_id)
+        put = self._get_method(vertex="put_vertex", edge="put_edge")
+        resp = put(self.index_name,key,value,_id)
         return resp
+
+    def update(self,_id,key=None,value=None,**pair):
+        """
+        Update the element ID for the key and value and return Rexsters' 
+        response.
+
+        :param _id: The element ID.
+
+        :param key: The index key. This is optional because you can instead 
+                    supply a key/value pair such as name="James". 
+
+        :param value: The index key's value. This is optional because you can 
+                      instead supply a key/value pair such as name="James". 
+
+        :param **pair: Optional keyword param. Instead of supplying key=name 
+                       and value = 'James', you can supply a key/value pair in
+                       the form of name='James'.
+        """
+        key, value = self._get_key_value(key,value,pair)
+        for result in self.get(key,value):
+            self.remove(self.index_name, result._id, key, value)
+        return self.put(_id,key,value)
+
 
     def put_unique(self,_id,key=None,value=None,**pair):
         """
@@ -274,36 +309,10 @@ class ManualIndex(Index):
                        the form of name='James'.
 
         """
-        key, value = self._parse_args(key,value,pair)
-        method_map = dict(vertex=self.client.remove_vertex,
-                          edge=self.client.remove_edge)
-        remove_method = method_map.get(self.index_type)
-        for result in self.get(key,value):
-            remove_method(self.index_name,result._id,key,value)
-        resp = self.put(_id,key,value)
-        return resp
+        return self.update(_id, key, value, **pair)
 
-    def update(self,_id,key=None,value=None,**pair):
-        """
-        Update the element ID for the key and value and return Rexsters' 
-        response.
 
-        :param _id: The element ID.
-
-        :param key: The index key. This is optional because you can instead 
-                    supply a key/value pair such as name="James". 
-
-        :param value: The index key's value. This is optional because you can 
-                      instead supply a key/value pair such as name="James". 
-
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in
-                       the form of name='James'.
-        """
-        return self.put_unique(_id,key,value,**pair)
-
-         
-    def lookup_unique(self,key=None,value=None,**pair):
+    def get_unique(self,key=None,value=None,**pair):
         """
         Returns a max of 1 elements matching the key/value pair in the index.
 
@@ -319,8 +328,9 @@ class ManualIndex(Index):
         """
         key, value = self._parse_args(key,value,pair)
         resp = self.client.lookup_vertex(self.index_name,key,value)
-        result = get_one_result(resp)
-        return initialize_element(self.client,result)
+        if resp.total_size > 0:
+            result = get_one_result(resp)
+            return initialize_element(self.client,result)
 
     def remove(self,_id,key=None,value=None,**pair):
         """
@@ -338,11 +348,9 @@ class ManualIndex(Index):
                        and value = 'James', you can supply a key/value pair in
                        the form of name='James'.
         """
-        key, value = self._parse_args(key,value,pair)
-        method_map = dict(vertex=self.client.remove_vertex,
-                          edge=self.client.remove_edge)
-        remove_method = method_map.get(self.index_class)
-        return remove_method(self.index_name,_id,key,value)
+        key, value = self._get_key_value(key, value, pair)
+        remove = self._get_method(vertex="remove_vertex", edge="remove_edge")
+        return remove(self.index_name,_id,key,value)
 
 
 

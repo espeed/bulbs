@@ -17,6 +17,8 @@ class RexsterClientTestCase(ClientTestCase):
     def setUp(self):
         self.client = RexsterClient(db_name=db_name)
 
+# The index test cases have been moved to the Bulbs ClientTestCAset
+
 class RexsterIndexTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -112,7 +114,7 @@ class RexsterAutomaticIndexTestCase(unittest.TestCase):
 def rexster_client_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(RexsterClientTestCase))
-    suite.addTest(unittest.makeSuite(RexsterIndexTestCase))
+    #suite.addTest(unittest.makeSuite(RexsterIndexTestCase))
     return suite
 
 if __name__ == '__main__':

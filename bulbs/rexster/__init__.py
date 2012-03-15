@@ -4,8 +4,12 @@
 # BSD License (see LICENSE for details)
 #
 
-#from graph import RexsterGraph
-from .client import RexsterClient, REXSTER_URI, SAIL_URI
+from bulbs.config import Config
+from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
+from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
+
+from .graph import Graph
+from .client import RexsterClient, REXSTER_URI
 from .index import ManualIndex, AutomaticIndex, \
     VertexIndexProxy, EdgeIndexProxy
 

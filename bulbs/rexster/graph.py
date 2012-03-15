@@ -7,27 +7,32 @@
 Interface for interacting with a graph database through Neo4j Server.
 
 """
+from bulbs.config import Config
 from bulbs.gremlin import Gremlin
-from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy
+from bulbs.element import Vertex, Edge
+from bulbs.model import Node, Relationship
+from bulbs.graph import Graph as BaseGraph
+from bulbs.factory import Factory
 
 # Rexster-specific imports
-from .client import Neo4jClient, NEO4J_URI
-from .index import ManualIndex, IndexProxy
+from .client import RexsterClient, SAIL_URI
+from .index import ManualIndex
 
-class Graph(object):
+class Graph(BaseGraph):
 
-    def __init__(self,root_uri=REXSTER_URI):
-        self.config = Config(root_uri)
-        self.client = RexsterClient(self.config)
+    #: The client class
+    client_class = RexsterClient
 
+    #: The default Index class.
+    default_index = ManualIndex
+    
+    def __init__(self, config=None):
+        super(Graph, self).__init__(config)
+
+        # Rexster supports Gremlin
         self.gremlin = Gremlin(self.client)
-        self.indices = IndexProxy(RexsterIndex,client)
+        self.scripts = self.client.scripts    # for convienience 
 
-        self.vertices = VertexProxy(Vertex,self.client)
-        self.vertices.index = self.indices.get("vertices",Vertex)
- 
-        self.edges = EdgeProxy(Edge,self.client)
-        self.edges.index = self.indices.get("edges",Edge)
 
     def load_graphml(self,uri):
         """Loads a GraphML file into the database and returns the response."""
@@ -40,6 +45,16 @@ class Graph(object):
         script = self.client.scripts.get('save_graphml')
         results = self.gremlin.execute(script,params=None)
         return results[0]
+
+    def warm_cache(self):
+        """
+        Warms the server cache by loading elements into memory.
+
+        :rtype: Neo4jResult
+
+        """
+        script = self.scripts.get('warm_cache')
+        return self.gremlin.command(script,params=None)
 
     def clear(self):
         """
@@ -55,9 +70,13 @@ class Graph(object):
            g.clear() will delete all your data!
 
         """
-        return self.client.clear()
+        script = self.client.scripts.get('clear')
+        return self.gremlin.command(script,params=None)
 
 
+#
+# SailGraph is Experimental - Not Current
+#
 class SailGraph(object):
     """ An interface to for SailGraph. """
 
