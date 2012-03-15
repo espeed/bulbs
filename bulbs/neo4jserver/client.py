@@ -20,7 +20,7 @@ from bulbs.registry import Registry
 
 # specific to this client
 from bulbs.client import Client, Response, Result
-from bulbs.rest import Request, RESPONSE_HANDLERS
+from bulbs.rest import Request, RESPONSE_HANDLERS, server_error
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
 
@@ -214,6 +214,8 @@ class Neo4jResponse(Response):
 
     def __init__(self, response, config):
 
+        #print response
+
         self.config = config
         self.handle_response(response)
         self.headers = self.get_headers(response)
@@ -237,6 +239,14 @@ class Neo4jResponse(Response):
 
         """
         headers, content = response
+
+        # Temporary hack to catch Gremlin Plugin exceptions that return 200 status
+        # See https://github.com/neo4j/community/issues/343
+        # Example: '"java.lang.IllegalArgumentException: Unknown property type on..."'
+        if re.search("java.(.*).Exception:", content):
+            # raise error...
+             server_error(response)
+        
         response_handler = RESPONSE_HANDLERS.get(headers.status)
         response_handler(response)
 
