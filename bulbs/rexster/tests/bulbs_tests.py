@@ -3,7 +3,7 @@ import unittest
 import argparse
 from bulbs.config import Config, DEBUG
 from bulbs.tests import BulbsTestCase, bulbs_test_suite
-from bulbs.rexster import RexsterClient, REXSTER_URI, \
+from bulbs.rexster import Graph, RexsterClient, REXSTER_URI, \
     VertexIndexProxy, EdgeIndexProxy, ManualIndex
 from bulbs.tests import GremlinTestCase
 
@@ -12,10 +12,12 @@ db_name = "tinkergraph"
 
 def test_suite():
     # pass in a db_name to test a specific database
-    BulbsTestCase.client = RexsterClient(db_name=db_name)
+    client = RexsterClient(db_name=db_name)
+    BulbsTestCase.client = client
     BulbsTestCase.vertex_index_proxy = VertexIndexProxy
     BulbsTestCase.edge_index_proxy = EdgeIndexProxy
     BulbsTestCase.index_class = ManualIndex
+    BulbsTestCase.graph = Graph(client.config)
 
     suite = bulbs_test_suite()
     #suite.addTest(unittest.makeSuite(RestTestCase))

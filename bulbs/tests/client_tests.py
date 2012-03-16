@@ -11,6 +11,20 @@ class ClientTestCase(unittest.TestCase):
         self.client = None
         raise NotImplementedError
 
+    # Some server implementations (Rexster) return a 404 if index doesn't exist
+    def _delete_vertex_index(self,index_name):
+        try:
+            self.client.delete_vertex_index(index_name)
+        except LookupError:
+            pass
+
+    def _delete_edge_index(self,index_name):
+        try:
+            self.client.delete_edge_index(index_name)
+        except LookupError:
+            pass
+
+
     def test_init(self):
         
         assert self.client.default_uri is not None
@@ -175,7 +189,7 @@ class ClientTestCase(unittest.TestCase):
 
     def test_create_vertex_index(self):
         index_name = "test_idxV"
-        self.client.delete_vertex_index(index_name)
+        self._delete_vertex_index(index_name)
         resp = self.client.create_vertex_index(index_name)
 
         assert resp.results.get_index_class() == "vertex"        
@@ -193,7 +207,7 @@ class ClientTestCase(unittest.TestCase):
 
     def test_indexed_vertex_CRUD(self):
         index_name = "test_idxV"
-        self.client.delete_vertex_index(index_name)
+        self._delete_vertex_index(index_name)
         self.client.create_vertex_index(index_name)
 
         # Create and Index Vertex
@@ -238,7 +252,7 @@ class ClientTestCase(unittest.TestCase):
 
     def test_indexed_edge_CRUD(self):
         index_name = "test_idxE"
-        self.client.delete_edge_index(index_name)
+        self._delete_edge_index(index_name)
         self.client.create_edge_index(index_name)
 
         respV1 = self.client.create_vertex({'name':'James','age':34})

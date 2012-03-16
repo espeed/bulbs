@@ -7,8 +7,6 @@ from .index_tests import IndexTestCase
 from .model_tests import NodeTestCase, RelationshipTestCase
 from .gremlin_tests import GremlinTestCase
 
-# TODO: Add GraphTestCase back in.
-
 
 def bulbs_test_suite():
 
@@ -20,11 +18,8 @@ def bulbs_test_suite():
     suite.addTest(unittest.makeSuite(IndexTestCase))
     suite.addTest(unittest.makeSuite(NodeTestCase))
     suite.addTest(unittest.makeSuite(RelationshipTestCase))
+    suite.addTest(unittest.makeSuite(GraphTestCase))
     #suite.addTest(unittest.makeSuite(GremlinTestCase))
 
 
     return suite
-
-
-#if __name__ == '__main__':
-#    unittest.main(defaultTest='suite')

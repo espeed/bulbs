@@ -1,45 +1,53 @@
 import unittest
-from bulbs import config
+
+from bulbs.config import Config
+from bulbs.client import Client
+from bulbs.graph import Graph
+from bulbs.element import VertexProxy, EdgeProxy
+from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
+from bulbs.property import String
+
+from .testcase import BulbsTestCase
 
 
-class GraphTestCase(unittest.TestCase):
+# Test Models
 
-    def setUp(self):
-        self.graph = Graph()
+class User(Node):
+
+    element_type = "user"
+
+    name = String(nullable=False)
+    username = String(nullable=False)
+  
+class Group(Node):
+
+    element_type = "group"
+
+    name = String(nullable=False)
+
+class Member(Relationship):
+
+    label = "member"
+    
+
+
+class GraphTestCase(BulbsTestCase):
 
     def test_init(self):
-        assert config.DATABASE_URL == self.graph.client.db_url
+        assert isinstance(self.graph.config, Config)
+        assert isinstance(self.graph.client, Client)
+        assert isinstance(self.graph.vertices, VertexProxy)
+        assert isinstance(self.graph.edges, EdgeProxy)
 
-    def test_V(self):
-        vertices = self.graph.V
-        vertices = list(vertices)
-        assert len(vertices) > 0
+    def test_add_proxy(self):
+        self.graph.add_proxy("users", User)
+        self.graph.add_proxy("groups", Group)
+        self.graph.add_proxy("members", Member)
+
+        assert isinstance(self.graph.users, NodeProxy)
+        assert isinstance(self.graph.groups, NodeProxy)
+        assert isinstance(self.graph.members, RelationshipProxy)
         
-    def test_E(self):
-        edges = self.graph.E
-        edges = list(edges)
-        assert len(edges) > 0
-
-    def test_idxV(self):
-        self.graph.vertices.create({'name':'james'})
-        vertices = self.graph.idxV(name="james")
-        vertices = list(vertices)
-        assert len(vertices) > 0
-        
-    def test_idxE(self):
-        self.james = self.graph.vertices.create({'name':'James'})
-        self.julie = self.graph.vertices.create({'name':'Julie'})
-        self.graph.edges.create(self.james,"test",self.julie,{'time':'rightnow'})
-        edges = self.graph.idxE(time="rightnow")
-        edges = list(edges)
-        assert len(edges) > 0
-
-    #def test_clear(self):
-    #    # WARNING: Be careful about uncommenting this. It will wipe your data.
-    #    self.graph.clear()
-    #    vertices = self.graph.V
-    #    vertices = list(vertices)
-    #    assert len(vertices) == 0
         
 def suite():
     suite = unittest.TestSuite()

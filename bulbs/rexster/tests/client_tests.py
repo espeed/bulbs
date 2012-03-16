@@ -28,7 +28,7 @@ class RexsterIndexTestCase(unittest.TestCase):
         try:
             self.client.delete_vertex_index(index_name)
         except LookupError:
-            return None
+            pass
 
 
     #
