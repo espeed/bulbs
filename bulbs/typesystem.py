@@ -66,7 +66,8 @@ class Database(Converter):
 
     def to_string(self,value):
         # Using unicode instead of str
-        return unicode(value)
+        if value is not None:
+            return unicode(value)
 
     def to_integer(self,value):
         return value
@@ -98,30 +99,36 @@ class Python(Converter):
     
     def to_string(self,value):
         # Converting everything to unicode in Python 2.x 
-        return unicode(value)
+        if value is not None:
+            return unicode(value)
 
     def to_integer(self,value):
-        return int(value)
+        if value is not None:
+            return int(value)
 
     def to_long(self,value):
-        return long(value)
+        if value is not None:
+            return long(value)
 
     def to_float(self,value):
-        return float(value)              
+        if value is not None:
+            return float(value)              
 
     def to_list(self,value):
-        return list(value)
+        if value is not None:
+            return list(value)
 
     def to_dictionary(self,value):
-        return dict(value)
-
-    def to_null(self,value):
-        return None
+        if value is not None:
+            return dict(value)
 
     def to_datetime(self, value):
         if value is not None:
             return to_datetime(value)
 
+    def to_null(self,value):
+        return None
+    
 
 class JSONTypeSystem(TypeSystem):
 
