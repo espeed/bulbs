@@ -19,10 +19,11 @@ from bulbs.utils import get_file_path, get_logger, build_path
 from bulbs.registry import Registry
 
 # specific to this client
-from bulbs.client import Client, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS, server_error
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
+
+from bulbs.base.client import Client, Response, Result
 
 # The default URI
 NEO4J_URI = "http://localhost:7474/db/data/"

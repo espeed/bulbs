@@ -11,8 +11,7 @@ from bulbs.config import Config
 from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, Edge
 from bulbs.model import Node, Relationship
-from bulbs.graph import Graph as BaseGraph
-from bulbs.factory import Factory
+from bulbs.base.graph import Graph as BaseGraph
 
 # Neo4j-specific imports
 from .client import Neo4jClient

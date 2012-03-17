@@ -7,9 +7,7 @@ import unittest
 
 from bulbs.config import Config, DEBUG, ERROR
 from bulbs.element import Vertex, VertexProxy, Edge, EdgeProxy       
-from bulbs.index import VertexIndexProxy, EdgeIndexProxy, Index
 from .testcase import BulbsTestCase
-
 
 
 class IndexTestCase(BulbsTestCase):

@@ -10,8 +10,9 @@ returning a Response object.
 """
 import httplib2
 
-from .client import Response
+from bulbs.base.client import Response
 from .utils import json, get_logger, quote, urlencode
+
 
 log = get_logger(__name__)
 

@@ -11,8 +11,9 @@ from bulbs.config import Config
 from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, Edge
 from bulbs.model import Node, Relationship
-from bulbs.graph import Graph as BaseGraph
 from bulbs.factory import Factory
+
+from bulbs.base.graph import Graph as BaseGraph
 
 # Rexster-specific imports
 from .client import RexsterClient, SAIL_URI

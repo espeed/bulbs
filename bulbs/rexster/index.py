@@ -47,10 +47,12 @@ class VertexIndexProxy(IndexProxy):
 
     def get_or_create(self,index_name,*args,**kwds):
         # get it, create if doesn't exist, then register it
+        # NOTE: flipped this around and actually doing a try create or get
+        # until we find an atomic way to do this
         try:
-            index = self.get(index_name)
-        except LookupError:
             index = self.create(index_name,*args,**kwds)
+        except SystemError:
+            index = self.get(index_name)
         return index
 
     def delete(self,index_name):
@@ -97,10 +99,12 @@ class EdgeIndexProxy(IndexProxy):
 
     def get_or_create(self,index_name,*args,**kwds):
         # get it, create if doesn't exist, then register it
+        # NOTE: flipped this around and actually doing a try create or get
+        # until we find an atomic way to do this
         try: 
-            index = self.get(index_name)
-        except LookupError:
             index = self.create(index_name,*args,**kwds)
+        except SystemError:
+            index = self.get(index_name)
         return index
 
     def delete(self,index_name):

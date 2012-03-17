@@ -14,11 +14,13 @@ from bulbs.registry import Registry
 from bulbs.config import Config, DEBUG
 
 # specific to this client
-from bulbs.client import Client, Response, Result 
 from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
 from bulbs.utils import coerce_id
+
+from bulbs.base.client import Client, Response, Result 
+
 
 # The default URIs
 REXSTER_URI = "http://localhost:8182/graphs/tinkergraph"

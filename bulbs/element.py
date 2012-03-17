@@ -404,6 +404,7 @@ class VertexProxy(object):
             return None
         
     def get_or_create(self, key, value, _data=None, **kwds):
+        # TODO: Make this an atomic Gremlin method
         # TODO: This will only index for non-models if autoindex is True.
         # Relationship Models are set to index by default, but 
         # EdgeProxy doesn't have this method anyway.

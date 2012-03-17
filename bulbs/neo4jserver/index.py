@@ -48,6 +48,8 @@ class VertexIndexProxy(IndexProxy):
 
     def get_or_create(self, index_name):
         """Get a vertex index or creates it if it doesn't exist.""" 
+        # TODO: actaually, create will return the index if it already exists
+        # so we could reduce this down to just create() or make it a Gremlin script
         index = self.get(index_name)
         if not index:
             index = self.create(index_name)

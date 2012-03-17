@@ -1,11 +1,10 @@
 import unittest
 
 from bulbs.config import Config
-from bulbs.client import Client
-from bulbs.graph import Graph
+from bulbs.property import String
 from bulbs.element import VertexProxy, EdgeProxy
 from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
-from bulbs.property import String
+from bulbs.base.client import Client
 
 from .testcase import BulbsTestCase
 
