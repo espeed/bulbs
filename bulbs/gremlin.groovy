@@ -89,6 +89,24 @@ def index_count(index_name, key, value) {
   return index.count(key,value);
 }
 
+def get_or_create_vertex_index(index_name, index_params) {
+  try { 
+    index = g.createManualIndex(index_name, Vertex.class, index_params) 
+  } catch (e) {
+    index = g.idx(index_name)
+  }
+  return index
+}
+
+def get_or_create_edge_index(index_name, index_params) {
+  try { 
+    index = g.createManualIndex(index_name, Edge.class, index_params) 
+  } catch (e) {
+    index = g.idx(index_name)
+  }
+  return index
+}
+
 // Utils
 
 def warm_cache() {

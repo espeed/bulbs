@@ -17,7 +17,7 @@ from bulbs.config import Config, DEBUG
 from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
-from bulbs.utils import coerce_id
+from bulbs.utils import coerce_id, get_one_result
 
 from bulbs.base.client import Client, Response, Result 
 
@@ -159,6 +159,22 @@ class RexsterResponse(Response):
             results = None
             total_size = 0
         return results, total_size
+
+    def _set_index_name(self, index_name):
+        """Sets the index name to the raw result."""
+        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+        self.results.raw['name'] = index_name
+
+    def _set_index_type(self, index_type):
+        """Sets the index type to the raw result."""
+        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+        self.results.raw['type'] = index_type
+
+    def _set_index_class(self, index_class):
+        """Sets the index class to the raw result."""
+        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+        self.results.raw['class'] = index_class
+
 
 
 class RexsterRequest(Request):
@@ -336,9 +352,18 @@ class RexsterClient(Client):
             params.update({'keys':index_keys})
         return self.request.post(path,params)
 
-    def get_vertex_index(self,name):
+    def get_vertex_index(self, index_name):
         """Returns the vertex index with the index_name."""
-        return self.get_index(name)
+        return self.get_index(index_name)
+
+    def get_or_create_vertex_index(self, index_name, index_params=None):
+        script = self.scripts.get('get_or_create_vertex_index')
+        params = dict(index_name=index_name, index_params=index_params)
+        resp = self.gremlin(script, params)
+        result = {'name': index_name, 'type': 'manual', 'class': 'vertex'}
+        resp.results = RexsterResult(result, self.config)
+        return resp
+
 
     def delete_vertex_index(self,name): 
         """Deletes the vertex index with the index_name."""
@@ -360,6 +385,14 @@ class RexsterClient(Client):
         """Returns the edge index with the index_name."""
         return self.get_index(name)
         
+    def get_or_create_edge_index(self, index_name, index_params=None):
+        script = self.scripts.get('get_or_create_edge_index')
+        params = dict(index_name=index_name, index_params=index_params)
+        resp = self.gremlin(script, params)
+        result = {'name': index_name, 'type': 'manual', 'class': 'edge'}
+        resp.results = RexsterResult(result, self.config)
+        return resp
+
     def delete_edge_index(self,name):
         """Deletes the edge index with the index_name."""
         self.delete_index(name)

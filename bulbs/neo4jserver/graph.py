@@ -73,6 +73,7 @@ class Graph(BaseGraph):
         params = dict(uri=uri)
         return self.gremlin.command(script,params)
         
+    # TODO: This should be get_graphml
     def save_graphml(self):
         """
         Returns a GraphML file representing the entire database.

@@ -34,7 +34,7 @@ class VertexIndexProxy(IndexProxy):
         """Creates an an index and returns it."""
         resp = self.client.create_vertex_index(index_name,*args,**kwds)
         index = self.index_class(self.client,resp.results)
-        self.client.registry.add_index(index_name,index)
+        self.client.registry.add_index(index_name, index)
         return index
 
     def get(self,index_name):
@@ -42,17 +42,14 @@ class VertexIndexProxy(IndexProxy):
         resp = self.client.get_vertex_index(index_name)
         if resp.results:
             index = self.index_class(self.client,resp.results)
-            self.client.registry.add_index(index_name,index)
+            self.client.registry.add_index(index_name, index)
             return index
 
-    def get_or_create(self,index_name,*args,**kwds):
+    def get_or_create(self,index_name, index_params=None):
         # get it, create if doesn't exist, then register it
-        # NOTE: flipped this around and actually doing a try create or get
-        # until we find an atomic way to do this
-        try:
-            index = self.create(index_name,*args,**kwds)
-        except SystemError:
-            index = self.get(index_name)
+        resp = self.client.get_or_create_vertex_index(index_name, index_params)
+        index = self.index_class(self.client,resp.results)
+        self.client.registry.add_index(index_name, index)
         return index
 
     def delete(self,index_name):
@@ -97,14 +94,11 @@ class EdgeIndexProxy(IndexProxy):
             self.client.registry.add_index(index_name,index)
             return index
 
-    def get_or_create(self,index_name,*args,**kwds):
+    def get_or_create(self, index_name, index_params=None):
         # get it, create if doesn't exist, then register it
-        # NOTE: flipped this around and actually doing a try create or get
-        # until we find an atomic way to do this
-        try: 
-            index = self.create(index_name,*args,**kwds)
-        except SystemError:
-            index = self.get(index_name)
+        resp = self.client.get_or_create_edge_index(index_name, index_params)
+        index = self.index_class(self.client,resp.results)
+        self.client.registry.add_index(index_name, index)
         return index
 
     def delete(self,index_name):
