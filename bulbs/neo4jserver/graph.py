@@ -19,13 +19,23 @@ from .index import ExactIndex
 
 class Graph(BaseGraph):
     """
-    The primary interface to graph databases on Neo4j Server.
+    The primary interface to the Neo4j Server graph database.
 
     Instantiates the database :class:`~bulbs.neo4jserver.client.Client` object using 
-    the specified database URL and sets up proxy objects to the database.
+    the specified Config and sets up proxy objects to the database.
+
+    :cvar client_class: Neo4jClient class.
+    :cvar default_index: Default index class.
 
     :param config: Optional. Defaults to the default config.
     :type config: bulbs.config.Config
+
+    :ivar client: Neo4jClient object.
+    :ivar vertices: VertexProxy object.
+    :ivar edges: EdgeProxy object.
+    :ivar config: Config object.
+    :ivar gremlin: Gremlin object.
+    :ivar scripts: GroovyScripts object.
     
     Example:
 
@@ -36,10 +46,7 @@ class Graph(BaseGraph):
     >>> g.edges.create(james, "knows", julie)
 
     """
-    #: The client class
     client_class = Neo4jClient
-
-    #: The default Index class.
     default_index = ExactIndex
 
     def __init__(self, config=None):
@@ -51,12 +58,45 @@ class Graph(BaseGraph):
         self.scripts = self.client.scripts    # for convienience 
 
     def set_metadata(self, key, value):
+        """
+        Sets the metadata key to the supplied value.
+
+        :param key: Metadata key
+        :type key: str
+
+        :param value: Metadata value.
+        :type value: str, int, or list
+
+        :rtype: Neo4jResponse
+        
+        """
         return self.client.set_metadata(key, value).one()
 
     def get_metadata(self, key, default_value=None):
+        """
+        Returns the value of metadata for the key.
+
+        :param key: Metadata key
+        :type key: str
+
+        :param default_value: Default value to return if the key is not found.
+        :type default_value: str, int, or list
+
+        :rtype: Neo4jResult
+        
+        """
         return self.client.get_metadata(key, default_value).one()
 
     def remove_metadata(self, key):
+        """
+        Removes the metadata key and value.
+
+        :param key: Metadata key
+        :type key: str
+
+        :rtype: Neo4jResponse
+        
+        """
         return self.client.remove_metadata(key)
         
     def load_graphml(self, uri):
@@ -73,8 +113,7 @@ class Graph(BaseGraph):
         params = dict(uri=uri)
         return self.gremlin.command(script,params)
         
-    # TODO: This should be get_graphml
-    def save_graphml(self):
+    def get_graphml(self):
         """
         Returns a GraphML file representing the entire database.
 

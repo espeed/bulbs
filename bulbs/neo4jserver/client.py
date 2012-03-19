@@ -54,7 +54,7 @@ class Neo4jResult(Result):
 
     """
 
-    def __init__(self,result, config):
+    def __init__(self, result, config):
         self.config = config
 
         # The raw result.
@@ -153,7 +153,7 @@ class Neo4jResult(Result):
         neo4j_type = self._parse_index_type(uri)
         return self.type_map[neo4j_type]
 
-    def get(self,attribute):
+    def get(self, attribute):
         """
         Returns the value of a client-specific attribute.
         
@@ -165,24 +165,24 @@ class Neo4jResult(Result):
         """
         return self.raw[attribute]
 
-    def _get_data(self,result):
+    def _get_data(self, result):
         if type(result) is dict:
             return result.get('data') 
 
-    def _parse_id(self,uri):
+    def _parse_id(self, uri):
         """Parses the ID out of a URI."""
         if uri:
             _id = int(uri.rpartition('/')[-1])
             return _id
 
-    def _parse_type(self,uri):
+    def _parse_type(self, uri):
         """Parses the type ouf of a normal URI."""
         if uri:
             root_uri = uri.rpartition('/')[0]
             neo4j_type = root_uri.rpartition('/')[-1]
             return neo4j_type
     
-    def _parse_index_type(self,uri):
+    def _parse_index_type(self, uri):
         """Parses the type out of an index URI."""
         if uri:
             path = urlsplit(uri).path
@@ -227,9 +227,9 @@ class Neo4jResponse(Response):
         if config.log_level == DEBUG:
             return response
 
-    def handle_response(self,response):
+    def handle_response(self, response):
         """
-        Handle HTTP server response.
+        Handles the HTTP server response.
         
         :param response: httplib2 response: (headers, content).
         :type response: tuple
@@ -244,14 +244,14 @@ class Neo4jResponse(Response):
         # Example: '"java.lang.IllegalArgumentException: Unknown property type on..."'
         if re.search("^\"java.(.*).Exception:", content):
             # raise error...
-             server_error(response)
+            server_error(response)
         
         response_handler = RESPONSE_HANDLERS.get(headers.status)
         response_handler(response)
 
-    def get_headers(self,response):
+    def get_headers(self, response):
         """
-        Return the headers from the HTTP response.
+        Returns the headers from the HTTP response.
 
         :param response: httplib2 response: (headers, content).
         :type response: tuple
@@ -265,9 +265,9 @@ class Neo4jResponse(Response):
         headers, content = response
         return headers
 
-    def get_content(self,response):
+    def get_content(self, response):
         """
-        Return the content from the HTTP response.
+        Returns the content from the HTTP response.
         
         :param response: httplib2 response: (headers, content).
         :type response: tuple
@@ -275,7 +275,7 @@ class Neo4jResponse(Response):
         :rtype: dict or None
 
         """
-        # content is a string
+        # content is a JSON string
         headers, content = response
 
         # Neo4jServer returns empty content on update
@@ -285,11 +285,11 @@ class Neo4jResponse(Response):
 
     def get_results(self):
         """
-        Return results from response, formatted as Result objects, and its total size.
+        Returns results from response, formatted as Result objects, and its total size.
 
-        :return:  A tuple containing: A generator of Neo4jResult objects, a single 
-                  Neo4jResult object, or None, depending on the number of results 
-                  returned; An int of the number results returned.
+        :return:  A tuple containing two items: 1. Either a generator of Neo4jResult objects, 
+                  a single Neo4jResult object, or None, depending on the number of results 
+                  returned; 2. An int representing the number results returned.
         :rtype: tuple
 
         """
@@ -308,10 +308,9 @@ class Neo4jResponse(Response):
             total_size = 0
         return results, total_size
 
-
-    def _set_index_name(self,index_name):
+    def _set_index_name(self, index_name):
         """Sets the index name to the raw result."""
-        # this is pretty much a hack becuase the way neo4j does this is inconsistent
+        # this is pretty much a hack becuase neo4j doesn't include the index name in response
         self.results.raw['name'] = index_name
         
 
@@ -327,9 +326,10 @@ class Neo4jClient(Client):
     Low-level client that sends a request to Neo4j Server and returns a response.
 
     :param config: Optional Config object. Defaults to default Config.
-    :type config: Config
+    :type config: bulbs.config.Config
 
     :ivar config: Config object.
+    :ivar registry: Registry object.
     :ivar scripts: GroovyScripts object.  
     :ivar type_system: JSONTypeSystem object.
     :ivar request: Neo4jRequest object.
@@ -442,6 +442,12 @@ class Neo4jClient(Client):
         return self.request.get(path, params)
         
     def get_all_vertices(self):
+        """
+        Returns a Response containing all the vertices in the Graph.
+
+        :rtype: Neo4jResponse
+
+        """
         script = self.scripts.get("get_vertices")
         params = None
         return self.gremlin(script, params)
@@ -525,6 +531,12 @@ class Neo4jClient(Client):
         return self.request.get(path, params)
         
     def get_all_edges(self):
+        """
+        Returns a Response containing all the edges in the Graph.
+
+        :rtype: Neo4jResponse
+
+        """
         script = self.scripts.get("get_edges")
         params = None
         return self.gremlin(script, params)
@@ -692,7 +704,7 @@ class Neo4jClient(Client):
 
     def get_vertex_indices(self):
         """
-        Returns a map of all the vertex indices.
+        Returns all the vertex indices.
 
         :rtype: Neo4jResponse
 
@@ -751,7 +763,7 @@ class Neo4jClient(Client):
 
     def get_edge_indices(self):
         """
-        Returns a map of all the vertex indices.
+        Returns a dict of all the vertex indices.
 
         :rtype: Neo4jResponse
 
@@ -1037,18 +1049,50 @@ class Neo4jClient(Client):
 
 
     # Metadata
-
-    def get_metadata(self, key, default_value=None):
-        script = self.scripts.get("get_metadata")
-        params = dict(key=key, default_value=default_value)
-        return self.gremlin(script, params)
-
     def set_metadata(self, key, value):
+        """
+        Sets the metadata key to the supplied value.
+
+        :param key: Metadata key
+        :type key: str
+
+        :param value: Metadata value.
+        :type value: str, int, or list
+
+        :rtype: Neo4jResponse
+        
+        """
         script = self.scripts.get("set_metadata")
         params = dict(key=key, value=value)
         return self.gremlin(script, params)
 
+    def get_metadata(self, key, default_value=None):
+        """
+        Returns the value of metadata for the key.
+
+        :param key: Metadata key
+        :type key: str
+
+        :param default_value: Default value to return if the key is not found.
+        :type default_value: str, int, or list
+
+        :rtype: Neo4jResponse
+        
+        """
+        script = self.scripts.get("get_metadata")
+        params = dict(key=key, default_value=default_value)
+        return self.gremlin(script, params)
+
     def remove_metadata(self, key):
+        """
+        Removes the metadata key and value.
+
+        :param key: Metadata key
+        :type key: str
+
+        :rtype: Neo4jResponse
+        
+        """
         script = self.scripts.get("remove_metadata")
         params = dict(key=key)
         return self.gremlin(script, params)
@@ -1065,7 +1109,7 @@ class Neo4jClient(Client):
 
     def _get_index_results(self, index_name, resp):
         """
-        Returns the index from a map of indicies.
+        Returns the index from a dict of indicies.
 
         """
         if resp.content and index_name in resp.content:

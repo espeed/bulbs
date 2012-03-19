@@ -360,6 +360,7 @@ class RexsterClient(Client):
         script = self.scripts.get('get_or_create_vertex_index')
         params = dict(index_name=index_name, index_params=index_params)
         resp = self.gremlin(script, params)
+        assert "MANUAL" in resp.content['results'][0]
         result = {'name': index_name, 'type': 'manual', 'class': 'vertex'}
         resp.results = RexsterResult(result, self.config)
         return resp
@@ -389,6 +390,7 @@ class RexsterClient(Client):
         script = self.scripts.get('get_or_create_edge_index')
         params = dict(index_name=index_name, index_params=index_params)
         resp = self.gremlin(script, params)
+        assert "MANUAL" in resp.content['results'][0]
         result = {'name': index_name, 'type': 'manual', 'class': 'edge'}
         resp.results = RexsterResult(result, self.config)
         return resp

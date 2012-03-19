@@ -8,7 +8,6 @@ from bulbs.factory import Factory
 from bulbs.element import Vertex, Edge
 from bulbs.model import Relationship
 
-
 from bulbs.base.client import Client
 from bulbs.base.index import Index
 
@@ -106,7 +105,7 @@ class Graph(object):
         """
         raise NotImplementedError
         
-    def save_graphml(self):
+    def get_graphml(self):
         """
         Returns a GraphML file representing the entire database.
 

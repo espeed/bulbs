@@ -39,14 +39,13 @@ class Graph(BaseGraph):
         """Loads a GraphML file into the database and returns the response."""
         script = self.client.scripts.get('load_graphml')
         params = dict(uri=uri)
-        return self.gremlin.execute(script,params)
+        return self.gremlin.command(script,params)
         
-    def save_graphml(self):
+    def get_graphml(self):
         """Returns a GraphML file representing the entire database."""
         script = self.client.scripts.get('save_graphml')
-        results = self.gremlin.execute(script,params=None)
-        return results[0]
-
+        return self.gremlin.command(script,params=None)
+        
     def warm_cache(self):
         """
         Warms the server cache by loading elements into memory.
