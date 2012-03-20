@@ -29,7 +29,7 @@ class VertexIndexProxy(object):
         # The Client object for the database.
         self.client = client
     
-    def create(self,index_name):
+    def create(self, index_name):
         """
         Creates an Vertex index and returns it.
 
@@ -41,7 +41,7 @@ class VertexIndexProxy(object):
         """
         raise NotImplementedError
 
-    def get(self,index_name):
+    def get(self, index_name):
         """
         Returns the Index object with the specified name or None if not found.
         
@@ -53,7 +53,7 @@ class VertexIndexProxy(object):
         """
         raise NotImplementedError
 
-    def get_or_create(self,index_name):
+    def get_or_create(self, index_name):
         """
         Get a Vertex Index or create it if it doesn't exist.
 
@@ -65,7 +65,7 @@ class VertexIndexProxy(object):
         """ 
         raise NotImplementedError
 
-    def delete(self,index_name):
+    def delete(self, index_name):
         """ 
         Deletes an index and returns the Response.
 
@@ -195,7 +195,7 @@ class Index(object):
         """
         return self.result.get_index_class()
 
-    def put(self,_id,key=None,value=None,**pair):
+    def put(self, _id, key=None, value=None, **pair):
         """
         Put an element into the index at key/value and return the Response.
 
