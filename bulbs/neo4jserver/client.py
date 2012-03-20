@@ -1108,9 +1108,9 @@ class Neo4jClient(Client):
         """Removes null property values because they aren't valid in Neo4j."""
         # Neo4j Server uses PUTs to overwrite all properties so no need
         # to worry about deleting props that are being set to null.
-        if data:
-            clean_data = [(k, data[k]) for k in data if data[k] is not None] # Python 3
-            return dict(clean_data)
+        data = data or {}
+        clean_data = [(k, data[k]) for k in data if data[k] is not None] # Python 3
+        return dict(clean_data)
 
     def _get_index_results(self, index_name, resp):
         """

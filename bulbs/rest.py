@@ -10,7 +10,7 @@ returning a Response object.
 """
 import httplib2
 
-from bulbs.base.client import Response
+from bulbs.base import Response
 from .utils import json, get_logger, quote, urlencode
 
 

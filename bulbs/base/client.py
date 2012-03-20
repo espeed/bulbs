@@ -16,9 +16,15 @@ from bulbs.registry import Registry
 from bulbs.typesystem import TypeSystem
 from bulbs.utils import get_logger
 
+
+SERVER_URI = "http://localhost"
+
 log = get_logger(__name__)
 
 # TODO: Consider making these real Python Abstract Base Classes (import abc)            
+
+class Request(object):
+    pass
 
 class Result(object):
     """
