@@ -20,7 +20,7 @@ from .index import ExactIndex
 
 class Graph(BaseGraph):
     """
-    The primary interface to the Neo4j Server graph database.
+    The primary interface to Neo4j Server.
 
     Instantiates the database :class:`~bulbs.neo4jserver.client.Client` object using 
     the specified Config and sets up proxy objects to the database.

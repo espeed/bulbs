@@ -31,6 +31,12 @@ class VertexIndexProxy(IndexProxy):
     """
     Manage vertex indices on Neo4j Server.
 
+    :param index_class: The index class for this proxy, e.g. ExactIndex.
+    :type index_class: Index
+
+    :param client: The Client object for the database.
+    :type client: bulbs.neo4jserver.client.Neo4jClient
+
     :ivar index_class: Index class.
     :ivar client: Neo4jClient object.
 
@@ -101,6 +107,12 @@ class EdgeIndexProxy(IndexProxy):
     """
     Manage edge indices on Neo4j Server.
 
+    :param index_class: The index class for this proxy, e.g. ExactIndex.
+    :type index_class: Index
+
+    :param client: The Client object for the database.
+    :type client: bulbs.neo4jserver.client.Neo4jClient
+
     :ivar index_class: Index class.
     :ivar client: Neo4jClient object.
 
@@ -137,7 +149,7 @@ class EdgeIndexProxy(IndexProxy):
             self.client.registry.add_index(index_name,index)
             return index
 
-    def get_or_create(self, index_name, *args, **kwds):
+    def get_or_create(self, index_name):
         """
         Get an Edge Index or create it if it doesn't exist.
 
@@ -180,7 +192,7 @@ class Index(object):
         self.result = result
 
     @classmethod 
-    def get_proxy_class(cls, base_type=None):
+    def get_proxy_class(cls, base_type):
         """
         Returns the IndexProxy class.
 
@@ -206,7 +218,7 @@ class Index(object):
     @property
     def index_class(self):
         """
-        Returns the index class.
+        Returns the index class, either vertex or edge.
 
         :rtype: class
 

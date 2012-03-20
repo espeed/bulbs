@@ -17,6 +17,7 @@ from bulbs.base.graph import Graph as BaseGraph
 from .client import RexsterClient, SAIL_URI
 from .index import ManualIndex
 
+
 class Graph(BaseGraph):
     """
     The primary interface to Rexster.

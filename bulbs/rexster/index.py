@@ -7,53 +7,91 @@
 An interface for interacting with indices on Rexster.
 
 """
-
 from bulbs.utils import initialize_element, initialize_elements, get_one_result
+
 
 class IndexProxy(object):
     """Abstract base class the index proxies."""
 
-    def __init__(self,index_class,client):        
-        #: The index class for this proxy, e.g. ExactIndex.
+    def __init__(self, index_class, client):        
+        # The index class for this proxy, e.g. ManualIndex.
         self.index_class = index_class
 
-        #: The Client object for the database.
+        # The Client object for the database.
         self.client = client
     
 
 class VertexIndexProxy(IndexProxy):
     """
-    An interface for interacting with indices on Rexster.
+    Manage vertex indices on Rexster.
+
+    :param index_class: The index class for this proxy, e.g. ManualIndex.
+    :type index_class: Index
 
     :param client: The Client object for the database.
-    :param index_class: The index class for this proxy, e.g. RexsterIndex.
+    :type client: bulbs.rexster.client.RexsterClient
+
+    :ivar index_class: Index class.
+    :ivar client: RexsterClient object.
 
     """
                         
-    def create(self,index_name,*args,**kwds):
-        """Creates an an index and returns it."""
-        resp = self.client.create_vertex_index(index_name,*args,**kwds)
+    def create(self, index_name):
+        """
+        Creates an Vertex index and returns it.
+
+        :param index_name: Index name.
+        :type index_name: str
+
+        :rtype: bulbs.neo4jserver.index.Index
+        
+        """
+        resp = self.client.create_vertex_index(index_name)
         index = self.index_class(self.client,resp.results)
         self.client.registry.add_index(index_name, index)
         return index
 
-    def get(self,index_name):
-        """Returns the Index object with the specified name or None if not found."""
+    def get(self, index_name):
+        """
+        Returns the Index object with the specified name or None if not found.
+        
+        :param index_name: Index name.
+        :type index_name: str
+
+        :rtype: bulbs.neo4jserver.index.Index
+        
+        """
         resp = self.client.get_vertex_index(index_name)
         if resp.results:
             index = self.index_class(self.client,resp.results)
             self.client.registry.add_index(index_name, index)
             return index
 
-    def get_or_create(self,index_name, index_params=None):
-        # get it, create if doesn't exist, then register it
+    def get_or_create(self, index_name, index_params=None):
+        """
+        Get a Vertex Index or create it if it doesn't exist.
+
+        :param index_name: Index name.
+        :type index_name: str
+
+        :rtype: bulbs.neo4jserver.index.Index
+
+        """ 
         resp = self.client.get_or_create_vertex_index(index_name, index_params)
         index = self.index_class(self.client,resp.results)
         self.client.registry.add_index(index_name, index)
         return index
 
-    def delete(self,index_name):
-        """Deletes/drops an index and returns the Rexster Response object."""
+    def delete(self, index_name):
+        """ 
+        Deletes an index and returns the Response.
+
+        :param index_name: Index name.
+        :type index_name: str
+
+        :rtype: bulbs.neo4jserver.client.Neo4jResponse
+
+        """
         try:
             return self.client.delete_vertex_index(index_name)
         except LookupError:
@@ -61,10 +99,16 @@ class VertexIndexProxy(IndexProxy):
 
 class EdgeIndexProxy(IndexProxy):
     """
-    An interface for interacting with indices on Rexster.
+    Manage edge indices on Rexster.
+
+    :param index_class: The index class for this proxy, e.g. ManualIndex.
+    :type index_class: Index
 
     :param client: The Client object for the database.
-    :param index_class: The index class for this proxy, e.g. RexsterIndex.
+    :type client: bulbs.rexster.client.RexsterClient
+
+    :ivar index_class: Index class.
+    :ivar client: RexsterClient object.
 
     """
 
@@ -87,7 +131,15 @@ class EdgeIndexProxy(IndexProxy):
         return index
 
     def get(self,index_name):
-        """Returns the Index object with the specified name or None if not found."""
+        """
+        Returns the Index object with the specified name or None if not found.
+        
+        :param index_name: Index name.
+        :type index_name: str
+
+        :rtype: bulbs.neo4jserver.index.Index
+        
+        """
         resp = self.client.get_edge_index(index_name)
         if resp.results:
             index = self.index_class(self.client,resp.results)
@@ -95,47 +147,122 @@ class EdgeIndexProxy(IndexProxy):
             return index
 
     def get_or_create(self, index_name, index_params=None):
-        # get it, create if doesn't exist, then register it
+        """
+        Get an Edge Index or create it if it doesn't exist.
+
+        :param index_name: Index name.
+        :type index_name: str
+
+        :rtype: bulbs.neo4jserver.index.Index
+
+        """ 
         resp = self.client.get_or_create_edge_index(index_name, index_params)
         index = self.index_class(self.client,resp.results)
         self.client.registry.add_index(index_name, index)
         return index
 
     def delete(self,index_name):
-        """Deletes/drops an index and returns the Rexster Response object."""
+        """ 
+        Deletes an index and returns the Response.
+
+        :param index_name: Index name.
+        :type index_name: str
+
+        :rtype: bulbs.neo4jserver.client.Neo4jResponse
+
+        """
         try:
             return self.client.delete_edge_index(index_name)
         except LookupError:
             return None
 
 
-class Index(object):
+#
+# Index Containers (Manual, Automatic)
+#
 
-    def __init__(self,client,results):
+class Index(object):
+    """Abstract base class for Neo4j's Lucene index."""
+
+    def __init__(self, client, result):
         self.client = client
-        self.results = results
+        self.result = result
 
     @classmethod 
-    def get_proxy_class(cls, base_type=None):
+    def get_proxy_class(cls, base_type):
+        """
+        Returns the IndexProxy class.
+
+        :param base_type: Index base type, either vertex or edge.
+        :type base_type: str
+
+        :rtype: class
+
+        """
         class_map = dict(vertex=VertexIndexProxy, edge=EdgeIndexProxy)
         return class_map[base_type]
 
     @property
     def index_name(self):
-        """Returns the index name."""
-        return self.results.data['name']
+        """
+        Returns the index name.
+
+        :rtype: str
+
+        """
+        return self.result.data['name']
 
     @property
     def index_class(self):
-        """Returns the index class, which will either be vertex or edge."""
-        return self.results.data['class']
+        """
+        Returns the index class, either vertex or edge.
+
+        :rtype: class
+
+        """
+        return self.result.data['class']
 
     @property
     def index_type(self):
-        """Returns the index type, which will either be automatic or manual."""
-        return self.results.data['type']
+        """
+        Returns the index type, which will either be automatic or manual.
 
-    def lookup(self,key=None,value=None,**pair):
+        :rtype: str
+
+        """
+        return self.result.data['type']
+
+    def count(self,key=None,value=None,**pair):
+        """
+        Return a count of all elements with 'key' equal to 'value' in the index.
+
+        :param key: The index key. This is optional because you can instead 
+                    supply a key/value pair such as name="James". 
+
+        :param value: The index key's value. This is optional because you can 
+                      instead supply a key/value pair such as name="James". 
+
+        :param **pair: Optional keyword param. Instead of supplying key=name 
+                       and value = 'James', you can supply a key/value pair in
+                       the form of name='James'.
+        """
+        key, value = self._get_key_value(key,value,pair)
+        resp = self.client.index_count(self.index_name,key,value)
+        return resp.content['totalSize']
+
+
+    def _get_key_value(self, key, value, pair):
+        """Return the key and value, regardless of how it was entered."""
+        if pair:
+            key, value = pair.popitem()
+        return key, value
+
+    def _get_method(self, **method_map):
+        method_name = method_map[self.index_class]
+        method = getattr(self.client, method_name)
+        return method
+
+    def lookup(self, key=None, value=None, **pair):
         """
         Return a generator containing all the elements with key property equal 
         to value in the index.
@@ -153,59 +280,9 @@ class Index(object):
                        and value = 'James', you can supply a key/value pair in
                        the form of name='James'.
         """
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key, value, pair)
         resp = self.client.lookup_vertex(self.index_name,key,value)
         return initialize_elements(self.client,resp)
-
-    def _parse_args(self,key,value,pair):
-        if pair:
-            key, value = pair.popitem()
-        return key, value
- 
-    def count(self,key=None,value=None,**pair):
-        """
-        Return a count of all elements with 'key' equal to 'value' in the index.
-
-        :param key: The index key. This is optional because you can instead 
-                    supply a key/value pair such as name="James". 
-
-        :param value: The index key's value. This is optional because you can 
-                      instead supply a key/value pair such as name="James". 
-
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in
-                       the form of name='James'.
-        """
-        key, value = self._parse_args(key,value,pair)
-        resp = self.client.index_count(self.index_name,key,value)
-        return resp.content['totalSize']
-
-    def keys(self):
-        """Return the index's keys."""
-        resp = self.client.index_keys(self.index_name)
-        return list(resp.results)
-
-    def _get_key_value(self, key, value, pair):
-        """Return the key and value, regardless of how it was entered."""
-        if pair:
-            key, value = pair.popitem()
-        return key, value
-
-    def _get_method(self, **method_map):
-        method_name = method_map[self.index_class]
-        method = getattr(self.client, method_name)
-        return method
-
-class AutomaticIndex(Index):
-    
-    def rebuild(self):
-        # need class_map b/c the Blueprints need capitalized class names, 
-        # but Rexster returns lower-case class names for index_class
-        method_map = dict(vertex=self.client.rebuild_vertex_index,
-                          edge=self.client.rebuild_edge_index)
-        rebuild_method = method_map.get(self.index_class)
-        resp = rebuild_method(self.index_name)
-        return list(resp.results)
 
 
 class ManualIndex(Index):
@@ -217,7 +294,7 @@ class ManualIndex(Index):
 
     :param client: The Client object for the database.
 
-    :param results: The results list returned by Rexster.
+    :param result: The result list returned by Rexster.
 
     :param classes: Zero or more subclasses of Element to use when 
                     initializing the the elements returned by the query. 
@@ -259,7 +336,7 @@ class ManualIndex(Index):
 
         """
         # NOTE: if you ever change the _id arg to element, change remove() too
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key,value,pair)
         put = self._get_method(vertex="put_vertex", edge="put_edge")
         resp = put(self.index_name,key,value,_id)
         return resp
@@ -324,11 +401,11 @@ class ManualIndex(Index):
                        and value = 'James', you can supply a key/value pair in
                        the form of name='James'.
         """
-        key, value = self._parse_args(key,value,pair)
+        key, value = self._get_key_value(key,value,pair)
         resp = self.client.lookup_vertex(self.index_name,key,value)
         if resp.total_size > 0:
             result = get_one_result(resp)
-            return initialize_element(self.client,result)
+            return initialize_element(self.client, result)
 
     def remove(self,_id,key=None,value=None,**pair):
         """
@@ -351,5 +428,20 @@ class ManualIndex(Index):
         return remove(self.index_name,_id,key,value)
 
 
+class AutomaticIndex(Index):
+
+    def keys(self):
+        """Return the index's keys."""
+        resp = self.client.index_keys(self.index_name)
+        return list(resp.results)
+    
+    def rebuild(self):
+        # need class_map b/c the Blueprints need capitalized class names, 
+        # but Rexster returns lower-case class names for index_class
+        method_map = dict(vertex=self.client.rebuild_vertex_index,
+                          edge=self.client.rebuild_edge_index)
+        rebuild_method = method_map.get(self.index_class)
+        resp = rebuild_method(self.index_name)
+        return list(resp.results)
 
  
