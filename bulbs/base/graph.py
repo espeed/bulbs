@@ -16,9 +16,7 @@ from bulbs.base.index import Index
 
 class Graph(object):
     """
-    Abstract base class for the Graph implementations. See the Bulbs 
-    Neo4j Server and Rexster documentation for server-specific 
-    implementations. 
+    Abstract base class for the server-specific Graph implementations. 
 
     :param config: Optional. Defaults to the default config.
     :type config: Config

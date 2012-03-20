@@ -112,7 +112,7 @@ class Graph(BaseGraph):
         """
         script = self.client.scripts.get('load_graphml')
         params = dict(uri=uri)
-        return self.gremlin.command(script,params)
+        return self.gremlin.command(script, params)
         
     def get_graphml(self):
         """
@@ -122,7 +122,7 @@ class Graph(BaseGraph):
 
         """
         script = self.client.scripts.get('save_graphml')
-        return self.gremlin.command(script,params=None)
+        return self.gremlin.command(script, params=None)
         
     def warm_cache(self):
         """
@@ -132,10 +132,11 @@ class Graph(BaseGraph):
 
         """
         script = self.scripts.get('warm_cache')
-        return self.gremlin.command(script,params=None)
+        return self.gremlin.command(script, params=None)
 
     def clear(self):
-        """Deletes all the elements in the graph.
+        """
+        Deletes all the elements in the graph.
 
         :rtype: Neo4jResult
 
@@ -145,5 +146,5 @@ class Graph(BaseGraph):
 
         """
         script = self.client.scripts.get('clear')
-        return self.gremlin.command(script,params=None)
+        return self.gremlin.command(script, params=None)
         
