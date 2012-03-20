@@ -375,6 +375,7 @@ class ExactIndex(Index):
         :rtype: Element generator
 
         """
+        # TODO: is there a way to do this via the REST API?
         script = self.client.scripts.get('query_exact_index')
         params = dict(index_name=self.index_name, key=key, query_string=query_string)
         resp = self.client.gremlin(script, params)

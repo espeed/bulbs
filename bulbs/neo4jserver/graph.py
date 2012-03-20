@@ -17,6 +17,7 @@ from bulbs.base.graph import Graph as BaseGraph
 from .client import Neo4jClient
 from .index import ExactIndex
 
+
 class Graph(BaseGraph):
     """
     The primary interface to the Neo4j Server graph database.

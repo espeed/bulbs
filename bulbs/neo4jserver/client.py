@@ -12,18 +12,21 @@ import os
 import re
 import urllib
 
+from bulbs.base import Client, Response, Result
 from bulbs.config import Config, DEBUG
-from bulbs.rest import GET, PUT, POST, DELETE
+from bulbs.registry import Registry
+
+
 from bulbs.utils import json, urlsplit, quote
 from bulbs.utils import get_file_path, get_logger, build_path
-from bulbs.registry import Registry
+
 
 # specific to this client
 from bulbs.rest import Request, RESPONSE_HANDLERS, server_error
+from bulbs.rest import GET, PUT, POST, DELETE
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
 
-from bulbs.base.client import Client, Response, Result
 
 # The default URI
 NEO4J_URI = "http://localhost:7474/db/data/"
@@ -214,7 +217,6 @@ class Neo4jResponse(Response):
     result_class = Neo4jResult
 
     def __init__(self, response, config):
-
         self.config = config
         self.handle_response(response)
         self.headers = self.get_headers(response)
@@ -223,13 +225,14 @@ class Neo4jResponse(Response):
         self.raw = self._maybe_get_raw(response, config)
 
     def _maybe_get_raw(self,response, config):
+        """Returns the raw response if in DEBUG mode."""
         # don't store raw response in production else you'll bloat the obj
         if config.log_level == DEBUG:
             return response
 
     def handle_response(self, response):
         """
-        Handles the HTTP server response.
+        Check the server response and raise exception if needed.
         
         :param response: httplib2 response: (headers, content).
         :type response: tuple
@@ -251,7 +254,7 @@ class Neo4jResponse(Response):
 
     def get_headers(self, response):
         """
-        Returns the headers from the HTTP response.
+        Returns a dict containing the headers from the response.
 
         :param response: httplib2 response: (headers, content).
         :type response: tuple
@@ -267,7 +270,7 @@ class Neo4jResponse(Response):
 
     def get_content(self, response):
         """
-        Returns the content from the HTTP response.
+        Returns a dict containing the content from the response.
         
         :param response: httplib2 response: (headers, content).
         :type response: tuple
@@ -285,7 +288,7 @@ class Neo4jResponse(Response):
 
     def get_results(self):
         """
-        Returns results from response, formatted as Result objects, and its total size.
+        Returns the results contained in the response.
 
         :return:  A tuple containing two items: 1. Either a generator of Neo4jResult objects, 
                   a single Neo4jResult object, or None, depending on the number of results 
@@ -320,13 +323,15 @@ class Neo4jRequest(Request):
     response_class = Neo4jResponse
 
 
-
 class Neo4jClient(Client):
     """
     Low-level client that sends a request to Neo4j Server and returns a response.
 
     :param config: Optional Config object. Defaults to default Config.
     :type config: bulbs.config.Config
+
+    :cvar default_uri: Default URI for the database.
+    :cvar request_class: Request class for the Client.
 
     :ivar config: Config object.
     :ivar registry: Registry object.
@@ -343,14 +348,15 @@ class Neo4jClient(Client):
     >>> result = response.results.next()
 
     """ 
-    #: Default URI for the database.
     default_uri = NEO4J_URI
     request_class = Neo4jRequest
 
-    def __init__(self, config=None):
 
+    def __init__(self, config=None):
         self.config = config or Config(self.default_uri)
         self.registry = Registry(self.config)
+        self.type_system = JSONTypeSystem()
+        self.request = self.request_class(self.config, self.type_system.content_type)
 
         # Neo4j supports Gremlin so include the Gremlin-Groovy script library
         self.scripts = GroovyScripts()
@@ -362,10 +368,8 @@ class Neo4jClient(Client):
         # Add it to the registry. This allows you to have more than one scripts namespace.
         self.registry.add_scripts("gremlin", self.scripts)
 
-        self.type_system = JSONTypeSystem()
-        self.request = self.request_class(self.config, self.type_system.content_type)
         
-    #: Gremlin
+    # Gremlin
 
     def gremlin(self, script, params=None): 
         """
@@ -408,7 +412,7 @@ class Neo4jClient(Client):
         resp.total_size = len(resp.results.data)
         return resp
 
-    #: Vertex Proxy
+    # Vertex Proxy
 
     def create_vertex(self, data):
         """
@@ -486,9 +490,9 @@ class Neo4jClient(Client):
         params = dict(_id=_id)
         return self.gremlin(script,params)
         
-    #: Edge Proxy
+    # Edge Proxy
 
-    def create_edge(self, outV, label, inV, data={}): 
+    def create_edge(self, outV, label, inV, data=None): 
         """
         Creates a edge and returns the Response.
         
@@ -502,7 +506,7 @@ class Neo4jClient(Client):
         :type inV: int
 
         :param data: Property data.
-        :type data: dict
+        :type data: dict or None
 
         :rtype: Neo4jResponse
 
@@ -1104,8 +1108,9 @@ class Neo4jClient(Client):
         """Removes null property values because they aren't valid in Neo4j."""
         # Neo4j Server uses PUTs to overwrite all properties so no need
         # to worry about deleting props that are being set to null.
-        clean_data = [(k, data[k]) for k in data if data[k] is not None] # Python 3
-        return dict(clean_data)
+        if data:
+            clean_data = [(k, data[k]) for k in data if data[k] is not None] # Python 3
+            return dict(clean_data)
 
     def _get_index_results(self, index_name, resp):
         """
