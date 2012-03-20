@@ -25,11 +25,11 @@ class Graph(BaseGraph):
     Instantiates the database :class:`~bulbs.neo4jserver.client.Client` object using 
     the specified Config and sets up proxy objects to the database.
 
-    :cvar client_class: Neo4jClient class.
-    :cvar default_index: Default index class.
-
     :param config: Optional. Defaults to the default config.
     :type config: bulbs.config.Config
+
+    :cvar client_class: Neo4jClient class.
+    :cvar default_index: Default index class.
 
     :ivar client: Neo4jClient object.
     :ivar vertices: VertexProxy object.

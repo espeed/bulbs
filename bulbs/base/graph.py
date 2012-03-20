@@ -12,7 +12,6 @@ from bulbs.base.client import Client
 from bulbs.base.index import Index
 
 # A framework is an understanding of how things could fit together.
-## It's important to design with the understanding that your understanding is incomplete.
 # When designing these things, it's important to remember that your understanding is incomplete.
 
 class Graph(object):
@@ -24,6 +23,14 @@ class Graph(object):
     :param config: Optional. Defaults to the default config.
     :type config: Config
         
+    :cvar client_class: Client class.
+    :cvar default_index: Default index class.
+
+    :ivar client: Client object.
+    :ivar config: Config object.
+    :ivar vertices: VertexProxy object.
+    :ivar edges: EdgeProxy object.
+
     Example:
 
     >>> from bulbs.neo4jserver import Graph
@@ -33,28 +40,20 @@ class Graph(object):
     >>> g.edges.create(james, "knows", julie)
 
     """    
-    #: The Client class to use for this Graph.
+    # The Client class to use for this Graph.
     client_class = Client
 
-    #: The default Index class.
+    # The default Index class.
     default_index = Index
 
     def __init__(self, config=None):
-
-        #: Client object.
         self.client = self.client_class(config)
+        self.config = self.client.config
 
         self._factory = Factory(self.client)
 
-        #: Generic VertexProxy object.
         self.vertices = self.build_proxy(Vertex)
-
-        #: Generic EdgeProxy object.
         self.edges = self.build_proxy(Edge)
-
-        #: Config object for convienence
-        self.config = self.client.config
-
 
     def add_proxy(self, proxy_name, element_class, index_class=None):
         """
