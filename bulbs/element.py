@@ -108,7 +108,10 @@ class Element(object):
         :rtype: None
 
         """
-        _initialized = getattr(self,"_initialized",False)
+        # getattr cuts object instantiation performance by more than half.
+        # it reduces it from 600 gets per second to 230; don't use getattr here.
+        #_initialized = getattr(self,"_initialized",False)
+        _initialized = self.__dict__.get("_initialized", False)
         if key in self.__dict__ or _initialized is False:
             # set the attribute normally
             object.__setattr__(self, key, value)
@@ -165,6 +168,8 @@ class Element(object):
         return u("<%s: %s>" % (self.__class__.__name__,self._result.get_uri()))  # Python 3
 
     def get(self, name):
+        # TODO: First off, why do we need this?
+        # Second, check this getattr performance. See __setattr__ comments.
         return getattr(self, name, None)
 
     def map(self):

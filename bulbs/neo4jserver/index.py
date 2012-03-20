@@ -161,7 +161,7 @@ class EdgeIndexProxy(IndexProxy):
         """ 
         index = self.get(index_name)
         if not index:
-            index = self.create(index_name, *args, **kwds)
+            index = self.create(index_name)
         return index
 
     def delete(self, index_name):
@@ -483,11 +483,6 @@ class ExactIndex(Index):
 
 
 # Uncdocumented -- experimental
-class UniqueIndex(ExactIndex):
-    pass
-   
-
-# Uncdocumented -- experimental
 class AutomaticIndex(ExactIndex):
 
     index_type = "exact"
@@ -505,4 +500,9 @@ class AutomaticIndex(ExactIndex):
 
     def remove(self, _id, key=None, value=None, **pair):
         raise NotImplementedError
+
+
+# Uncdocumented -- experimental
+class UniqueIndex(ExactIndex):
+    pass
 

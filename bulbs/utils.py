@@ -57,6 +57,7 @@ def initialize_elements(client,response):
         for result in response.results:
             yield initialize_element(client,result)
 
+
 def initialize_element(client,result):
     # result should be a single Result object, not a list or generator
     element_class = get_element_class(client,result)

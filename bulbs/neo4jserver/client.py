@@ -4,13 +4,10 @@
 # BSD License (see LICENSE for details)
 #
 """
-
 Bulbs supports pluggable backends. This is the Neo4j Server client.
 
 """
-import os
 import re
-import urllib
 
 from bulbs.config import Config, DEBUG
 from bulbs.registry import Registry
@@ -20,10 +17,9 @@ from bulbs.utils import get_logger
 from bulbs.typesystem import JSONTypeSystem
 from bulbs.base import Client, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS, server_error
-from bulbs.rest import GET, PUT, POST, DELETE
 from bulbs.groovy import GroovyScripts
 
-from bulbs.utils import get_file_path, build_path, json, urlsplit, quote
+from bulbs.utils import json, build_path, get_file_path, urlsplit, quote
 
 
 # The default URI
@@ -32,7 +28,7 @@ NEO4J_URI = "http://localhost:7474/db/data/"
 # The logger defined in Config
 log = get_logger(__name__)
 
-# Neo4j Server Resource Paths
+# Neo4j Server resource paths
 vertex_path = "node"
 edge_path = "relationship"
 index_path = "index"
@@ -54,7 +50,6 @@ class Neo4jResult(Result):
     :ivar data: The data in the result.
 
     """
-
     def __init__(self, result, config):
         self.config = config
 
@@ -441,6 +436,7 @@ class Neo4jClient(Client):
         """
         path = build_path(vertex_path, _id)
         params = None
+        self.request.skip = False
         return self.request.get(path, params)
         
     def get_all_vertices(self):

@@ -7,19 +7,17 @@
 Bulbs supports pluggable clients. This is the Rexster client.
 
 """
-import os
-
-from bulbs.utils import json, build_path, get_file_path, get_logger, urlsplit
-from bulbs.registry import Registry
 from bulbs.config import Config, DEBUG
+from bulbs.registry import Registry
+from bulbs.utils import get_logger
 
 # specific to this client
-from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.typesystem import JSONTypeSystem
+from bulbs.base import Client, Response, Result 
+from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.groovy import GroovyScripts
-from bulbs.utils import coerce_id, get_one_result
 
-from bulbs.base.client import Client, Response, Result 
+from bulbs.utils import json, build_path, get_file_path, urlsplit, coerce_id
 
 
 # The default URIs
@@ -28,6 +26,14 @@ SAIL_URI = "http://localhost:8182/graphs/sailgraph"
 
 # The logger defined in Config
 log = get_logger(__name__)
+
+# Rexster resource paths
+vertex_path = "vertices"
+edge_path = "edges"
+index_path = "indices"
+gremlin_path = "tp/gremlin"
+transaction_path = "tp/batch/tx"
+multi_get_path = "tp/batch"
 
 
 class RexsterResult(Result):
@@ -40,19 +46,26 @@ class RexsterResult(Result):
     :param config: The client Config object.
     :type config: Config 
 
-    """
+    :ivar raw: The raw result.
+    :ivar data: The data in the result.
 
-    def __init__(self,result, config):
+    """
+    def __init__(self, result, config):
         self.config = config
 
-        #: The raw result.
+        # The raw result.
         self.raw = result
 
-        #: The data in the result.
+        # The data in the result.
         self.data = result
 
     def get_id(self):
-        """Returns the element ID."""
+        """
+        Returns the element ID.
+
+        :rtype: int or str
+
+        """
         _id = self.data['_id']
 
         # OrientDB uses string IDs
@@ -173,13 +186,6 @@ class RexsterClient(Client):
     #: Default URI for the database.
     default_uri = REXSTER_URI
 
-    vertex_path = "vertices"
-    edge_path = "edges"
-    index_path = "indices"
-    gremlin_path = "tp/gremlin"
-    transaction_path = "tp/batch/tx"
-    multi_get_path = "tp/batch"
-
     def __init__(self, config=None, db_name=None):
 
         # This makes is easy to test different DBs 
@@ -211,18 +217,18 @@ class RexsterClient(Client):
     def gremlin(self,script,params=None): 
         """Executes a Gremlin script and returns the Response."""
         params = dict(script=script,params=params)
-        return self.request.post(self.gremlin_path,params)
+        return self.request.post(gremlin_path,params)
 
     # Vertex Proxy
 
     def create_vertex(self,data):
         """Creates a vertex and returns the Response."""
         data = self._remove_null_values(data)
-        return self.request.post(self.vertex_path,data)
+        return self.request.post(vertex_path,data)
 
     def get_vertex(self,_id):
         """Gets the vertex with the _id and returns the Response."""
-        path = build_path(self.vertex_path,_id)
+        path = build_path(vertex_path,_id)
         return self.request.get(path,params=None)
 
     def get_all_vertices(self):
@@ -233,12 +239,12 @@ class RexsterClient(Client):
     def update_vertex(self,_id,data):
         """Updates the vertex with the _id and returns the Response."""
         data = self._remove_null_values(data)
-        path = build_path(self.vertex_path,_id)
+        path = build_path(vertex_path,_id)
         return self.request.put(path,data)
         
     def delete_vertex(self,_id):
         """Deletes a vertex with the _id and returns the Response."""
-        path = build_path(self.vertex_path,_id)
+        path = build_path(vertex_path,_id)
         return self.request.delete(path,params=None)
 
     # Edge Proxy
@@ -248,11 +254,11 @@ class RexsterClient(Client):
         data = self._remove_null_values(data)
         edge_data = dict(_outV=outV,_label=label,_inV=inV)
         data.update(edge_data)
-        return self.request.post(self.edge_path,data)
+        return self.request.post(edge_path,data)
 
     def get_edge(self,_id):
         """Gets the edge with the _id and returns the Response."""
-        path = build_path(self.edge_path,_id)
+        path = build_path(edge_path,_id)
         return self.request.get(path,params=None)
 
     def get_all_edges(self):
@@ -263,12 +269,12 @@ class RexsterClient(Client):
     def update_edge(self,_id,data):
         """Updates the edge with the _id and returns the Response."""
         data = self._remove_null_values(data)
-        path = build_path(self.edge_path,_id)
+        path = build_path(edge_path,_id)
         return self.request.put(path,data)
 
     def delete_edge(self,_id):
         """Deletes a edge with the _id and returns the Response."""
-        path = build_path(self.edge_path,_id)
+        path = build_path(edge_path,_id)
         return self.request.delete(path,params=None)
 
     # Vertex Container
@@ -313,22 +319,22 @@ class RexsterClient(Client):
 
     def get_all_indices(self):
         """Returns a list of all the element indices."""
-        return self.request.get(self.index_path,params=None)
+        return self.request.get(index_path,params=None)
 
     def get_index(self,name):
-        path = build_path(self.index_path,name)
+        path = build_path(index_path,name)
         return self.request.get(path,params=None)
 
     def delete_index(self,name): 
         """Deletes the index with the index_name."""
-        path = build_path(self.index_path,name)
+        path = build_path(index_path,name)
         return self.request.delete(path,params=None)
             
     # Index Proxy - Vertex
 
     def create_vertex_index(self,index_name,*args,**kwds):
         """Creates a vertex index with the specified params."""
-        path = build_path(self.index_path,index_name)
+        path = build_path(index_path,index_name)
         index_type = kwds.get('index_type','manual')
         index_keys = kwds.get('index_keys',None)                              
         params = {'class':'vertex','type':index_type}
@@ -358,7 +364,7 @@ class RexsterClient(Client):
 
     def create_edge_index(self,name,*args,**kwds):
         """Creates a edge index with the specified params."""
-        path = build_path(self.index_path,name)
+        path = build_path(index_path,name)
         index_type = kwds.get('index_type','manual')
         index_keys = kwds.get('index_keys',None)                              
         params = {'class':'edge','type':index_type}
@@ -398,12 +404,12 @@ class RexsterClient(Client):
     # Index Container - General
 
     def index_count(self,index_name,key,value):
-        path = build_path(self.index_path,index_name,"count")
+        path = build_path(index_path,index_name,"count")
         params = dict(key=key,value=value)
         return self.request.get(path,params)
 
     def index_keys(self,index_name):
-        path = build_path(self.index_path,index_name,"keys")
+        path = build_path(index_path,index_name,"keys")
         return self.request.get(path,params=None)
 
     # Index Container - Vertex
@@ -411,25 +417,25 @@ class RexsterClient(Client):
     def put_vertex(self,index_name,key,value,_id):
         """Adds a vertex to the index with the index_name."""
         # Rexster's API only supports string lookups so convert value to a string 
-        path = build_path(self.index_path,index_name)
+        path = build_path(index_path,index_name)
         params = {'key':key,'value':str(value),'class':'vertex','id':_id}
         return self.request.put(path,params)
 
     def lookup_vertex(self,index_index_name,key,value):
         """Returns the vertices indexed with the key and value."""
-        path = build_path(self.index_path,index_index_name)
+        path = build_path(index_path,index_index_name)
         params = dict(key=key,value=value)
         return self.request.get(path,params)
 
     def query_vertex(self,index_name,params):
         """Queries for an edge in the index and returns the Response."""
-        path = build_path(self.index_path,index_name)
+        path = build_path(index_path,index_name)
         return self.request.get(path,params)
 
     def remove_vertex(self,index_name,_id,key=None,value=None):
         """Removes a vertex from the index and returns the Response."""
         # Can Rexster have None for key and value?
-        path = build_path(self.index_path,index_name)
+        path = build_path(index_path,index_name)
         params = {'key':key,'value':value,'class':'vertex','id':_id}
         return self.request.delete(path,params)
 
@@ -438,25 +444,25 @@ class RexsterClient(Client):
     def put_edge(self,index_name,key,value,_id):
         """Adds an edge to the index and returns the Response."""
         # Rexster's API only supports string lookups so convert value to a string 
-        path = build_path(self.index_path,index_name)
+        path = build_path(index_path,index_name)
         params = {'key':key,'value':str(value),'class':'edge','id':_id}
         return self.request.put(path,params)
 
     def lookup_edge(self,index_index_name,key,value):
         """Looks up an edge in the index and returns the Response."""
-        path = build_path(self.index_path,index_index_name)
+        path = build_path(index_path,index_index_name)
         params = dict(key=key,value=value)
         return self.request.get(path,params)
 
     def query_edge(self,index_name,params):
         """Queries for an edge in the index and returns the Response."""
-        path = build_path(self.index_path,index_name)
+        path = build_path(index_path,index_name)
         return self.request.get(path,params)
 
     def remove_edge(self,index_name,_id,key=None,value=None):
         """Removes an edge from the index and returns the Response."""
         # Can Rexster have None for key and value?
-        path = build_path(self.index_path,index_name)
+        path = build_path(index_path,index_name)
         params = {'key':key,'value':value,'class':'edge','id':_id}
         return self.request.delete(path,params)
     
@@ -517,13 +523,13 @@ class RexsterClient(Client):
     # TODO: manual/custom index API
 
     def multi_get_vertices(self,id_list):
-        path = build_path(self.multi_get_path,"vertices")
+        path = build_path(multi_get_path,"vertices")
         idList = self._build_url_list(id_list)
         params = dict(idList=idList)
         return self.request.get(path,params)
 
     def multi_get_edges(self,id_list):
-        path = build_path(self.multi_get_path,"edges")
+        path = build_path(multi_get_path,"edges")
         idList = self._build_url_list(id_list)
         params = dict(idList=idList)
         return self.request.get(path,params)

@@ -115,6 +115,16 @@ class ClientTestCase(unittest.TestCase):
         assert resp3.results.get_map() == resp4.results.get_map()
 
     def test_get_all_edges(self):
+        resp1 = self.client.create_vertex({'name':'James','age':34})
+        resp2 = self.client.create_vertex({'name':'Julie','age':28})
+
+        outV = resp1.results.get_id()
+        inV = resp2.results.get_id()
+        label = "knows"
+        data = dict(timestamp=123456789)
+        resp3 = self.client.create_edge(outV, label, inV, data)
+        resp3 = self.client.create_edge(inV, label, outV, data)
+
         resp = self.client.get_all_edges()
         assert resp.total_size > 1
 
