@@ -160,22 +160,6 @@ class RexsterResponse(Response):
             total_size = 0
         return results, total_size
 
-    def _set_index_name(self, index_name):
-        """Sets the index name to the raw result."""
-        # this is pretty much a hack becuase the way neo4j does this is inconsistent
-        self.results.raw['name'] = index_name
-
-    def _set_index_type(self, index_type):
-        """Sets the index type to the raw result."""
-        # this is pretty much a hack becuase the way neo4j does this is inconsistent
-        self.results.raw['type'] = index_type
-
-    def _set_index_class(self, index_class):
-        """Sets the index class to the raw result."""
-        # this is pretty much a hack becuase the way neo4j does this is inconsistent
-        self.results.raw['class'] = index_class
-
-
 
 class RexsterRequest(Request):
     """Makes requests to Rexster and returns a RexsterResponse.""" 
@@ -184,7 +168,7 @@ class RexsterRequest(Request):
 
 
 class RexsterClient(Client):
-    """Low-level client that connects to Neo4j Server and returns a response.""" 
+    """Low-level client that connects to Rexster and returns a response.""" 
     
     #: Default URI for the database.
     default_uri = REXSTER_URI
@@ -555,7 +539,7 @@ class RexsterClient(Client):
 
     def _remove_null_values(self,data):
         """Removes null property values because they aren't valid in Neo4j."""
-        # Neo4j Server uses PUTs to overwrite all properties so no need
+        # using PUTs to overwrite all properties so no need
         # to worry about deleting props that are being set to null.
         clean_data = [(k, data[k]) for k in data if data[k] is not None]  # Python 3
         return dict(clean_data)

@@ -43,7 +43,7 @@ class VertexIndexProxy(IndexProxy):
         :param index_name: Index name.
         :type index_name: str
 
-        :rtype: bulbs.neo4jserver.index.Index
+        :rtype: bulbs.rexster.index.Index
         
         """
         resp = self.client.create_vertex_index(index_name)
@@ -58,7 +58,7 @@ class VertexIndexProxy(IndexProxy):
         :param index_name: Index name.
         :type index_name: str
 
-        :rtype: bulbs.neo4jserver.index.Index
+        :rtype: bulbs.rexster.index.Index
         
         """
         resp = self.client.get_vertex_index(index_name)
@@ -74,7 +74,7 @@ class VertexIndexProxy(IndexProxy):
         :param index_name: Index name.
         :type index_name: str
 
-        :rtype: bulbs.neo4jserver.index.Index
+        :rtype: bulbs.rexster.index.Index
 
         """ 
         resp = self.client.get_or_create_vertex_index(index_name, index_params)
@@ -89,13 +89,14 @@ class VertexIndexProxy(IndexProxy):
         :param index_name: Index name.
         :type index_name: str
 
-        :rtype: bulbs.neo4jserver.client.Neo4jResponse
+        :rtype: bulbs.rexster.client.RexsterResponse
 
         """
         try:
             return self.client.delete_vertex_index(index_name)
         except LookupError:
             return None
+
 
 class EdgeIndexProxy(IndexProxy):
     """
@@ -137,7 +138,7 @@ class EdgeIndexProxy(IndexProxy):
         :param index_name: Index name.
         :type index_name: str
 
-        :rtype: bulbs.neo4jserver.index.Index
+        :rtype: bulbs.rexster.index.Index
         
         """
         resp = self.client.get_edge_index(index_name)
@@ -153,7 +154,7 @@ class EdgeIndexProxy(IndexProxy):
         :param index_name: Index name.
         :type index_name: str
 
-        :rtype: bulbs.neo4jserver.index.Index
+        :rtype: bulbs.rexster.index.Index
 
         """ 
         resp = self.client.get_or_create_edge_index(index_name, index_params)
@@ -168,7 +169,7 @@ class EdgeIndexProxy(IndexProxy):
         :param index_name: Index name.
         :type index_name: str
 
-        :rtype: bulbs.neo4jserver.client.Neo4jResponse
+        :rtype: bulbs.rexster.client.RexsterResponse
 
         """
         try:
@@ -182,7 +183,7 @@ class EdgeIndexProxy(IndexProxy):
 #
 
 class Index(object):
-    """Abstract base class for Neo4j's Lucene index."""
+    """Abstract base class for an index."""
 
     def __init__(self, client, result):
         self.client = client
