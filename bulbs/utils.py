@@ -100,6 +100,12 @@ def get_one_result(resp):
     return result
     
 
+def get_key_value(key, value, pair):
+    """Return the key and value, regardless of how it was entered."""
+    if pair:
+        key, value = pair.popitem()
+    return key, value
+
 
 #
 # Client Utils

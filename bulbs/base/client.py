@@ -13,9 +13,9 @@ import inspect
 
 from bulbs.config import Config, DEBUG
 from bulbs.registry import Registry
-from bulbs.typesystem import TypeSystem
 from bulbs.utils import get_logger
 
+from bulbs.typesystem import TypeSystem
 
 SERVER_URI = "http://localhost"
 

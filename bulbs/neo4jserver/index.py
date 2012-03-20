@@ -14,10 +14,10 @@ class IndexProxy(object):
     """Abstract base class the index proxies."""
 
     def __init__(self, index_class, client):        
-        #: The index class for this proxy, e.g. ExactIndex.
+        # The index class for this proxy, e.g. ExactIndex.
         self.index_class = index_class
 
-        #: The Client object for the database.
+        # The Client object for the database.
         self.client = client
     
     def _build_index_config(self, index_class):
@@ -237,13 +237,35 @@ class Index(object):
         return total_size
 
     def _get_key_value(self, key, value, pair):
-        """Return the key and value, regardless of how it was entered."""
+        """
+        Returns the key and value, regardless of how it was entered.
+
+        :param key: The index key. 
+        :type key: str
+
+        :param value: The key's value.
+        :type value: str or int
+
+        :param pair: Optional key/value pair. Example: name="James"
+        :type pair: key/value pair
+
+        :rtype: tuple
+
+        """
         if pair:
             key, value = pair.popitem()
         return key, value
 
     def _get_method(self, **method_map):
-        """Returns the right method, depending on the index class."""
+        """
+        Returns the right method, depending on the index class type.
+
+        :param method_map: Dict mapping the index class type to its method name. 
+        :type method_map: dict
+
+        :rtype: Callable
+
+        """
         method_name = method_map[self.index_class]
         method = getattr(self.client, method_name)
         return method
@@ -417,7 +439,7 @@ class ExactIndex(Index):
         :param pair: Optional key/value pair. Example: name="James"
         :type pair: key/value pair
 
-        :rtype: generator
+        :rtype: Element or None
 
         """
         key, value = self._get_key_value(key,value,pair)

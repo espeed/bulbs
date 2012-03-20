@@ -12,20 +12,18 @@ import os
 import re
 import urllib
 
-from bulbs.base import Client, Response, Result
 from bulbs.config import Config, DEBUG
 from bulbs.registry import Registry
-
-
-from bulbs.utils import json, urlsplit, quote
-from bulbs.utils import get_file_path, get_logger, build_path
-
+from bulbs.utils import get_logger
 
 # specific to this client
+from bulbs.typesystem import JSONTypeSystem
+from bulbs.base import Client, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS, server_error
 from bulbs.rest import GET, PUT, POST, DELETE
-from bulbs.typesystem import JSONTypeSystem
 from bulbs.groovy import GroovyScripts
+
+from bulbs.utils import get_file_path, build_path, json, urlsplit, quote
 
 
 # The default URI
