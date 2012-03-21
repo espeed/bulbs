@@ -29,6 +29,7 @@ NEO4J_URI = "http://localhost:7474/db/data/"
 log = get_logger(__name__)
 
 # Neo4j Server resource paths
+# TODO: local path vars would be faster
 vertex_path = "node"
 edge_path = "relationship"
 index_path = "index"
@@ -360,7 +361,6 @@ class Neo4jClient(Client):
 
         # Add it to the registry. This allows you to have more than one scripts namespace.
         self.registry.add_scripts("gremlin", self.scripts)
-
         
     # Gremlin
 
@@ -436,7 +436,6 @@ class Neo4jClient(Client):
         """
         path = build_path(vertex_path, _id)
         params = None
-        self.request.skip = False
         return self.request.get(path, params)
         
     def get_all_vertices(self):
