@@ -108,11 +108,10 @@ class Element(object):
         :rtype: None
 
         """
-        # getattr cuts object instantiation performance by more than half.
-        # it reduces it from 600 gets per second to 230; don't use getattr here.
-        #_initialized = getattr(self,"_initialized",False)
-        _initialized = self.__dict__.get("_initialized", False)
-        if key in self.__dict__ or _initialized is False:
+        # caching __dict__ to avoid the dots and boost performance
+        dict_ = self.__dict__ 
+        initialized = dict_.get("_initialized", False)
+        if key in dict_ or initialized is False:
             # set the attribute normally
             object.__setattr__(self, key, value)
         else:
@@ -333,20 +332,7 @@ class Vertex(Element):
 
         """
         return self._vertices.update(self._id, self._data)
-    
-
-    #def _create(self,_data=None,**kwds):
-    #    data = build_data(_data, kwds)
-    #    resp = self.client.create_vertex(data)
-    #    self._initialize(resp.results)
-        
-    #def _update(self,_id, _data=None, **kwds):
-    #    data = build_data(_data, kwds)
-    #    resp = self.client.update_vertex(_id,_data)
-    #    # with Neo4j, there is nothting to initialize
-    #    self._initialize(resp.results)
-        
-        
+            
 
 class VertexProxy(object):
     """ 

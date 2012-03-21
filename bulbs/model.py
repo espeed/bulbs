@@ -42,10 +42,11 @@ class ModelMeta(type):
     def _get_initial_properties(cls):
         # Get Properties defined in the parent and inherit them.
         # Or if the Model doesn't have a parent Model, set it to an empty dict
-        properties = {}
-        parent_properties = getattr(cls, '_properties', None)
-        if parent_properties:
+        try: 
+            parent_properties = getattr(cls, '_properties')
             properties = parent_properties.copy() 
+        except:
+            properties = {}
         return properties
             
     def _register_properties(cls, namespace):
@@ -85,12 +86,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
 
     _mode = DEFAULT
     
-    # TODO: Why must this be here and in Node?
     def __setattr__(self, key, value):
-        return self._setattr(key, value)
-
-    # overloaded in Node and Relationship to deal with multiple inheritence
-    def _setattr(self, key, value):
         if key in self._properties:
             if self._is_calculated_property(key):
                 return 
@@ -116,7 +112,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
     def _set_property_defaults(self):
         for key in self._properties:
             default_value = self._get_property_default(key)     
-            Model.__setattr__(self, key, default_value)
+            setattr(self, key, default_value)
             
     def _get_property_default(self, key):
         # The value entered could be a scalar or a function name
@@ -135,7 +131,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
             value = data[key]  # 
             # Notice that __setattr__ is overloaded
             # Must explicitly use Model's setattr because of multiple inheritence 
-            Model.__setattr__(self, key, value)
+            setattr(self, key, value)
 
     def _set_property_data(self):
         """
@@ -161,7 +157,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         if hasattr(self, type_var):
             # add element_type to the database properties to be saved;
             # but don't worry about "label", it's always saved on the edge
-            data[type_var] = getattr(self, type_var)
+            data[type_var] = object.__getattribute__(self, type_var)
         for key in self._properties:  # Python 3
             property_instance = self._properties[key]
             value = self._get_property_value(key)
@@ -172,7 +168,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         return data
 
     def _get_property_value(self, key):
-        value = getattr(self, key)
+        value = object.__getattribute__(self, key)
         if isinstance(value, Callable):
             return value()
         return value
@@ -180,16 +176,6 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
     def _get_initial_data(self):
         """Returns empty dict if mode is set to strict, else return the existing _data."""
         data = {} if self._mode == STRICT else self._data.copy()
-        return data
-
-    def _map(self):
-        # map() is overloaded in Node and Relationship so calculated props are returned properly. 
-        # Calculated props shouldn't be stored, but their components should be.
-        data = dict()
-        # Iterating over self._properties instead of _data like in Element
-        # in case new props have been set but not saved   
-        for key in self._properties: 
-            data[key] = getattr(self, key)
         return data
 
     def get_index(self, index_name):
@@ -219,10 +205,17 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         keys = self.get_index_keys()
         return data, index_name, keys
 
-        
+    def map(self):
+        # Calculated props shouldn't be stored, but their components should be.
+        data = dict()
+        # Iterating over self._properties instead of _data like in Element
+        # in case new props have been set but not saved   
+        for key in self._properties: 
+            data[key] = object.__getattribute__(self, key)
+        return data
 
 
-class Node(Vertex,Model):
+class Node(Model, Vertex):
     """ 
     Node is a Vertex model. It's an abstract base class used to create classes 
     that model domain objects. It's not meant to be used directly.
@@ -267,27 +260,6 @@ class Node(Vertex,Model):
         >>> nodes = g.people.index.lookup(name="James Thornton")
         
     """
-    def __setattr__(self, key, value):
-        Model._setattr(self, key, value)
-
-    # TODO: Sure we want this?
-    def __getattr__(self,name):
-        """
-        Returns the value of the database property for the given name.
-
-        :param name: The name of the data property.
-        :type name: str
-
-        :raises: AttributeError
-
-        :rtype: str, int, long, float, list, dict, or None 
-        
-        """
-        try:
-            return self._data[name]
-        except:
-            raise AttributeError(name)
-
 
     @classmethod
     def get_element_type(cls, config):
@@ -305,15 +277,6 @@ class Node(Vertex,Model):
     @classmethod 
     def get_proxy_class(cls):
         return NodeProxy
-
-    def map(self):
-        """
-        Returns the Model's property data.
-
-        :rtype: dict
-
-        """
-        return self._map()
 
 
     def save(self):
@@ -348,7 +311,7 @@ class Node(Vertex,Model):
         self._initialized = True
 
 
-class Relationship(Edge,Model):
+class Relationship(Model, Edge):
     """ 
     An abstract base class used to create classes that model domain objects. It is
     not meant to be used directly
@@ -388,9 +351,6 @@ class Relationship(Edge,Model):
           >>> friends = james.outV('knows')
 
     """
-    def __setattr__(self, key, value):
-        Model._setattr(self, key, value)
-
 
     @classmethod
     def get_label(cls, config):
@@ -408,15 +368,6 @@ class Relationship(Edge,Model):
     @classmethod 
     def get_proxy_class(cls):
         return RelationshipProxy
-
-    def map(self):
-        """
-        Returns the Model's property data.
-
-        :rtype: dict
-
-        """
-        return self._map()
 
 
     def save(self):

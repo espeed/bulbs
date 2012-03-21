@@ -123,7 +123,7 @@ class ClientTestCase(unittest.TestCase):
         label = "knows"
         data = dict(timestamp=123456789)
         resp3 = self.client.create_edge(outV, label, inV, data)
-        resp3 = self.client.create_edge(inV, label, outV, data)
+        resp4 = self.client.create_edge(inV, label, outV, data)
 
         resp = self.client.get_all_edges()
         assert resp.total_size > 1
