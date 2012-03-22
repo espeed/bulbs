@@ -41,8 +41,8 @@ class Element(object):
         # Sets the element ID to the var defined in Config. Defaults to eid.
         self._set_pretty_id(self._client)
 
-        # These vertex and edge proxies are primarily used for gets, 
-        # not mutable stuff.
+        # These vertex and edge proxies are primarily used for gets; 
+        # all mutable methods that use these are overloaded in Model.
         self._vertices = VertexProxy(Vertex,self._client)
         self._edges = EdgeProxy(Edge,self._client)
 
@@ -176,7 +176,7 @@ class Element(object):
             # set the attribute as a data property
             self._data[key] = value
 
-    def __getattr__(self,name):
+    def __getattr__(self, name):
         """
         Returns the value of the database property for the given name.
 
@@ -311,7 +311,7 @@ class Vertex(Element):
     :ivar _edges: Edge proxy object.
     :ivar _initialized: Boolean set to True upon initialization.
 
-    Example:
+    Example::
         
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()
@@ -961,7 +961,7 @@ def build_data(_data, kwds):
     :rtype: dict
 
     """
-    # Doing this rather than defaulting the _data arg to {}
+    # Doing this rather than defaulting the _data arg to a mutable value
     data = {} if _data is None else _data
     data.update(kwds)
     return data

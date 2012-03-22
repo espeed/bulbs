@@ -12,7 +12,7 @@ log = get_logger(__name__)
 
 class Config(object):
     """
-    Configuration options for Bulbs
+    Configuration options for Bulbs.
 
     :param root_uri: Root URI of the database.
     :type root_uri: str
@@ -60,6 +60,7 @@ class Config(object):
         self.edge_index = "edge"
         self.autoindex = True
         
+        # Set the default log level and log handler
         self.set_logger(self.log_level, self.log_handler)
 
         # Sanity checks...
