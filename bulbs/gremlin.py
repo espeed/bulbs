@@ -17,12 +17,6 @@ class Gremlin(object):
     :param client: The Client object for the database.
     :type client: Client
 
-    .. note:: To get the raw query results, use the lower-level method 
-              self.client.gremlin(script, params)
-           
-              Use case: You are returning element IDs and the actual
-              elements are cached in Redis or Membase.
-
     """
 
     def __init__(self, client):
@@ -30,7 +24,7 @@ class Gremlin(object):
 
     def command(self, script, params=None):
         """
-        Returns the raw result of an arbitrary Gremlin command.
+        Returns the raw Result object from an arbitrary Gremlin command.
 
         :param script: Gremlin script to execute on the client.
         :type script: str
@@ -46,7 +40,7 @@ class Gremlin(object):
 
     def query(self, script, params=None):
         """
-        Returns initialized results of an arbitrary Gremlin query.
+        Returns initialized Element objects from an arbitrary Gremlin query.
 
         :param script: Gremlin script to execute on the client.
         :type script: str
@@ -71,6 +65,11 @@ class Gremlin(object):
         :type params: dict or None
 
         :rtype: Response
+
+        .. note:: Use case: You are returning element IDs and the actual
+                  elements are cached in Redis or Membase.
+
+                  Or, you're returning primitives or Table data.
 
         """
         return self.client.gremlin(script, params)
