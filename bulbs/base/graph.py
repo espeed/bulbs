@@ -7,6 +7,7 @@ from bulbs.config import Config
 from bulbs.factory import Factory
 from bulbs.element import Vertex, Edge
 from bulbs.model import Relationship
+from bulbs.utils import initialize_elements
 
 from bulbs.base.client import Client
 from bulbs.base.index import Index
@@ -53,6 +54,32 @@ class Graph(object):
         self.vertices = self.build_proxy(Vertex)
         self.edges = self.build_proxy(Edge)
 
+    @property
+    def V(self):
+        """
+        Returns a list of all the vertices in the graph.
+
+        :rtype: list or None
+
+        """
+        resp = self.client.get_all_vertices()
+        if resp.total_size > 0:
+            vertices = initialize_elements(self.client, resp)
+            return list(vertices)
+   
+    @property
+    def E(self):
+        """
+        Returns a list of all the edges in the graph.
+
+        :rtype: list or None
+
+        """
+        resp = self.client.get_all_edges()
+        if resp.total_size > 0:
+            edges = initialize_elements(self.client, resp)
+            return list(edges)
+        
     def add_proxy(self, proxy_name, element_class, index_class=None):
         """
         Adds an element proxy to the Graph object for the element class.

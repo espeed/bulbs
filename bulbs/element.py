@@ -538,7 +538,7 @@ class VertexProxy(object):
         :param _id: The vertex ID.
         :type _id: int or str
 
-        :rtype: Vertex
+        :rtype: Vertex or None
 
         """
         try:
@@ -878,7 +878,7 @@ class EdgeProxy(object):
         :param _id: The edge ID.
         :type _id: int or str
 
-        :rtype: Edge
+        :rtype: Edge or None
 
         """
         try:

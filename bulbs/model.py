@@ -24,12 +24,6 @@ STRICT = 2
 log = get_logger(__name__)
 
 
-#class Bundle(OrderedDict):
-    
-#    def as_tuple(self):
-#        return tuple(self.values())
-
-
 class ModelMeta(type):
     """Metaclass used to set database Property definitions on Models"""
 
@@ -402,8 +396,6 @@ class Relationship(Model, Edge):
 
 
 class NodeProxy(VertexProxy):
-
-    # make these have the same signature as VertexProxy
 
     def create(self, _data=None, **kwds):
         node = self.element_class(self.client)
