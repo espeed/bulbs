@@ -32,16 +32,23 @@ class Element(object):
         :rtype: None
 
         """
-        # initialize all non-database properties here because
-        # __setattr__ will assume all non-defined properties are database properties
+        # Result object.
         self._result = result
-        self._data = result.get_map().copy() # Do we really need/want to make a copy?
+
+        # Property data. # TODO: Do we really need to make a copy?
+        self._data = result.get_map().copy() 
+
+        # Sets the element ID to the var defined in Config. Defaults to eid.
         self._set_pretty_id(self._client)
 
-        # These vertex and edge proxies are primarily used for gets, not mutable stuff
+        # These vertex and edge proxies are primarily used for gets, 
+        # not mutable stuff.
         self._vertices = VertexProxy(Vertex,self._client)
         self._edges = EdgeProxy(Edge,self._client)
 
+        # Initialize all non-database properties here because when _initialized
+        # is set to True, __setattr__ will assume all non-defined properties 
+        # are database properties and will set them in self._data.
         self._initialized = True
        
     @classmethod
@@ -59,6 +66,9 @@ class Element(object):
         """
         Returns the element key.
 
+        :param config: Config object.
+        :type config: bulbs.config.Config
+
         :rtype: str
 
         """
@@ -68,6 +78,9 @@ class Element(object):
     def get_index_name(cls, config):
         """
         Returns the index name. 
+
+        :param config: Config object.
+        :type config: bulbs.config.Config
 
         :rtype: str
 
@@ -79,6 +92,9 @@ class Element(object):
         """
         Returns the proxy class. 
 
+        :param config: Config object.
+        :type config: bulbs.config.Config
+
         :rtype: class
 
         """
@@ -87,14 +103,18 @@ class Element(object):
     @property
     def _id(self):
         """
-        Returns the element ID. This is the element's "primary key"; however,
-        some DBs (such as neo4j) reuse IDs if they are deleted so be careful 
-        with how you use them. If you want to guarantee they are unique across 
-        the DB's lifetime either don't physically delete elements and just set 
-        a deleted flag, or use some other mechanism, such as an external 
-        sequence or a hash.
+        Returns the element ID. 
 
         :rtype: int or str
+
+        .. note:: This is the element's "primary key"; however, some DBs (such 
+                  as neo4j) reuse IDs if they are deleted so be careful with 
+                  how you use them. 
+      
+                  If you want to guarantee they are unique across the DB's 
+                  lifetime either don't physically delete elements and just set
+                  a deleted flag, or use some other mechanism  for the primary 
+                  key, such as an external sequence or a hash.
 
         """
         return self._result.get_id()
@@ -111,15 +131,21 @@ class Element(object):
 
     def _set_pretty_id(self, client):
         """
-        Sets the ID var specified in Config as a Python property. Defaults to eid.
+        Sets the ID var defined in Config as a Python property. Defaults to eid.
         
-        The user-configured element_type and label vars are not set because 
-        they are class vars so you set those when you create the Model.
+        :param client: Client object.
+        :type client: Client
+
+        :rtype: None
+
+        .. note:: The user-configured element_type and label vars are not set 
+                  as Python properties because they are class vars so you set 
+                  those when you define the Models.
 
         """
         pretty_var = client.config.id_var
         fget = lambda self: self._result.get_id()
-        setattr(Element,pretty_var,property(fget))                    
+        setattr(Element, pretty_var, property(fget))                    
 
     def __setattr__(self, key, value):
         """
@@ -128,13 +154,22 @@ class Element(object):
         If you explicitly set/change the values of an element's properties,
         make sure you call save() to updated the values in the DB.
 
+        :param key: Database property key.
+        :type key: str
+
+        :param value: Database property value.
+        :type value: str, int, long, float, list, dict
+
         :rtype: None
 
         """
         # caching __dict__ to avoid the dots and boost performance
         dict_ = self.__dict__ 
-        initialized = dict_.get("_initialized", False)
-        if key in dict_ or initialized is False:
+
+        # dict_.get() is faster than getattr()
+        _initialized = dict_.get("_initialized", False)
+
+        if key in dict_ or _initialized is False:
             # set the attribute normally
             object.__setattr__(self, key, value)
         else:
@@ -159,39 +194,94 @@ class Element(object):
             raise AttributeError(name)
 
     def __len__(self):
-        """Returns the number of items stored in the DB results"""
+        """
+        Returns the number of items stored in the DB results
+
+        :rtype: int
+
+        """
         return len(self._data)
 
-    def __contains__(self, item):
-        """Returns True if attribute is a key that has been stored in the DB"""
-        return item in self._data
+    def __contains__(self, key):
+        """
+        Returns True if the key in the database property data.
+        
+        :param key: Property key. 
+        :type key: str
 
-    def __eq__(self, obj):
-        """Returns True if the elements are equal"""
-        return (hasattr(obj, "__class__") and
-                self.__class__ == obj.__class__ and
-                self._id == obj._id and
-                self._data == obj._data)
+        :rtype: bool
 
-    def __ne__(self, obj):
-        """Returns True if the elements are not equal."""
-        return not self.__eq__(obj)
+        """
+        return key in self._data
+
+    def __eq__(self, element):
+        """
+        Returns True if the elements are equal
+
+        :param element: Element object.
+        :type element: Element
+
+        :rtype bool
+
+        """
+        return (isinstance(element, Element) and
+                element.__class__  == self.__class__ and
+                element._id == self._id and
+                element._data == self._data)
+
+    def __ne__(self, element):
+        """
+        Returns True if the elements are not equal.
+
+        :param element: Element object.
+        :type element: Element
+
+        :rtype bool
+
+        """
+        return not self.__eq__(element)
 
     def __repr__(self):
-        """Returns the string representation of the attribute."""
+        """
+        Returns the string representation of the attribute.
+
+        :rtype: unicode
+
+        """
         return self.__unicode__()
     
     def __str__(self):
-        """Returns the string representation of the attribute."""
+        """
+        Returns the string representation of the attribute.
+
+        :rtype: unicode
+
+        """
         return self.__unicode__()
     
     def __unicode__(self):
-        """Returns the unicode representation of the attribute."""
-        return u("<%s: %s>" % (self.__class__.__name__,self._result.get_uri()))  # Python 3
+        """
+        Returns the unicode representation of the attribute.
+
+        :rtype: unicode
+
+        """
+        class_name = self.__class__.__name__
+        element_uri = self._result.get_uri()
+        representation = "<%s: %s>" % (class_name, element_uri)
+        return u(representation)    # Python 3
 
     def get(self, name):
-        # TODO: First off, why do we need this?
-        # Second, check this getattr performance. See __setattr__ comments.
+        """
+        Returns the value of a Python attribute.
+
+        :param name: Python attribute name.
+        :type name: str
+
+        :rtype: object
+
+        """
+        # TODO: Why do we need this?
         return getattr(self, name, None)
 
     def map(self):
@@ -225,30 +315,46 @@ class Vertex(Element):
         
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()
+
     # Get a vertex from the database.
     >>> james = g.vertices.get(3)
+
+    # Set a database property.
     >>> james.age = 34
+
+    # Save the vertex in the database.
     >>> james.save()
+
+    # Return the database property map.
     >>> james.map()
     {'age': 34, 'name': 'James'}
+
+    # Return a Vertex generator containing the people James knows.
     >>> friends = james.outV("knows")
 
     """  
     @classmethod
     def get_base_type(cls):
         """
-        Returns the base type, which is "vertex". Don't override this.
+        Returns the base type, which is "vertex". 
         
         :rtype: str
         
+        .. admonition:: WARNING 
+
+           Don't override this.
+
         """
-        #: Don't override this
+        # Don't override this
         return "vertex"
 
     @classmethod
     def get_element_key(cls, config):
         """
         Returns the element key. Defaults to "vertex". Override this in Model.
+
+        :param config: Config object.
+        :type config: Config
 
         :rtype: str
 
@@ -259,6 +365,9 @@ class Vertex(Element):
     def get_index_name(cls, config):
         """
         Returns the index name. Defaults to the value of Config.vertex_index. 
+
+        :param config: Config object.
+        :type config: Config
 
         :rtype: str
 
@@ -275,11 +384,11 @@ class Vertex(Element):
         """
         return VertexProxy
 
-    def outE(self,label=None):
+    def outE(self, label=None):
         """
-        Returns the outgoing edges of the vertex.
+        Returns the outgoing edges.
 
-        :param label: An optional edge label.
+        :param label: Optional edge label.
         :type label: str or None
 
         :rtype: Edge generator
@@ -288,11 +397,11 @@ class Vertex(Element):
         resp = self._client.outE(self._id,label)
         return initialize_elements(self._client,resp)
 
-    def inE(self,label=None):
+    def inE(self, label=None):
         """
-        Returns the incoming edges of the vertex.
+        Returns the incoming edges.
 
-        :param label: An optional edge label.
+        :param label: Optional edge label.
         :type label: str or None
 
         :rtype: Edge generator
@@ -301,11 +410,11 @@ class Vertex(Element):
         resp = self._client.inE(self._id,label)
         return initialize_elements(self._client,resp)
 
-    def bothE(self,label=None):
+    def bothE(self, label=None):
         """
-        Returns the incoming and outgoing edges of the vertex.
+        Returns the incoming and outgoing edges.
 
-        :param label: An optional edge label.
+        :param label: Optional edge label.
         :type label: str or None
 
         :rtype: Edge generator
@@ -314,11 +423,11 @@ class Vertex(Element):
         resp = self._client.bothE(self._id,label)
         return initialize_elements(self._client,resp)
 
-    def outV(self,label=None):
+    def outV(self, label=None):
         """
-        Returns the out-adjacent vertices of the vertex.
+        Returns the out-adjacent vertices.
 
-        :param label: An optional edge label.
+        :param label: Optional edge label.
         :type label: str or None
 
         :rtype: Vertex generator
@@ -327,11 +436,11 @@ class Vertex(Element):
         resp = self._client.outV(self._id,label)
         return initialize_elements(self._client,resp)
 
-    def inV(self,label=None):
+    def inV(self, label=None):
         """
-        Returns the in-adjacent vertices of the vertex.
+        Returns the in-adjacent vertices.
 
-        :param label: An optional edge label.
+        :param label: Optional edge label.
         :type label: str or None
 
         :rtype: Vertex generator
@@ -340,11 +449,11 @@ class Vertex(Element):
         resp = self._client.inV(self._id,label)
         return initialize_elements(self._client,resp)
         
-    def bothV(self,label=None):
+    def bothV(self, label=None):
         """
-        Returns all incoming- and outgoing-adjacent vertices of vertex.
+        Returns all incoming- and outgoing-adjacent vertices.
 
-        :param label: An optional edge label.
+        :param label: Optional edge label.
         :type label: str or None
 
         :rtype: Vertex generator
@@ -367,45 +476,60 @@ class VertexProxy(object):
     """ 
     A proxy for interacting with vertices on the Client. 
 
-    :param element_class: The element class to be managed by this proxy instance.
-    :type element_class: Vertex or Edge class
+    :param element_class: The element class managed by this proxy instance.
+    :type element_class: Vertex class
 
     :param client: The Client object for the database.
     :type client: Client
+
+    :ivar element_class: Element class.
+    :ivar client: Client object.
+    :ivar index: The primary index object or None.
 
     Example::
         
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()
-    >>> james = g.vertices.create({'name':'James'})
-    >>> data = dict(name="James", age=34)
-    >>> g.vertices.update(james.eid, data)
+ 
+    # Create a vertex in the database.
+    >>> james = g.vertices.create(name="James")
+
+    # Add another database property and update the vertex in the database.
+    >>> g.vertices.update(james.eid, age=34)
+
+    # Get the vertex (again) from the database.
     >>> james = g.vertices.get(james.eid)
-    >>> g.vertices.remove_properties(james.eid)
+    
+    # Delete the vertex from the database.
     >>> g.vertices.delete(james.eid)
 
     """
+    def __init__(self,element_class, client):
+        assert issubclass(element_class, Vertex)
 
-    def __init__(self,element_class,client):
-        assert issubclass(element_class,Vertex)
         self.element_class = element_class
         self.client = client
-        self.client.registry.add_class(element_class)
         self.index = None
+
+        # Add element class to Registry so we can initialize query results.
+        self.client.registry.add_class(element_class)
 
     def create(self, _data=None, **kwds):
         """
         Adds a vertex to the database and returns it.
 
-        :param data: A dict containing the vettex's property data.
-        :type data: dict
+        :param _data: Optional property data dict.
+        :type _data: dict
+
+        :param **kwds: Optional property data keyword pairs. 
+        :type **kwds: keyword pairs
 
         :rtype: Vertex
 
         """
         data = build_data(_data, kwds)
         resp = self.client.create_vertex(data)
-        return initialize_element(self.client,resp.results)
+        return initialize_element(self.client, resp.results)
 
     def get(self, _id):
         """
@@ -419,11 +543,29 @@ class VertexProxy(object):
         """
         try:
             resp = self.client.get_vertex(_id)
-            return initialize_element(self.client,resp.results)
+            return initialize_element(self.client, resp.results)
         except LookupError:
             return None
         
     def get_or_create(self, key, value, _data=None, **kwds):
+        """
+        Lookup a vertex in the index and create it if it doesn't exsit.
+
+        :param key: Index key.
+        :type key: str
+
+        :param value: Index value.
+        :type value: str, int, long
+
+        :param _data: Optional property data dict.
+        :type _data: dict
+
+        :param **kwds: Optional property data keyword pairs. 
+        :type **kwds: keyword pairs
+
+        :rtype: Vertex
+
+        """
         # TODO: Make this an atomic Gremlin method
         # TODO: This will only index for non-models if autoindex is True.
         # Relationship Models are set to index by default, but 
@@ -433,7 +575,6 @@ class VertexProxy(object):
             vertex = self.create(_data, **kwds)
         return vertex
 
-    # is this really needed?
     def get_all(self):
         """
         Returns all the vertices in the graph.
@@ -451,16 +592,21 @@ class VertexProxy(object):
         :param _id: The vertex ID.
         :type _id: int or str
 
+        :param _data: Opetional property data dict.
+        :type _data: dict
+
+        :param **kwds: Optional property data keyword pairs. 
+        :type **kwds: keyword pairs
+
         :rtype: Response
 
         """ 
         # NOTE: this no longer returns an initialized element because not all 
         # Clients return element data, e.g. Neo4jServer retuns nothing.
         data = build_data(_data, kwds)
-        self.client.update_vertex(_id,_data)
+        self.client.update_vertex(_id, _data)
 
-    # is this really needed?    
-    def remove_properties(self,_id):
+    def remove_properties(self, _id):
         """
         Removes all properties from a vertex and returns the response.
 
@@ -472,9 +618,9 @@ class VertexProxy(object):
         """ 
         return self.client.remove_vertex_properties(_id)
                     
-    def delete(self,_id):
+    def delete(self, _id):
         """
-        Deletes a vertex from a graph DB and returns the response.
+        Deletes a vertex from the graph database and returns the response.
 
         :param _id: The vertex ID.
         :type _id: int or str
@@ -502,30 +648,45 @@ class Edge(Element):
     :ivar _edges: Edge proxy object.
     :ivar _initialized: Boolean set to True upon initialization.
 
-
     Example:
         
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()
+
     # Get an edge from the database
     >>> edge = g.edges.get(8)
+
+    # Return the edge label
     >>> edge.label()
     'knows'
+
+    # Return the outgoing vertex.
     >>> edge.outV()
     <Vertex: http://localhost:7474/db/data/node/5629>
+
+    # Return the outgoing vertex ID.
     >>> edge._outV
     5629
+
+    # Return the incoming vertex ID.
     >>> edge.inV()
     <Vertex: http://localhost:7474/db/data/node/5630>
+
+    # Return the incoming vertex ID.
     >>> edge._inV
     5630
+
+    # Set an edge database property.
     >>> edge.weight = 0.5
+
+    # Save the edge in the database.
     >>> edge.save()
+
+    # Return the edge property data.
     >>> edge.map()
     {'weight': 0.5}
 
     """
-
     @classmethod
     def get_base_type(cls):
         """
@@ -633,35 +794,56 @@ class Edge(Element):
         """
         return self._edges.update(self._id, self._data)
 
-
     
 class EdgeProxy(object):
     """ 
     A proxy for interacting with edges on the Client. 
 
+    :param element_class: The element class managed by this proxy instance.
+    :type element_class: Edge class
+
+    :param client: The Client object for the database.
+    :type client: Client
+
+    :ivar element_class: Element class
+    :ivar client: Client object.
+    :ivar index: The primary index object or None.
+
     Example::
         
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()
-    >>> james = g.vertices.create({'name':'James'})
-    >>> julie = g.vertices.create({'name':'Julie'})
-    >>> knows = g.edges.create(james,"knows",julie)
+
+    # Create the outgoing vertex.
+    >>> james = g.vertices.create(name="James")
+
+    # Create the incoming vertex.
+    >>> julie = g.vertices.create(name="Julie")
+
+    # Create a "knows" edge between the outgoing and incoming vertex.
+    >>> knows = g.edges.create(james, "knows", julie)
+
+    # Get the edge (again) from the database.
     >>> knows = g.edges.get(knows.eid)
-    >>> data = dict(weight=0.5)
-    >>> g.edges.update(knows.eid, data)
-    >>> g.edges.remove_properties(knows.eid)
+
+    # Add another database property and update it in the database.
+    >>> g.edges.update(knows.eid, weight=0.5)
+
+    # Delete the edge from the database.
     >>> g.edges.delete(knows.eid)
 
     """
+    def __init__(self, element_class, client):
+        assert issubclass(element_class, Edge)
 
-    def __init__(self,element_class,client):
-        assert issubclass(element_class,Edge)
         self.element_class = element_class
         self.client = client
-        self.client.registry.add_class(element_class)
         self.index = None
 
-    def create(self,outV,label,inV,_data=None,**kwds):
+        # Add element class to Registry so we can initialize query results.
+        self.client.registry.add_class(element_class)
+
+    def create(self, outV, label, inV, _data=None, **kwds):
         """
         Creates an edge in the database and returns it.
         
@@ -674,8 +856,11 @@ class EdgeProxy(object):
         :param inV: The incoming vertex. 
         :type inV: Vertex or int
 
-        :param data: The edge's property data.
-        :type data: dict
+        :param _data: Optional property data dict.
+        :type _data: dict
+
+        :param **kwds: Optional property data keyword pairs. 
+        :type **kwds: keyword pairs
 
         :rtype: Edge
 
@@ -683,8 +868,8 @@ class EdgeProxy(object):
         assert label is not None
         data = build_data(_data, kwds)
         outV, inV = coerce_vertices(outV, inV)
-        resp = self.client.create_edge(outV,label,inV,data)
-        return initialize_element(self.client,resp.results)
+        resp = self.client.create_edge(outV, label, inV, data)
+        return initialize_element(self.client, resp.results)
 
     def get(self,_id):
         """
@@ -698,11 +883,10 @@ class EdgeProxy(object):
         """
         try:
             resp = self.client.get_edge(_id)
-            return initialize_element(self.client,resp.results)
+            return initialize_element(self.client, resp.results)
         except LookupError:
             return None
 
-    # is this really needed?
     def get_all(self):
         """
         Returns all the edges in the graph.
@@ -714,15 +898,18 @@ class EdgeProxy(object):
         return initialize_elements(self.client, resp)
 
 
-    def update(self,_id,_data=None,**kwds):
+    def update(self,_id, _data=None, **kwds):
         """ 
         Updates an edge in the database and returns it. 
         
         :param _id: The edge ID.
         :type _id: int or str
 
-        :param data: A dict containing the edge's property data.
-        :type data: dict
+        :param _data: Optional property data dict.
+        :type _data: dict
+
+        :param **kwds: Optional property data keyword pairs. 
+        :type **kwds: keyword pairs
 
         :rtype: Response
 
@@ -732,7 +919,7 @@ class EdgeProxy(object):
         data = build_data(_data, kwds)
         return self.client.update_edge(_id, data)
                     
-    def remove_properties(self,_id):
+    def remove_properties(self, _id):
         """
         Removes all properties from a element and returns the response.
         
@@ -744,7 +931,7 @@ class EdgeProxy(object):
         """
         return self.client.remove_edge_properties(_id)
 
-    def delete(self,_id):
+    def delete(self, _id):
         """
         Deletes a vertex from a graph DB and returns the response.
         
@@ -762,12 +949,36 @@ class EdgeProxy(object):
 #
 
 def build_data(_data, kwds):
+    """
+    Returns property data dict, regardless of how it was entered.
+
+    :param _data: Optional property data dict.
+    :type _data: dict
+
+    :param **kwds: Optional property data keyword pairs. 
+    :type **kwds: keyword pairs
+
+    :rtype: dict
+
+    """
     # Doing this rather than defaulting the _data arg to {}
     data = {} if _data is None else _data
     data.update(kwds)
     return data
 
 def coerce_vertices(outV, inV):
+    """
+    Coerces the outgoing and incoming vertices to integers or strings.
+
+    :param outV: The outgoing vertex. 
+    :type outV: Vertex or int
+                      
+    :param inV: The incoming vertex. 
+    :type inV: Vertex or int
+
+    :rtype: tuple
+
+    """
     outV = coerce_vertex(outV)
     inV = coerce_vertex(inV)
     return outV, inV
