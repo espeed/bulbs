@@ -25,10 +25,10 @@ class Gremlin(object):
 
     """
 
-    def __init__(self,client):
+    def __init__(self, client):
         self.client = client
 
-    def command(self,script,params=None):
+    def command(self, script, params=None):
         """
         Returns the raw result of an arbitrary Gremlin command.
 
@@ -44,7 +44,7 @@ class Gremlin(object):
         resp = self.client.gremlin(script,params)
         return get_one_result(resp)
 
-    def query(self,script,params=None):
+    def query(self, script, params=None):
         """
         Returns initialized results of an arbitrary Gremlin query.
 
@@ -57,6 +57,21 @@ class Gremlin(object):
         :rtype: Generator of objects: Vertex, Edge, Node, or Relationship
 
         """
-        resp = self.client.gremlin(script,params)
-        return initialize_elements(self.client,resp)
+        resp = self.client.gremlin(script, params)
+        return initialize_elements(self.client, resp)
+ 
+    def execute(self, script, params=None):
+        """
+        Returns the raw Response object from an arbitrary Gremlin script.
+
+        :param script: Gremlin script to execute on the client.
+        :type script: str
+ 
+        :param params: Optional paramaters to bind to the Gremlin script. 
+        :type params: dict or None
+
+        :rtype: Response
+
+        """
+        return self.client.gremlin(script, params)
  

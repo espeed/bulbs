@@ -7,22 +7,19 @@
 Vertex and Edge container classes and associated proxy classes.
 
 """
-
-
-from .utils import initialize_element, initialize_elements, coerce_id
 from .utils import u  # Python 3 unicode
+from .utils import initialize_element, initialize_elements, coerce_id
+
 
 class Element(object):
-    """
-    An abstract base class for Vertex and Edge containers.
+    """An abstract base class for Vertex and Edge containers."""
 
-    """
     def __init__(self, client):
 
-        #: Client object....
+        # Client object
         self._client = client
 
-        #: Property data
+        # Property data
         self._data = {}
 
     def _initialize(self, result):
@@ -30,9 +27,9 @@ class Element(object):
         Initialize the element after its data has been returned by the database.
 
         :param result: The Result object returned by the the Client request.
-        :param result: Result
+        :type result: Result
 
-        
+        :rtype: None
 
         """
         # initialize all non-database properties here because
@@ -40,25 +37,51 @@ class Element(object):
         self._result = result
         self._data = result.get_map().copy() # Do we really need/want to make a copy?
         self._set_pretty_id(self._client)
-        # These vertex and edge proxies are only used for gets, not mutable stuff
+
+        # These vertex and edge proxies are primarily used for gets, not mutable stuff
         self._vertices = VertexProxy(Vertex,self._client)
         self._edges = EdgeProxy(Edge,self._client)
+
         self._initialized = True
        
     @classmethod
     def get_base_type(cls):
+        """
+        Returns the base type.
+        
+        :rtype: str
+        
+        """
         raise NotImplementedError 
 
     @classmethod
     def get_element_key(cls, config):
+        """
+        Returns the element key.
+
+        :rtype: str
+
+        """
         raise NotImplementedError 
 
     @classmethod
     def get_index_name(cls, config):
+        """
+        Returns the index name. 
+
+        :rtype: str
+
+        """
         raise NotImplementedError 
 
     @classmethod
     def get_proxy_class(cls):
+        """
+        Returns the proxy class. 
+
+        :rtype: class
+
+        """
         raise NotImplementedError 
 
     @property
@@ -191,6 +214,12 @@ class Vertex(Element):
 
     :param client: The Client object for the database.
     :type client: Client
+
+    :ivar _client: Client object.
+    :ivar _data: Property data dict returned in Result.
+    :ivar _vertices: Vertex proxy object.
+    :ivar _edges: Edge proxy object.
+    :ivar _initialized: Boolean set to True upon initialization.
 
     Example:
         
@@ -466,6 +495,13 @@ class Edge(Element):
 
     :param client: The Client object for the database.
     :type client: Client
+
+    :ivar _client: Client object.
+    :ivar _data: Property data dict returned in Result.
+    :ivar _vertices: Vertex proxy object.
+    :ivar _edges: Edge proxy object.
+    :ivar _initialized: Boolean set to True upon initialization.
+
 
     Example:
         

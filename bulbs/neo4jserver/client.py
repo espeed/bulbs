@@ -1046,6 +1046,7 @@ class Neo4jClient(Client):
 
 
     # Metadata
+
     def set_metadata(self, key, value):
         """
         Sets the metadata key to the supplied value.
