@@ -7,7 +7,7 @@
 Base classes for modeling domain objects that wrap vertices and edges.
 
 """
-import six   # Python 3
+import six  # Python 3
 import inspect
 import types
 from collections import Callable
@@ -15,8 +15,8 @@ from collections import Callable
 from bulbs.property import Property
 from bulbs.element import Element, Vertex, VertexProxy, Edge, EdgeProxy, \
     coerce_vertices, build_data
-from bulbs.utils import initialize_element, get_one_result, get_logger, extract
-import bulbs.utils as utils
+from bulbs.utils import initialize_element, get_logger
+
 
 # Model Modes
 NORMAL = 1
@@ -44,12 +44,11 @@ class ModelMeta(type):
         :rtype: dict
 
         """
-        
-        # Or if the Model doesn't have a parent Model, set it to an empty dict
         try: 
             parent_properties = getattr(cls, '_properties')
             properties = parent_properties.copy() 
         except:
+            # Set it to an empty dict if the Model doesn't have a parent Model. 
             properties = {}
         return properties
             
@@ -81,7 +80,7 @@ class ModelMeta(type):
                             
     def _set_property_name(cls, key, property_instance):
         """
-        Set the Property name.
+        Set Property name to attribute key unless explicitly set via kwd param.
 
         :param key: Class attribute key
         :type key: str
@@ -90,9 +89,6 @@ class ModelMeta(type):
         :type property_instance bulbs.property.Property
 
         :rtype None
-
-        .. note:: Uses the class attribute key unless explicitly set via 
-                  kwd param.
 
         """
         if property_instance.name is None:
@@ -124,16 +120,8 @@ class ModelMeta(type):
 
 
 class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
-    """
-    Abstract base class for Node and Relationship container classes.
-
-    :cvar __mode__: The mode for saving attributes to the database. 
-                    If set to STRICT, only defined Properties are saved.
-                    If set to NORMAL, all attributes are saved. 
-                    Defaults to NORMAL. 
-    :cvar _properties: A dict containing the database Property instances.
-
-    """
+    """Abstract base class for Node and Relationship container classes."""
+    
     __mode__ = NORMAL
     
     def __setattr__(self, key, value):
@@ -329,8 +317,8 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
             value = self._get_property_value(key)
             property_instance.validate(key, value)
             #name = property_instance.name
-            value = property_instance.convert_to_db(type_system, value)
-            data[key] = value
+            db_value = property_instance.convert_to_db(type_system, value)
+            data[key] = db_value
 
         return data
 
@@ -421,6 +409,12 @@ class Node(Model, Vertex):
     It's used to create classes that model domain objects, and it's not meant 
     to be used directly. To use it, create a subclass specific to the type of 
     data you are storing. 
+
+    :cvar __mode__: The mode for saving attributes to the database. 
+                    If set to STRICT, only defined Properties are saved.
+                    If set to NORMAL, all attributes are saved. 
+                    Defaults to NORMAL. 
+    :cvar _properties: A dict containing the database Property instances.
 
     Example model declaration::
 
@@ -597,15 +591,20 @@ class Relationship(Model, Edge):
     to be used directly. To use it, create a subclass specific to the type of 
     data you are storing. 
 
+    :cvar __mode__: The mode for saving attributes to the database. 
+                    If set to STRICT, only defined Properties are saved.
+                    If set to NORMAL, all attributes are saved. 
+                    Defaults to NORMAL. 
+    :cvar _properties: A dict containing the database Property instances.
+
     Example usage for an edge between a blog entry node and its creating user::
 
         class Knows(Relationship):
+
             label = "knows"
 
-            timestamp = Float(default="current_timestamp", nullable=False)
+            timestamp = DateTime(default=utils.current_timestamp, nullable=False)
 
-            def current_timestamp(self):
-                return time.time()
 
     Example usage::
 

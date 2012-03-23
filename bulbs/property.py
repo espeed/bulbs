@@ -24,18 +24,47 @@ log = get_logger(__name__)
 
 
 class Property(object):
-    """Container for a graph-database property used to create Models."""
+    """
+    Abstract base class for database property types used in Models.
 
-    def __init__(self, fget=None, fset=None, fdel=None, name=None, \
-                     default=None, onupdate=None, constraint=None, \
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
+
+    :param fset: Method name that sets a calculated value. Defaults to None.
+    :type fset: str
+
+    :param fdel: Method name that deletes a calculated value. Defaults to None.
+    :type fdel: str
+    
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
+
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param index: If True, index the Property in the DB. Defaults to False.
+    :type index: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar fset: Name of the method that sets the calculated Property value.
+    ;ivar fdel: Name of the method that deletes the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar index: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    def __init__(self, fget=None, fset=None, fdel=None, \
+                     name=None, default=None, constraint=None, \
                      nullable=True, unique=False, index=False):
-
         self.fget = fget
         self.fset = fset
         self.fdel = fdel
-        # NOTE: If you pass name as a kwd, then it overwrites variables named "name"
-        # FIX THIS!!!! -- why are they sharing the same namespace??? 
-        # The above is an old comment -- is this still an issue?
         self.name = name
         self.default = default
         self.nullable = nullable
@@ -44,7 +73,6 @@ class Property(object):
         # TODO: unique creates an index
         self.index = index
         self.unique = unique
-        self.onupdate = onupdate
         self.constraint = constraint
 
 
@@ -54,28 +82,22 @@ class Property(object):
         to the DB and that the Property has a value if nullable is set to False.
         
         """
-        # Do null checks first so you can ignore None values in check_datatype
+        # Do null checks first so you can ignore None values in check_datatype()
         self._check_null(key, value)
         self._check_datatype(key, value)
 
+    def _check_null(self,key,value):
+        # TODO: should this be checking that the value is True to catch empties?
+        if self.nullable is False and value is None:
+            log.error("Null Property Error: '%s' cannot be set to '%s'", 
+                      key, value)
+            raise ValueError
 
     def _check_datatype(self,key, value):
-        if value is None:
-            return
-        if not isinstance(value, self.python_type):
+        if value is not None and isinstance(value, self.python_type) is False:
             log.error("Type Error: '%s' is set to %s with type %s, but must be a %s.", 
                       key, value, type(value), self.python_type)
             raise TypeError
-
-    def _check_null(self,key,value):
-        try: 
-            if self.nullable is False:
-                # should this be "assert value is True" to catch empties?
-                assert value is not None
-        except AssertionError:
-           log.error("Null Property Error: '%s' cannot be set to '%s'", 
-                     key, value)
-           raise ValueError
 
     def convert_to_db(self,type_system,value):
         value = self.to_db(type_system,value)
@@ -222,9 +244,4 @@ class DateTime(Property):
 
         return dt
 
-# have both?
-# You don't need both, unless you're trying to eek out performance by saving on the conversion step
-
-class Timestamp(Property):
-    pass
     
