@@ -12,14 +12,16 @@ from bulbs.utils import initialize_elements
 from bulbs.base.client import Client
 from bulbs.base.index import Index
 
+
 # A framework is an understanding of how things could fit together.
-# When designing these things, it's important to remember that your understanding is incomplete.
+# When designing these things, it's important to remember that your 
+# understanding is incomplete.
 
 class Graph(object):
     """
     Abstract base class for the server-specific Graph implementations. 
 
-    :param config: Optional. Defaults to the default config.
+    :param config: Optional Config object. Defaults to the default config.
     :type config: Config
         
     :cvar client_class: Client class.
@@ -90,7 +92,8 @@ class Graph(object):
         :param element_class: Element class managed by this proxy.
         :type element_class: Element
 
-        :param index_class: Index class used for Element's primary index. Defaults to default_index.
+        :param index_class: Index class for Element's primary index. 
+            Defaults to default_index.
         :type index_class: Index
 
         :rtype: None
@@ -106,7 +109,7 @@ class Graph(object):
         :param element_class: Element class managed by this proxy.
         :type element_class: Element
 
-        :param index_class: Optional Index class used for Element's primary index. 
+        :param index_class: Optional Index class for Element's primary index. 
             Defaults to default_index.
         :type index_class: Index
 
