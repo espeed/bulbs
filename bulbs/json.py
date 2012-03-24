@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2011 James Thornton (http://jamesthornton.com)
+# Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
 """
-Bulbs supports plugabble type systems.
+The JSON Type System.
 
 """
 # Python 3
@@ -14,103 +14,116 @@ if sys.version > '3':
     long = int
     unicode = str
 
+from bulbs.base import TypeSystem, Converter
 from .utils import to_timestamp, to_datetime
 
 
-class TypeSystem(object):
-    """Abstract base class for plugabble database type systems."""
-
-    #: The backend client's content type.
-    content_type = None
-
-    #: Converter object used to convert Python values to database values.
-    database = None
-
-    #: Converter object used to covert database values to Python values.
-    python = None
-
-
-class Converter(object):
-    """Abstract base class of conversion methods called by DataType classes."""
-
-    def to_string(self,value):
-        raise NotImplementedError
-
-    def to_integer(self,value):
-        raise NotImplementedError
-    
-    def to_long(self,value):
-        raise NotImplementedError
-
-    def to_float(self,value):
-        raise NotImplementedError
-
-    def to_list(self,value):
-        raise NotImplementedError
-
-    def to_dictionary(self,value):
-        raise NotImplementedError
-
-    def to_null(self,value):
-        raise NotImplementedError
-
-
-#
-# The JSON Type System
-#
-
 class Database(Converter):
-    """Converts Python values to database values."""
+    """
+    Converts Python values to database values.
 
-    # The JSON type system is just a simple pass through.
+    .. note:: Python to JSON conversion is usually just a simple pass through.
 
+    """
     def to_string(self, value):
         """
         Converts a Python byte string to a unicode string.
         
         :param value: Property value. 
-        :type value: str
+        :type value: str or None
 
         :rtype unicode or None
 
         :raises: ValueError
 
         """
-        # Using unicode instead of str
+        # NOTE: Using unicode instead of str
         if value is not None:
             return unicode(value)
 
     def to_integer(self, value):
         """
-        Converts a JSON number to a Python integer.
+        Passes through a Python integer.
 
         :param value: Property value. 
-        :type value: int
+        :type value: int or None
 
         :rtype int or None
-
-        :raises: ValueError
 
         """
         return value
     
     def to_long(self, value):
+        """
+        Passes through a Python long.
+
+        :param value: Property value. 
+        :type value: long or None
+
+        :rtype long or None
+
+        """
         return value
 
     def to_float(self, value):
+        """
+        Passes through a Python float.
+
+        :param value: Property value. 
+        :type value: float or None
+
+        :rtype float or None
+
+        """
         return value
 
     def to_list(self, value):
+        """
+        Passes through a Python list.
+
+        :param value: Property value. 
+        :type value: list or None
+
+        :rtype list or None
+
+        """
         return value
 
     def to_dictionary(self, value):
+        """
+        Passes through a Python dictionary.
+
+        :param value: Property value. 
+        :type value: dict or None
+
+        :rtype dict or None
+
+        """
         return value
 
     def to_datetime(self, value):
+        """
+        Converts a Python datetime object to a timestamp integer.
+
+        :param value: Property value. 
+        :type value: int or None
+
+        :rtype datetime or None
+
+        """
         if value is not None:
             return to_timestamp(value)
 
     def to_null(self, value):
+        """
+        Passes through a Python None.
+
+        :param value: Property value. 
+        :type value: None
+
+        :rtype None
+
+        """
         return value
 
 
@@ -126,7 +139,7 @@ class Python(Converter):
         Converts a JSON string to a Python unicode string.
         
         :param value: Property value. 
-        :type value: str
+        :type value: str or None
 
         :rtype unicode or None
 
@@ -141,7 +154,7 @@ class Python(Converter):
         Converts a JSON number to a Python integer.
 
         :param value: Property value. 
-        :type value: int
+        :type value: int or None
 
         :rtype int or None
 
@@ -156,7 +169,7 @@ class Python(Converter):
         Converts a JSON number to a Python long.
 
         :param value: Property value. 
-        :type value: long
+        :type value: long or None
 
         :rtype long or None
 
@@ -171,7 +184,7 @@ class Python(Converter):
         Converts a JSON number to a Python float.
 
         :param value: Property value. 
-        :type value: float
+        :type value: float or None
 
         :rtype float or None
 
@@ -186,7 +199,7 @@ class Python(Converter):
         Converts a JSON list to a Python list.
 
         :param value: Property value. 
-        :type value: list
+        :type value: list or None
 
         :rtype list or None
 
@@ -201,7 +214,7 @@ class Python(Converter):
         Converts a JSON map to a Python dictionary.         
 
         :param value: Property value. 
-        :type value: dict
+        :type value: dict or None
 
         :rtype dict or None
 
@@ -216,7 +229,7 @@ class Python(Converter):
         Converts a JSON integer timestamp to a Python datetime object.
 
         :param value: Property value. 
-        :type value: int
+        :type value: int or None
 
         :rtype datetime or None
 
@@ -249,8 +262,8 @@ class JSONTypeSystem(TypeSystem):
     Converts database properties to and from their JSON representations.
 
     :cvar content_type: The backend client's content type.
-    :cvar database: Converter object used to convert Python values to database values.
-    :cvar python: Converter object used to covert database values to Python values.
+    :cvar database: Converter object. Converts Python values to database values.
+    :cvar python: Converter object. Converts database values to Python values.
 
     """
     content_type = "application/json"

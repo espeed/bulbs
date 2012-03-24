@@ -3,7 +3,7 @@ import random
 
 from bulbs.config import Config
 from bulbs.registry import Registry
-from bulbs.typesystem import TypeSystem
+from bulbs.base import TypeSystem
 
 class ClientTestCase(unittest.TestCase):
     

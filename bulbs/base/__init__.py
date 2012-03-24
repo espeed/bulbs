@@ -6,4 +6,4 @@
 from .graph import Graph
 from .client import Client, Response, Result
 from .index import VertexIndexProxy, EdgeIndexProxy, Index
-
+from .typesystem import TypeSystem, Converter

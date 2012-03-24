@@ -12,7 +12,7 @@ from bulbs.registry import Registry
 from bulbs.utils import get_logger
 
 # specific to this client
-from bulbs.typesystem import JSONTypeSystem
+from bulbs.json import JSONTypeSystem
 from bulbs.base import Client, Response, Result 
 from bulbs.rest import Request, RESPONSE_HANDLERS
 from bulbs.groovy import GroovyScripts

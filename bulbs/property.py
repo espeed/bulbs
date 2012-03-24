@@ -93,7 +93,7 @@ class Property(object):
                       key, value)
             raise ValueError
 
-    def _check_datatype(self,key, value):
+    def _check_datatype(self, key, value):
         if value is not None and isinstance(value, self.python_type) is False:
             log.error("Type Error: '%s' is set to %s with type %s, but must be a %s.", 
                       key, value, type(value), self.python_type)
@@ -231,12 +231,12 @@ class DateTime(Property):
         if isinstance(value, Number):
             # catches unix timestamps
             dt = to_datetime(value)
-        elif not isinstance(value, datetime.datetime):  
-            # Python 3 unicode/str catchall
-            dt = dateutil.parser.parse(value)
-        else:
+        elif isinstance(value, datetime.datetime):  
             # value passed in was already in proper form
             dt = value
+        else:
+            # Python 3 unicode/str catchall
+            dt = dateutil.parser.parse(value)
 
         #if dt.tzinfo is None:
         #    tz = pytz.timezone('UTC')
