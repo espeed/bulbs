@@ -9,38 +9,39 @@ Bulbs supports plugabble type systems.
 """
 
 class TypeSystem(object):
-    """Abstract base class for plugabble database type systems."""
+    """
+    Abstract base class for plugabble database type systems.
 
-    #: The backend client's content type.
+    :cvar content_type: The backend client's content type.
+    :cvar database: Converter object. Converts Python values to database values.
+    :cvar python: Converter object. Converts database values to Python values.
+
+    """
     content_type = None
-
-    #: Converter object used to convert Python values to database values.
     database = None
-
-    #: Converter object used to covert database values to Python values.
     python = None
 
 
 class Converter(object):
     """Abstract base class of conversion methods called by DataType classes."""
 
-    def to_string(self,value):
+    def to_string(self, value):
         raise NotImplementedError
 
-    def to_integer(self,value):
+    def to_integer(self, value):
         raise NotImplementedError
     
-    def to_long(self,value):
+    def to_long(self, value):
         raise NotImplementedError
 
-    def to_float(self,value):
+    def to_float(self, value):
         raise NotImplementedError
 
-    def to_list(self,value):
+    def to_list(self, value):
         raise NotImplementedError
 
-    def to_dictionary(self,value):
+    def to_dictionary(self, value):
         raise NotImplementedError
 
-    def to_null(self,value):
+    def to_null(self, value):
         raise NotImplementedError

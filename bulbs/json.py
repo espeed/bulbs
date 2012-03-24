@@ -18,7 +18,7 @@ from bulbs.base import TypeSystem, Converter
 from .utils import to_timestamp, to_datetime
 
 
-class Database(Converter):
+class DatabaseConverter(Converter):
     """
     Converts Python values to database values.
 
@@ -32,7 +32,7 @@ class Database(Converter):
         :param value: Property value. 
         :type value: str or None
 
-        :rtype unicode or None
+        :rtype: unicode or None
 
         :raises: ValueError
 
@@ -48,7 +48,7 @@ class Database(Converter):
         :param value: Property value. 
         :type value: int or None
 
-        :rtype int or None
+        :rtype: int or None
 
         """
         return value
@@ -60,7 +60,7 @@ class Database(Converter):
         :param value: Property value. 
         :type value: long or None
 
-        :rtype long or None
+        :rtype: long or None
 
         """
         return value
@@ -72,7 +72,7 @@ class Database(Converter):
         :param value: Property value. 
         :type value: float or None
 
-        :rtype float or None
+        :rtype: float or None
 
         """
         return value
@@ -84,7 +84,7 @@ class Database(Converter):
         :param value: Property value. 
         :type value: list or None
 
-        :rtype list or None
+        :rtype: list or None
 
         """
         return value
@@ -96,7 +96,7 @@ class Database(Converter):
         :param value: Property value. 
         :type value: dict or None
 
-        :rtype dict or None
+        :rtype: dict or None
 
         """
         return value
@@ -108,7 +108,7 @@ class Database(Converter):
         :param value: Property value. 
         :type value: int or None
 
-        :rtype datetime or None
+        :rtype: datetime or None
 
         """
         if value is not None:
@@ -121,13 +121,13 @@ class Database(Converter):
         :param value: Property value. 
         :type value: None
 
-        :rtype None
+        :rtype: None
 
         """
         return value
 
 
-class Python(Converter):
+class PythonConverter(Converter):
     """Converts database values to Python values."""
 
     # TODO: Why are we checking if value is not None?
@@ -141,7 +141,7 @@ class Python(Converter):
         :param value: Property value. 
         :type value: str or None
 
-        :rtype unicode or None
+        :rtype: unicode or None
 
         :raises: ValueError
 
@@ -156,7 +156,7 @@ class Python(Converter):
         :param value: Property value. 
         :type value: int or None
 
-        :rtype int or None
+        :rtype: int or None
 
         :raises: ValueError
 
@@ -171,7 +171,7 @@ class Python(Converter):
         :param value: Property value. 
         :type value: long or None
 
-        :rtype long or None
+        :rtype: long or None
 
         :raises: ValueError
 
@@ -186,7 +186,7 @@ class Python(Converter):
         :param value: Property value. 
         :type value: float or None
 
-        :rtype float or None
+        :rtype: float or None
 
         :raises: ValueError
 
@@ -201,7 +201,7 @@ class Python(Converter):
         :param value: Property value. 
         :type value: list or None
 
-        :rtype list or None
+        :rtype: list or None
 
         :raises: ValueError
 
@@ -216,7 +216,7 @@ class Python(Converter):
         :param value: Property value. 
         :type value: dict or None
 
-        :rtype dict or None
+        :rtype: dict or None
 
         :raises: ValueError
 
@@ -231,7 +231,7 @@ class Python(Converter):
         :param value: Property value. 
         :type value: int or None
 
-        :rtype datetime or None
+        :rtype: datetime or None
 
         :raises: ValueError
 
@@ -246,7 +246,7 @@ class Python(Converter):
         :param value: Property value. 
         :type value: None
 
-        :rtype None
+        :rtype: None
 
         :raises: ValueError
 
@@ -268,8 +268,8 @@ class JSONTypeSystem(TypeSystem):
     """
     content_type = "application/json"
 
-    database = Database()
-    python = Python()
+    database = DatabaseConverter()
+    python = PythonConverter()
     
 
 
