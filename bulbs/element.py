@@ -271,18 +271,21 @@ class Element(object):
         representation = "<%s: %s>" % (class_name, element_uri)
         return u(representation)    # Python 3
 
-    def get(self, name):
+    def get(self, name, default_value=None):
         """
-        Returns the value of a Python attribute.
+        Returns the value of a Python attribute or the default value.
 
         :param name: Python attribute name.
         :type name: str
 
-        :rtype: object
+        :param default_value: Default value. Defaults to None.
+        :type default_value: object
+
+        :rtype: object or None
 
         """
         # TODO: Why do we need this?
-        return getattr(self, name, None)
+        return getattr(self, name, default_vaoue)
 
     def map(self):
         """
@@ -314,23 +317,12 @@ class Vertex(Element):
     Example::
         
     >>> from bulbs.neo4jserver import Graph
-    >>> g = Graph()
-
-    # Get a vertex from the database.
-    >>> james = g.vertices.get(3)
-
-    # Set a database property.
-    >>> james.age = 34
-
-    # Save the vertex in the database.
-    >>> james.save()
-
-    # Return the database property map.
-    >>> james.map()
-    {'age': 34, 'name': 'James'}
-
-    # Return a Vertex generator containing the people James knows.
-    >>> friends = james.outV("knows")
+    >>> g = Graph()                   # Create a Neo4j Graph object
+    >>> james = g.vertices.get(3)     # Get a vertex from the database
+    >>> james.age = 34                # Set a database property
+    >>> james.save()                  # Save the vertex in the database
+    >>> james.map()                   # Get the database property map
+    >>> friends = james.outV("knows") # Return Vertex generator of friends
 
     """  
     @classmethod
@@ -464,7 +456,7 @@ class Vertex(Element):
 
     def save(self):
         """
-        Saves the vertex on the client.
+        Saves the vertex in the database.
 
         :rtype: Response
 
@@ -489,19 +481,11 @@ class VertexProxy(object):
     Example::
         
     >>> from bulbs.neo4jserver import Graph
-    >>> g = Graph()
- 
-    # Create a vertex in the database.
-    >>> james = g.vertices.create(name="James")
-
-    # Add another database property and update the vertex in the database.
-    >>> g.vertices.update(james.eid, age=34)
-
-    # Get the vertex (again) from the database.
-    >>> james = g.vertices.get(james.eid)
-    
-    # Delete the vertex from the database.
-    >>> g.vertices.delete(james.eid)
+    >>> g = Graph()                                  # Create Neo4j Graph
+    >>> james = g.vertices.create(name="James")      # Create vertex in DB
+    >>> g.vertices.update(james.eid, name="James T") # Update properties
+    >>> james = g.vertices.get(james.eid)            # Get vertex
+    >>> g.vertices.delete(james.eid)                 # Delete vertex
 
     """
     def __init__(self,element_class, client):
@@ -521,8 +505,8 @@ class VertexProxy(object):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Vertex
 
@@ -560,8 +544,8 @@ class VertexProxy(object):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Vertex
 
@@ -595,8 +579,8 @@ class VertexProxy(object):
         :param _data: Opetional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Response
 
@@ -651,49 +635,29 @@ class Edge(Element):
     Example:
         
     >>> from bulbs.neo4jserver import Graph
-    >>> g = Graph()
-
-    # Get an edge from the database
-    >>> edge = g.edges.get(8)
-
-    # Return the edge label
-    >>> edge.label()
-    'knows'
-
-    # Return the outgoing vertex.
-    >>> edge.outV()
-    <Vertex: http://localhost:7474/db/data/node/5629>
-
-    # Return the outgoing vertex ID.
-    >>> edge._outV
-    5629
-
-    # Return the incoming vertex ID.
-    >>> edge.inV()
-    <Vertex: http://localhost:7474/db/data/node/5630>
-
-    # Return the incoming vertex ID.
-    >>> edge._inV
-    5630
-
-    # Set an edge database property.
-    >>> edge.weight = 0.5
-
-    # Save the edge in the database.
-    >>> edge.save()
-
-    # Return the edge property data.
-    >>> edge.map()
-    {'weight': 0.5}
+    >>> g = Graph()            # Create a Neo4j Graph
+    >>> edge = g.edges.get(8)  # Get edge from DB
+    >>> edge.label()           # Return edge label
+    >>> edge.outV()            # Return outgoing vertex
+    >>> edge.inV()             # Return incoming vertex
+    >>> edge._outV             # Return outgoing vertex ID
+    >>> edge._inV              # Return incoming vertex ID
+    >>> edge.weight = 0.5      # Set a property
+    >>> edge.save()            # Save properties in DB
+    >>> edge.map()             # Return property data
 
     """
     @classmethod
     def get_base_type(cls):
         """
-        Returns the base type, which is "edge". Don't override this.
+        Returns the base type, which is "edge".
         
         :rtype: str
         
+        .. admonition:: WARNING 
+
+           Don't override this.
+
         """
         #: Don't override this
         return "edge"
@@ -731,7 +695,7 @@ class Edge(Element):
     @property
     def _outV(self):
         """
-        Returns the outgoing vertex ID of the edge.
+        Returns the outgoing (start) vertex ID of the edge.
 
         :rtype: int
 
@@ -741,7 +705,7 @@ class Edge(Element):
     @property
     def _inV(self):
         """
-        Returns the incoming vertex ID of the edge.
+        Returns the incoming (end) vertex ID of the edge.
 
         :rtype: int
 
@@ -760,7 +724,7 @@ class Edge(Element):
         
     def outV(self):
         """
-        Returns the outgoing Vertex of the edge.
+        Returns the outgoing (start) Vertex of the edge.
 
         :rtype: Vertex
 
@@ -769,7 +733,7 @@ class Edge(Element):
     
     def inV(self):
         """
-        Returns the incoming Vertex of the edge.
+        Returns the incoming (end) Vertex of the edge.
 
         :rtype: Vertex
 
@@ -787,7 +751,7 @@ class Edge(Element):
 
     def save(self):
         """
-        Saves the edge on the client.
+        Saves the edge in the database.
 
         :rtype: Response
 
@@ -812,25 +776,13 @@ class EdgeProxy(object):
     Example::
         
     >>> from bulbs.neo4jserver import Graph
-    >>> g = Graph()
-
-    # Create the outgoing vertex.
-    >>> james = g.vertices.create(name="James")
-
-    # Create the incoming vertex.
-    >>> julie = g.vertices.create(name="Julie")
-
-    # Create a "knows" edge between the outgoing and incoming vertex.
-    >>> knows = g.edges.create(james, "knows", julie)
-
-    # Get the edge (again) from the database.
-    >>> knows = g.edges.get(knows.eid)
-
-    # Add another database property and update it in the database.
-    >>> g.edges.update(knows.eid, weight=0.5)
-
-    # Delete the edge from the database.
-    >>> g.edges.delete(knows.eid)
+    >>> g = Graph()                                   # Create Neo4j Graph
+    >>> james = g.vertices.create(name="James")       # Create vetex
+    >>> julie = g.vertices.create(name="Julie")       # Create vertex
+    >>> knows = g.edges.create(james, "knows", julie) # Create edge
+    >>> knows = g.edges.get(knows.eid)                # Get edge
+    >>> g.edges.update(knows.eid, weight=0.5)         # Update properties
+    >>> g.edges.delete(knows.eid)                     # Delete edge
 
     """
     def __init__(self, element_class, client):
@@ -859,8 +811,8 @@ class EdgeProxy(object):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Edge
 
@@ -908,8 +860,8 @@ class EdgeProxy(object):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Response
 
@@ -933,7 +885,7 @@ class EdgeProxy(object):
 
     def delete(self, _id):
         """
-        Deletes a vertex from a graph DB and returns the response.
+        Deletes a vertex from a graph database and returns the response.
         
         :param _id: The edge ID.
         :type _id: int or str
@@ -955,8 +907,8 @@ def build_data(_data, kwds):
     :param _data: Optional property data dict.
     :type _data: dict
 
-    :param **kwds: Optional property data keyword pairs. 
-    :type **kwds: keyword pairs
+    :param kwds: Optional property data keyword pairs. 
+    :type kwds: dict
 
     :rtype: dict
 

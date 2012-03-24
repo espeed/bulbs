@@ -89,13 +89,13 @@ class Config(object):
         """
         Sets credentials if using the Neo4j Heroku Add On.
 
-        :param log_level: Python log level.
+        :param log_level: Python log level. Defaults to ERROR.
         :type log_level: int
 
         :param log_handler: Python log handler. Defaults to log_handler.
         :type log_handler: logging.Handler
 
-        :rtype: Nnone
+        :rtype: None
 
         """
         url = os.environ.get('NEO4J_REST_URL', None)

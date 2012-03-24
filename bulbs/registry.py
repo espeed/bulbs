@@ -46,7 +46,7 @@ class Registry(object):
         """
         Returns the element class given the element key.
 
-        :param element_key: Element key, either element_type or label.
+        :param element_key: Element key, value of element_type or label.
         :type element_key: str
 
         :rtype: class
@@ -87,7 +87,7 @@ class Registry(object):
 
     def add_index(self, index_name, index):
         """
-        Adds an index objects to the registry.
+        Adds an index object to the registry.
 
         :param name: Index name.
         :type name: str
