@@ -30,12 +30,6 @@ class Property(object):
     :param fget: Method name that returns a calculated value. Defaults to None.
     :type fget: str
 
-    :param fset: Method name that sets a calculated value. Defaults to None.
-    :type fset: str
-
-    :param fdel: Method name that deletes a calculated value. Defaults to None.
-    :type fdel: str
-    
     :param name: Database property name. Defaults to the Property key.
     :type name: str
 
@@ -45,42 +39,44 @@ class Property(object):
     :param nullable: If True, the Property can be null. Defaults to True.
     :type nullable: bool
 
-    :param index: If True, index the Property in the DB. Defaults to False.
-    :type index: bool
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexeded: bool
 
     :ivar fget: Name of the method that gets the calculated Property value.
-    :ivar fset: Name of the method that sets the calculated Property value.
-    ;ivar fdel: Name of the method that deletes the calculated Property value.
     :ivar name: Database property name. Defaults to the Property key.
     :ivar default: Default property value. Defaults to None.
     :ivar nullable: If True, the Property can be null. Defaults to True.
-    :ivar index: If True, index the Property in the DB. Defaults to False.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
 
     .. note:: If no Properties have index=True, all Properties are indexed. 
 
     """
-    def __init__(self, fget=None, fset=None, fdel=None, \
-                     name=None, default=None, constraint=None, \
-                     nullable=True, unique=False, index=False):
+    def __init__(self, fget=None, name=None, default=None, \
+                     nullable=True, unique=False, indexed=False):
         self.fget = fget
-        self.fset = fset
-        self.fdel = fdel
         self.name = name
         self.default = default
         self.nullable = nullable
 
         # These aren't implemented yet.         
         # TODO: unique creates an index
-        self.index = index
+        self.indexed = indexed
         self.unique = unique
-        self.constraint = constraint
+        #self.constraint = constraint
 
 
     def validate(self, key, value):
         """
-        Validates that Property data is of the right datatype before saving it
-        to the DB and that the Property has a value if nullable is set to False.
+        Validates the Property value before saving it to the database.
         
+        :param key: Property key.
+        :type key: str
+
+        :param value: Property value.
+        :type value: object
+
+        :rtype: None
+
         """
         # Do null checks first so you can ignore None values in check_datatype()
         self._check_null(key, value)
@@ -99,11 +95,41 @@ class Property(object):
                       key, value, type(value), self.python_type)
             raise TypeError
 
-    def convert_to_db(self,type_system,value):
+    def convert_to_db(self, type_system, key, value):
+        """
+        Converts a Property value from its Python type to its database representation.
+
+        :param type_system: TypeSystem object.
+        :type type_system: TypeSystem
+
+        :param key: Property key.
+        :type key: str
+
+        :param value: Property value.
+        :type value: object
+
+        :rtype: object
+
+        """
         value = self.to_db(type_system,value)
         return value
 
     def convert_to_python(self, type_system, key, value):
+        """
+        Converts a Property value from its database representation to its Python type.
+
+        :param type_system: TypeSystem object.
+        :type type_system: TypeSystem
+
+        :param key: Property key.
+        :type key: str
+
+        :param value: Property value.
+        :type value: object
+
+        :rtype: object
+
+        """
         try:
             value = self.to_python(type_system, value)
         except Exception as e:
@@ -112,7 +138,19 @@ class Property(object):
             value = None
         return value
 
-    def coerce(self,key,value):
+    def coerce(self, key, value):
+        """
+        Coerces a Property value to its Python type.
+        
+        :param key: Property key.
+        :type key: str
+        
+        :param value: Property value.
+        :type value: object
+
+        :rtype: object        
+
+        """
         initial_datatype = type(value)
         try:
             value = self._coerce(value)
@@ -131,7 +169,32 @@ class Property(object):
         return self.python_type(value)
 
 class String(Property): 
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
+    
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
 
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
     python_type = unicode
 
     def to_db(self,type_system,value):
@@ -141,7 +204,32 @@ class String(Property):
         return type_system.python.to_string(value)    
 
 class Integer(Property):    
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
 
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
+
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
     python_type = int
 
     def to_db(self,type_system,value):
@@ -151,7 +239,32 @@ class Integer(Property):
         return type_system.python.to_integer(value)
 
 class Long(Property):
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
 
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
+
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
     python_type = long
 
     def to_db(self,type_system,value):
@@ -161,7 +274,32 @@ class Long(Property):
         return type_system.python.to_long(value)
 
 class Float(Property):
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
 
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
+
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
     python_type = float
 
     def to_db(self,type_system,value):
@@ -171,7 +309,32 @@ class Float(Property):
         return type_system.python.to_float(value)              
 
 class Null(Property):
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
+    
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
 
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
     python_type = None
 
     def to_db(self,type_system,value):
@@ -181,7 +344,32 @@ class Null(Property):
         return type_system.python.to_null(value)
 
 class List(Property):
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
+    
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
 
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
     python_type = list
 
     def to_db(self,type_system,value):
@@ -191,7 +379,32 @@ class List(Property):
         return type_system.python.to_list(value)
 
 class Dictionary(Property):
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
+    
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
 
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
     python_type = dict
 
     def to_db(self,type_system,value):
@@ -202,7 +415,32 @@ class Dictionary(Property):
 
 
 class DateTime(Property):
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
 
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
+
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
     python_type = datetime.datetime
 
     def to_db(self, type_system, value):

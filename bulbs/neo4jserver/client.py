@@ -324,9 +324,6 @@ class Neo4jClient(Client):
     :param config: Optional Config object. Defaults to default Config.
     :type config: bulbs.config.Config
 
-    :cvar default_uri: Default URI for the database.
-    :cvar request_class: Request class for the Client.
-
     :ivar config: Config object.
     :ivar registry: Registry object.
     :ivar scripts: GroovyScripts object.  
@@ -337,12 +334,14 @@ class Neo4jClient(Client):
 
     >>> from bulbs.neo4jserver import Neo4jClient
     >>> client = Neo4jClient()
-    >>> script = client.scripts.get("get_vertices")
-    >>> response = client.gremlin(script, params=None)
+    >>> response = client.get_all_vertices()
     >>> result = response.results.next()
 
     """ 
+    #: Default URI for the database.
     default_uri = NEO4J_URI
+
+    #: Request class for the Client.
     request_class = Neo4jRequest
 
 

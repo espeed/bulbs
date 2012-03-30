@@ -34,9 +34,14 @@ class Gremlin(object):
 
         :rtype: Result
 
+        .. note:: Use this when you are executing a command that returns
+                  a single result that does not need to be initialized. 
+
         """
         resp = self.client.gremlin(script,params)
-        return get_one_result(resp)
+        if resp.total_size > 0:
+            result = get_one_result(resp)
+            return result.raw
 
     def query(self, script, params=None):
         """
@@ -49,6 +54,9 @@ class Gremlin(object):
         :type params: dict or None
 
         :rtype: Generator of objects: Vertex, Edge, Node, or Relationship
+
+        .. note:: Use this when you are returning elements that need to 
+                  be initialized.
 
         """
         resp = self.client.gremlin(script, params)
@@ -66,11 +74,10 @@ class Gremlin(object):
 
         :rtype: Response
 
-        .. note:: Use case: You are returning element IDs and the actual
-                  elements are cached in Redis or Membase.
-
-                  Or, you're returning primitives or Table data.
+        .. note:: Use this when you are returning element IDs and the actual
+                  elements are cached in Redis or Membase. Or, when you're 
+                  returning primitives or Table data.
 
         """
         return self.client.gremlin(script, params)
- 
+        

@@ -243,9 +243,9 @@ class Index(object):
         :param value: The index key's value. This is optional because you can 
                       instead supply a key/value pair such as name="James". 
 
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in
-                       the form of name='James'.
+        :param pair: Optional keyword param. Instead of supplying key=name 
+                     and value = 'James', you can supply a key/value pair in
+                     the form of name='James'.
         """
         key, value = self._get_key_value(key,value,pair)
         resp = self.client.index_count(self.index_name,key,value)
@@ -277,9 +277,9 @@ class Index(object):
         :param raw: Optional keyword param. If set to True, it won't try to 
                     initialize the results. Defaults to False. 
 
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in
-                       the form of name='James'.
+        :param pair: Optional keyword param. Instead of supplying key=name 
+                     and value = 'James', you can supply a key/value pair in
+                     the form of name='James'.
         """
         key, value = self._get_key_value(key, value, pair)
         resp = self.client.lookup_vertex(self.index_name,key,value)
@@ -331,9 +331,9 @@ class ManualIndex(Index):
         :param value: The index key's value. This is optional because you can 
                       instead supply a key/value pair such as name="James". 
 
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in
-                       the form of name='James'.
+        :param pair: Optional keyword param. Instead of supplying key=name 
+                     and value = 'James', you can supply a key/value pair in
+                     the form of name='James'.
 
         """
         # NOTE: if you ever change the _id arg to element, change remove() too
@@ -355,9 +355,9 @@ class ManualIndex(Index):
         :param value: The index key's value. This is optional because you can 
                       instead supply a key/value pair such as name="James". 
 
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in
-                       the form of name='James'.
+        :param pair: Optional keyword param. Instead of supplying key=name 
+                     and value = 'James', you can supply a key/value pair in
+                     the form of name='James'.
         """
         key, value = self._get_key_value(key,value,pair)
         for result in self.get(key,value):
@@ -380,9 +380,9 @@ class ManualIndex(Index):
         :param value: The index key's value. This is optional because you can 
                       instead supply a key/value pair such as name="James". 
 
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in 
-                       the form of name='James'.
+        :param pair: Optional keyword param. Instead of supplying key=name 
+                     and value = 'James', you can supply a key/value pair in 
+                     the form of name='James'.
 
         """
         return self.update(_id, key, value, **pair)
@@ -398,9 +398,9 @@ class ManualIndex(Index):
         :param value: The index key's value. This is optional because you can 
                       instead supply a key/value pair such as name="James". 
 
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in
-                       the form of name='James'.
+        :param pair: Optional keyword param. Instead of supplying key=name 
+                     and value = 'James', you can supply a key/value pair in
+                     the form of name='James'.
         """
         key, value = self._get_key_value(key,value,pair)
         resp = self.client.lookup_vertex(self.index_name,key,value)
@@ -420,9 +420,9 @@ class ManualIndex(Index):
         :param value: The index key's value. This is optional because you can 
                       instead supply a key/value pair such as name="James". 
 
-        :param **pair: Optional keyword param. Instead of supplying key=name 
-                       and value = 'James', you can supply a key/value pair in
-                       the form of name='James'.
+        :param pair: Optional keyword param. Instead of supplying key=name 
+                     and value = 'James', you can supply a key/value pair in
+                     the form of name='James'.
         """
         key, value = self._get_key_value(key, value, pair)
         remove = self._get_method(vertex="remove_vertex", edge="remove_edge")

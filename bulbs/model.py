@@ -111,8 +111,11 @@ class ModelMeta(type):
             # wrapped fset and fdel in str() to make the default None not 
             # error on getattr
             fget = getattr(cls, property_instance.fget)
-            fset = getattr(cls, str(property_instance.fset), None)
-            fdel = getattr(cls, str(property_instance.fdel), None)
+            # TODO: implement fset and fdel (maybe)
+            #fset = getattr(cls, str(property_instance.fset), None)
+            #fdel = getattr(cls, str(property_instance.fdel), None)
+            fset = None
+            fdel = None
             property_value = property(fget, fset, fdel)
         else:
             property_value = None
@@ -122,8 +125,17 @@ class ModelMeta(type):
 class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
     """Abstract base class for Node and Relationship container classes."""
     
+
+    #: The mode for saving attributes to the database. 
+    #: If set to STRICT, only defined Properties are saved.
+    #: If set to NORMAL, all attributes are saved. 
+    #: Defaults to NORMAL. 
     __mode__ = NORMAL
     
+    #: A dict containing the database Property instances.
+    _properties = None
+    
+
     def __setattr__(self, key, value):
         """
         Set model attributes, possibly coercing database Properties to the 
@@ -317,7 +329,7 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
             value = self._get_property_value(key)
             property_instance.validate(key, value)
             #name = property_instance.name
-            db_value = property_instance.convert_to_db(type_system, value)
+            db_value = property_instance.convert_to_db(type_system, key, value)
             data[key] = db_value
 
         return data
@@ -410,12 +422,6 @@ class Node(Model, Vertex):
     to be used directly. To use it, create a subclass specific to the type of 
     data you are storing. 
 
-    :cvar __mode__: The mode for saving attributes to the database. 
-                    If set to STRICT, only defined Properties are saved.
-                    If set to NORMAL, all attributes are saved. 
-                    Defaults to NORMAL. 
-    :cvar _properties: A dict containing the database Property instances.
-
     Example model declaration::
 
         from bulbs.model import Node
@@ -454,6 +460,14 @@ class Node(Model, Vertex):
         >>> nodes = g.people.index.lookup(name="James")
         
     """
+    #: The mode for saving attributes to the database. 
+    #: If set to STRICT, only defined Properties are saved.
+    #: If set to NORMAL, all attributes are saved. 
+    #: Defaults to NORMAL. 
+    __mode__ = NORMAL
+    
+    #: A dict containing the database Property instances.
+    _properties = None
 
     @classmethod
     def get_element_type(cls, config):
@@ -532,8 +546,8 @@ class Node(Model, Vertex):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: None
         
@@ -554,8 +568,8 @@ class Node(Model, Vertex):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: None
         
@@ -591,19 +605,17 @@ class Relationship(Model, Edge):
     to be used directly. To use it, create a subclass specific to the type of 
     data you are storing. 
 
-    :cvar __mode__: The mode for saving attributes to the database. 
-                    If set to STRICT, only defined Properties are saved.
-                    If set to NORMAL, all attributes are saved. 
-                    Defaults to NORMAL. 
-    :cvar _properties: A dict containing the database Property instances.
-
     Example usage for an edge between a blog entry node and its creating user::
+
+        from bulbs.model import Relationship
+        from bulbs.properties import DateTime
+        from bulbs.utils import current_timestamp
 
         class Knows(Relationship):
 
             label = "knows"
 
-            timestamp = DateTime(default=utils.current_timestamp, nullable=False)
+            created = DateTime(default=current_timestamp, nullable=False)
 
 
     Example usage::
@@ -704,8 +716,8 @@ class Relationship(Model, Edge):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: None
         
@@ -726,8 +738,8 @@ class Relationship(Model, Edge):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: None
         
@@ -763,8 +775,8 @@ class NodeProxy(VertexProxy):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Node
 
@@ -783,8 +795,8 @@ class NodeProxy(VertexProxy):
         :param _data: Opetional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Node
 
@@ -830,8 +842,8 @@ class RelationshipProxy(EdgeProxy):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Relationship
 
@@ -850,8 +862,8 @@ class RelationshipProxy(EdgeProxy):
         :param _data: Optional property data dict.
         :type _data: dict
 
-        :param **kwds: Optional property data keyword pairs. 
-        :type **kwds: keyword pairs
+        :param kwds: Optional property data keyword pairs. 
+        :type kwds: dict
 
         :rtype: Relationship
 

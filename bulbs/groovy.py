@@ -16,33 +16,67 @@ from . import utils
 
 
 class GroovyScripts(object):
-    """Load Gremlin scripts from a Groovy source file."""
+    """
+    Store and manage an index of Gremlin-Groovy scripts.
 
+    :param file_path: Path to the base Groovy scripts file.
+    :type file_path: str
+
+    :ivar source_files: List containing the absolute paths to the script files,
+                        in the order they were added.
+    :ivar methods: Dict mapping Groovy method names to the actual scripts.
+
+    .. note:: Use the update() method to add subsequent script files. 
+              Order matters. Groovy methods are overridden if subsequently added
+              files contain the same method name as a previously added file.
+
+    """
+    #: Relative path to the default script file
     default_file = "gremlin.groovy"
 
-    def __init__(self,file_path=None):
+    def __init__(self, file_path=None):
         self.source_files = list()  # an ordered set might be better
 
-        #: methods format: methods[method_name] = method_body
+        # methods format: methods[method_name] = method_body
         self.methods = dict()
 
         if file_path is None:
             file_path = self._get_default_file()
         self.update(file_path)
 
-    def get(self,name):
-        """Return the Gremlin script's body."""
-        return self.methods[name]
+    def get(self, method_name):
+        """
+        Returns the Groovy script with the method name.
+        
+        :param method_name: Method name of a Groovy script.
+        :type method_name: str
+
+        :rtype: str
+
+        """
+        return self.methods[method_name]
         #script = self._build_script(method_definition, method_signature)
         #return script
 
-    def update(self,file_path):
+    def update(self, file_path):
+        """
+        Updates the script index with the Groovy methods in the script file.
+
+        :rtype: None
+
+        """
+        file_path = os.path.abspath(file_path)
         methods = self._get_methods(file_path)
         self._add_source_file(file_path)
         self.methods.update(methods)
 
     def refresh(self):
-        """Refresh the stored templates from the source."""
+        """
+        Refreshes the script index by re-reading the Groovy source files.
+
+        :rtype: None
+
+        """
         for file_path in self.source_files:
             methods = self._get_methods(file_path)
             self.methods.update(methods)

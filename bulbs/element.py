@@ -24,7 +24,7 @@ class Element(object):
 
     def _initialize(self, result):
         """
-        Initialize the element after its data has been returned by the database.
+        Initialize the element with the result that was returned by the DB.
 
         :param result: The Result object returned by the the Client request.
         :type result: Result
@@ -54,7 +54,7 @@ class Element(object):
     @classmethod
     def get_base_type(cls):
         """
-        Returns the base type.
+        Returns this element class's base type.
         
         :rtype: str
         
@@ -122,7 +122,7 @@ class Element(object):
     @property 
     def _type(self):
         """
-        Returns the element's base type, either vertex or edge.
+        Returns the result's base type, either vertex or edge.
 
         :rtype: str
 
@@ -308,6 +308,7 @@ class Vertex(Element):
     :param client: The Client object for the database.
     :type client: Client
 
+    :ivar eid: Element ID. This varname is configurable in Config.
     :ivar _client: Client object.
     :ivar _data: Property data dict returned in Result.
     :ivar _vertices: Vertex proxy object.
@@ -328,7 +329,7 @@ class Vertex(Element):
     @classmethod
     def get_base_type(cls):
         """
-        Returns the base type, which is "vertex". 
+        Returns this element class's base type, which is "vertex". 
         
         :rtype: str
         
@@ -466,7 +467,7 @@ class Vertex(Element):
 
 class VertexProxy(object):
     """ 
-    A proxy for interacting with vertices on the Client. 
+    A proxy for interacting with vertices on the graph database. 
 
     :param element_class: The element class managed by this proxy instance.
     :type element_class: Vertex class
@@ -478,13 +479,15 @@ class VertexProxy(object):
     :ivar client: Client object.
     :ivar index: The primary index object or None.
 
+    .. note:: The Graph object contains a VertexProxy instance named "vertices".
+
     Example::
         
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()                                  # Create Neo4j Graph
     >>> james = g.vertices.create(name="James")      # Create vertex in DB
     >>> g.vertices.update(james.eid, name="James T") # Update properties
-    >>> james = g.vertices.get(james.eid)            # Get vertex
+    >>> james = g.vertices.get(james.eid)            # Get vertex (again)
     >>> g.vertices.delete(james.eid)                 # Delete vertex
 
     """
@@ -576,7 +579,7 @@ class VertexProxy(object):
         :param _id: The vertex ID.
         :type _id: int or str
 
-        :param _data: Opetional property data dict.
+        :param _data: Optional property data dict.
         :type _data: dict
 
         :param kwds: Optional property data keyword pairs. 
@@ -626,6 +629,7 @@ class Edge(Element):
     :param client: The Client object for the database.
     :type client: Client
 
+    :ivar eid: Element ID. This varname is configurable in Config.
     :ivar _client: Client object.
     :ivar _data: Property data dict returned in Result.
     :ivar _vertices: Vertex proxy object.
@@ -635,22 +639,25 @@ class Edge(Element):
     Example:
         
     >>> from bulbs.neo4jserver import Graph
-    >>> g = Graph()            # Create a Neo4j Graph
-    >>> edge = g.edges.get(8)  # Get edge from DB
-    >>> edge.label()           # Return edge label
-    >>> edge.outV()            # Return outgoing vertex
-    >>> edge.inV()             # Return incoming vertex
-    >>> edge._outV             # Return outgoing vertex ID
-    >>> edge._inV              # Return incoming vertex ID
-    >>> edge.weight = 0.5      # Set a property
-    >>> edge.save()            # Save properties in DB
-    >>> edge.map()             # Return property data
+    >>> g = Graph()                   # Create a Neo4j Graph
+    >>> edge = g.edges.get(8)         # Get an edge from DB
+
+    >>> label = edge.label()          # Return edge label
+    >>> outV = edge.outV()            # Return outgoing vertex
+    >>> inV = edge.inV()              # Return incoming vertex
+
+    >>> edge._outV                    # Return the outgoing vertex ID
+    >>> edge._inV                     # Return the incoming vertex ID
+
+    >>> edge.weight = 0.5             # Set a property
+    >>> edge.save()                   # Save properties in DB
+    >>> data = edge.map()             # Return property data
 
     """
     @classmethod
     def get_base_type(cls):
         """
-        Returns the base type, which is "edge".
+        Returns this element class's base type, which is "edge".
         
         :rtype: str
         
@@ -695,7 +702,7 @@ class Edge(Element):
     @property
     def _outV(self):
         """
-        Returns the outgoing (start) vertex ID of the edge.
+        Returns the edge's outgoing (start) vertex ID.
 
         :rtype: int
 
@@ -705,7 +712,7 @@ class Edge(Element):
     @property
     def _inV(self):
         """
-        Returns the incoming (end) vertex ID of the edge.
+        Returns the edge's incoming (end) vertex ID.
 
         :rtype: int
 
@@ -761,7 +768,7 @@ class Edge(Element):
     
 class EdgeProxy(object):
     """ 
-    A proxy for interacting with edges on the Client. 
+    A proxy for interacting with edges on the graph database. 
 
     :param element_class: The element class managed by this proxy instance.
     :type element_class: Edge class
@@ -773,14 +780,16 @@ class EdgeProxy(object):
     :ivar client: Client object.
     :ivar index: The primary index object or None.
 
+    .. note:: The Graph object contains an EdgeProxy instance named "edges".
+
     Example::
         
     >>> from bulbs.neo4jserver import Graph
     >>> g = Graph()                                   # Create Neo4j Graph
-    >>> james = g.vertices.create(name="James")       # Create vetex
+    >>> james = g.vertices.create(name="James")       # Create vertex
     >>> julie = g.vertices.create(name="Julie")       # Create vertex
     >>> knows = g.edges.create(james, "knows", julie) # Create edge
-    >>> knows = g.edges.get(knows.eid)                # Get edge
+    >>> knows = g.edges.get(knows.eid)                # Get edge (again)
     >>> g.edges.update(knows.eid, weight=0.5)         # Update properties
     >>> g.edges.delete(knows.eid)                     # Delete edge
 
