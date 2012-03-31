@@ -24,7 +24,7 @@ log = get_logger(__name__)
 # TODO: Consider making these real Python Abstract Base Classes (import abc)            
 
 class Request(object):
-     pass
+    pass
 
 class Result(object):
     """
