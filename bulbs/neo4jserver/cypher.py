@@ -17,9 +17,19 @@ class Cypher(object):
         self.client = client
 
     def query(self, query, params=None):
+        # Like a normal Gremlin query (returns elements)
         resp = self.client.cypher(query,params)
         return initialize_elements(self.client, resp)
 
+    def table(self, query, params=None):
+        resp = self.client.cypher(query,params)
+        columns = resp.content['columns']
+        data = resp.content['data']
+        return columns, data
+
+    def execute(self, query, params=None):
+        return self.client.cypher(query,params)
+        
 
 class ScriptError(Exception):
     pass

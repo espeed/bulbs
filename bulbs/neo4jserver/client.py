@@ -400,8 +400,8 @@ class Neo4jClient(Client):
         resp = self.request.post(path, params)
 
         # Cypher data hack
-        resp.results = (self.result_class(result[0], self.config) for result in resp.results.data)
         resp.total_size = len(resp.results.data)
+        resp.results = (Neo4jResult(result[0], self.config) for result in resp.results.data)
         return resp
 
     # Vertex Proxy
