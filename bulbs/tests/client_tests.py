@@ -39,7 +39,7 @@ class ClientTestCase(unittest.TestCase):
         data = dict(name=name, age=age)
         resp = self.client.create_vertex(data)
         assert resp.results.get_type() == "vertex"
-        assert resp.results.get_map() == data  
+        assert resp.results.get_data() == data  
         assert resp.results.data.get('name') == name
         assert resp.results.data.get('age') == age
   
@@ -97,7 +97,7 @@ class ClientTestCase(unittest.TestCase):
         assert resp3.results.get_label() == label
         assert resp3.results.get_outV() == outV
         assert resp3.results.get_inV() == inV
-        assert resp3.results.get_map() == data
+        assert resp3.results.get_data() == data
 
     def test_get_edge(self):
         resp1 = self.client.create_vertex({'name':'James','age':34})
@@ -112,7 +112,7 @@ class ClientTestCase(unittest.TestCase):
 
         assert resp3.results.get_id() == resp4.results.get_id()
         assert resp3.results.get_type() == resp4.results.get_type()
-        assert resp3.results.get_map() == resp4.results.get_map()
+        assert resp3.results.get_data() == resp4.results.get_data()
 
     def test_get_all_edges(self):
         resp1 = self.client.create_vertex({'name':'James','age':34})
@@ -140,7 +140,7 @@ class ClientTestCase(unittest.TestCase):
         data = dict(timestamp=12345678)
         resp4 = self.client.update_edge(resp3.results.get_id(),data)
 
-        assert resp4.results.get_map() == data
+        assert resp4.results.get_data() == data
 
     def test_delete_edge(self):
         resp1 = self.client.create_vertex({'name':'James','age':34})
@@ -232,7 +232,7 @@ class ClientTestCase(unittest.TestCase):
         results1 = resp1.results.next()
 
         assert results1.get_type() == "vertex"
-        assert results1.get_map() == data1  
+        assert results1.get_data() == data1  
         assert results1.data.get('name') == name1
         assert results1.data.get('age') == age1
 
@@ -249,7 +249,7 @@ class ClientTestCase(unittest.TestCase):
         result2 = resp2.results.next()
 
         assert result2.get_type() == "vertex"
-        assert result2.get_map() == data2
+        assert result2.get_data() == data2
         assert result2.data.get('name') == name2
         assert result2.data.get('age') == age2
 
@@ -281,7 +281,7 @@ class ClientTestCase(unittest.TestCase):
         results1 = resp1.results.next()
 
         assert results1.get_type() == "edge"
-        assert results1.get_map() == data1  
+        assert results1.get_data() == data1  
         assert results1.data.get('city') == city1
 
         # Update and Index Edge (update doesn't return data)
@@ -296,7 +296,7 @@ class ClientTestCase(unittest.TestCase):
         result2 = resp2.results.next()
 
         assert result2.get_type() == "edge"
-        assert result2.get_map() == data2
+        assert result2.get_data() == data2
         assert result2.data.get('city') == city2
 
         # Remove and edge from the index

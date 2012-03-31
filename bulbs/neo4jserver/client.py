@@ -83,7 +83,7 @@ class Neo4jResult(Result):
         neo4j_type = self._parse_type(uri)
         return self.type_map[neo4j_type]
         
-    def get_map(self):
+    def get_data(self):
         """
         Returns the element's property map.
 

@@ -8,7 +8,9 @@ Vertex and Edge container classes and associated proxy classes.
 
 """
 from .utils import u  # Python 3 unicode
-from .utils import initialize_element, initialize_elements, coerce_id
+from .utils import initialize_element, initialize_elements, coerce_id, get_logger
+
+log = get_logger(__name__)
 
 
 class Element(object):
@@ -36,7 +38,7 @@ class Element(object):
         self._result = result
 
         # Property data. # TODO: Do we really need to make a copy?
-        self._data = result.get_map().copy() 
+        self._data = result.get_data().copy() 
 
         # Sets the element ID to the var defined in Config. Defaults to eid.
         self._set_pretty_id(self._client)
@@ -287,7 +289,8 @@ class Element(object):
         # TODO: Why do we need this?
         return getattr(self, name, default_vaoue)
 
-    def map(self):
+
+    def data(self):
         """
         Returns the element's property data.
 
@@ -295,6 +298,17 @@ class Element(object):
 
         """
         return self._data
+
+    def map(self):
+        """
+        Deprecated. Returns the element's property data.
+
+        :rtype: dict
+
+        """
+        log.debug("This is deprecated; use data() instead.")
+        return self.data()
+
 
 
 #
@@ -322,7 +336,7 @@ class Vertex(Element):
     >>> james = g.vertices.get(3)     # Get a vertex from the database
     >>> james.age = 34                # Set a database property
     >>> james.save()                  # Save the vertex in the database
-    >>> james.map()                   # Get the database property map
+    >>> james.data()                   # Get the database property map
     >>> friends = james.outV("knows") # Return Vertex generator of friends
 
     """  
@@ -651,7 +665,7 @@ class Edge(Element):
 
     >>> edge.weight = 0.5             # Set a property
     >>> edge.save()                   # Save properties in DB
-    >>> data = edge.map()             # Return property data
+    >>> data = edge.data()            # Return property data
 
     """
     @classmethod

@@ -81,20 +81,20 @@ class RexsterResult(Result):
         """
         return self.data['_type']
         
-    def get_map(self):
+    def get_data(self):
         """
-        Returns the element's property map.
+        Returns the element's property data.
 
         :rtype: dict
 
         """
-        property_map = dict()
+        property_data = dict()
         private_keys = ['_id','_type','_outV','_inV','_label']
         for key in self.data: # Python 3
             value = self.data[key]
             if key not in private_keys:
-                property_map.update({key:value})
-        return property_map
+                property_data.update({key:value})
+        return property_data
 
     def get_uri(self):
         """

@@ -399,9 +399,9 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         """
         return self._properties.keys()
 
-    def map(self):
+    def data(self):
         """
-        Returns a dict containing the database property data.
+        Returns a the element's property data.
 
         :rtype: dict
 
@@ -412,6 +412,16 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
             # Calculated props shouldn't be stored, but components should be.
             data[key] = object.__getattribute__(self, key)
         return data
+
+    def map(self):
+        """
+        Deprecated. Returns the element's property data.
+
+        :rtype: dict
+
+        """
+        log.debug("This is deprecated; use data() instead.")
+        return self.data()
 
 
 class Node(Model, Vertex):
@@ -424,6 +434,8 @@ class Node(Model, Vertex):
 
     Example model declaration::
 
+        # people.py
+
         from bulbs.model import Node
         from bulbs.property import String, Integer
 
@@ -435,7 +447,7 @@ class Node(Model, Vertex):
 
     Example usage::
 
-        >>> from person import Person
+        >>> from people import Person
         >>> from bulbs.neo4jserver import Graph
         >>> g = Graph()
 
@@ -607,6 +619,8 @@ class Relationship(Model, Edge):
 
     Example usage for an edge between a blog entry node and its creating user::
 
+        # people.py
+
         from bulbs.model import Relationship
         from bulbs.properties import DateTime
         from bulbs.utils import current_timestamp
@@ -620,7 +634,7 @@ class Relationship(Model, Edge):
 
     Example usage::
 
-          >>> from person import Person, Knows
+          >>> from people import Person, Knows
           >>> from bulbs.neo4jserver import Graph
           >>> g = Graph()
 

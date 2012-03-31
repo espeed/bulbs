@@ -24,7 +24,7 @@ log = get_logger(__name__)
 # TODO: Consider making these real Python Abstract Base Classes (import abc)            
 
 class Request(object):
-    pass
+     pass
 
 class Result(object):
     """
@@ -68,9 +68,9 @@ class Result(object):
         """
         raise NotImplementedError
 
-    def get_map(self):
+    def get_data(self):
         """
-        Returns the element's property map.
+        Returns the element's property data.
 
         :rtype: dict
 
