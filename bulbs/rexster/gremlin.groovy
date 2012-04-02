@@ -30,7 +30,7 @@ def create_indexed_vertex(data,index_name,keys) {
       return results; 
     } catch (e) {
       g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
-      return e;
+      throw e;
     }
   }
   return transaction(createIndexedVertex);
@@ -67,7 +67,7 @@ def update_indexed_vertex(_id, data, index_name, keys) {
       return results; 
     } catch (e) {
       g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
-      return e;
+      throw e;
     }
   }
   return transaction(updateIndexedVertex);
@@ -97,7 +97,7 @@ def create_indexed_edge(outV,label,inV,data,index_name,keys) {
       return results; 
     } catch (e) {
       g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
-      return e;
+      throw e;
     }
   }
   return transaction(createIndexedEdge);
@@ -131,7 +131,7 @@ def update_indexed_edge(_id, data, index_name, keys) {
       return results; 
     } catch (e) {
       g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
-      return e;
+      throw e;
     }
   }
   return transaction(updateIndexedEdge);
