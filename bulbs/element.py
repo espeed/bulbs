@@ -287,7 +287,7 @@ class Element(object):
 
         """
         # TODO: Why do we need this?
-        return getattr(self, name, default_vaoue)
+        return getattr(self, name, default_value)
 
 
     def data(self):

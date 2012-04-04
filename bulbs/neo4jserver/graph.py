@@ -16,7 +16,7 @@ from bulbs.base.graph import Graph as BaseGraph
 # Neo4j-specific imports
 from .client import Neo4jClient
 from .index import ExactIndex
-
+from .cypher import Cypher
 
 class Graph(BaseGraph):
     """
@@ -57,6 +57,9 @@ class Graph(BaseGraph):
         # Neo4j Server supports Gremlin
         self.gremlin = Gremlin(self.client)
         self.scripts = self.client.scripts    # for convienience 
+
+        # Cypher; TODO: Cypher Queries library object
+        self.cypher = Cypher(self.client)
 
     def set_metadata(self, key, value):
         """

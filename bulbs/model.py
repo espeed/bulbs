@@ -481,6 +481,8 @@ class Node(Model, Vertex):
     #: A dict containing the database Property instances.
     _properties = None
 
+    element_type = None
+
     @classmethod
     def get_element_type(cls, config):
         """
@@ -654,6 +656,7 @@ class Relationship(Model, Edge):
           >>> friends = james.outV('knows')
 
     """
+    label = None
 
     @classmethod
     def get_label(cls, config):

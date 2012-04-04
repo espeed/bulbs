@@ -13,12 +13,12 @@ from bulbs.utils import initialize_elements
 
 class Cypher(object):
 
-    def __init__(self,client):
+    def __init__(self, client):
         self.client = client
 
     def query(self, query, params=None):
         # Like a normal Gremlin query (returns elements)
-        resp = self.client.cypher(query,params)
+        resp = self.client.cypher(query, params)
         return initialize_elements(self.client, resp)
 
     def table(self, query, params=None):
@@ -28,7 +28,7 @@ class Cypher(object):
         return columns, data
 
     def execute(self, query, params=None):
-        return self.client.cypher(query,params)
+        return self.client.cypher(query, params)
         
 
 class ScriptError(Exception):

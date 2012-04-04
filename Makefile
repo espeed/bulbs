@@ -9,7 +9,7 @@ ifneq ($(server), )
 endif
 
 ifneq ($(db), )
-	test_args = -m bulbs.rexster.tests $(db)
+	test_args = -m bulbs.rexster.tests --db $(db)
 endif
 
 

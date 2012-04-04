@@ -24,7 +24,20 @@ log = get_logger(__name__)
 # TODO: Consider making these real Python Abstract Base Classes (import abc)            
 
 class Request(object):
-    pass
+
+    def __init__(self, config, content_type):
+        """
+        Initializes a client object.
+
+        :param root_uri: the base URL of Rexster.
+
+        """
+        self.config = config
+        self.content_type = content_type
+        self._initialize()
+
+    def _initialize(self):
+        pass
 
 class Result(object):
     """

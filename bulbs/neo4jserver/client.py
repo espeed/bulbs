@@ -17,9 +17,11 @@ from bulbs.utils import get_logger
 from bulbs.json import JSONTypeSystem
 from bulbs.base import Client, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS, server_error
+from bulbs.utils import json, build_path, get_file_path, urlsplit, quote
 from bulbs.groovy import GroovyScripts
 
-from bulbs.utils import json, build_path, get_file_path, urlsplit, quote
+# TODO: Clean up and generalize Yaml
+from .cypher import Cypher, Yaml
 
 
 # The default URI
@@ -361,6 +363,7 @@ class Neo4jClient(Client):
         # Add it to the registry. This allows you to have more than one scripts namespace.
         self.registry.add_scripts("gremlin", self.scripts)
         
+
     # Gremlin
 
     def gremlin(self, script, params=None): 
