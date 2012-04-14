@@ -115,7 +115,7 @@ def get_key_value(key, value, pair):
 def build_path(*args):
     #path = "/".join(map(str,args))
     # don't include segment if it's None
-    segments = [str(segment) for segment in args if segment]
+    segments = [str(segment) for segment in args if segment is not None]
     # Only need to quote URL for index keys/values -- do it at the client level
     #segments = [quote_plus(str(segment)) for segment in args if segment]
     path = "/".join(segments)
