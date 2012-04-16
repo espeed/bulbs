@@ -90,21 +90,57 @@ def index_count(index_name, key, value) {
 }
 
 def get_or_create_vertex_index(index_name, index_params) {
-  try { 
-    index = g.createManualIndex(index_name, Vertex.class, index_params) 
-  } catch (e) {
+  def getOrCreateVertexIndex = { 
     index = g.idx(index_name)
+    if (index == null) {
+      if (index_params == null) {
+        index = g.createManualIndex(index_name, Vertex.class)
+      } else {
+        index = g.createManualIndex(index_name, Vertex.class, index_params)
+      }
+    }
+    return index
   }
-  return index
+  def transaction = { final Closure closure ->
+    g.setMaxBufferSize(0);
+    g.startTransaction();
+    try {
+      results = closure();
+      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      return results; 
+    } catch (e) {
+      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      throw e;
+    }
+  }
+  return transaction(getOrCreateVertexIndex);
 }
 
 def get_or_create_edge_index(index_name, index_params) {
-  try { 
-    index = g.createManualIndex(index_name, Edge.class, index_params) 
-  } catch (e) {
+  def getOrCreateEdgeIndex = { 
     index = g.idx(index_name)
+    if (index == null) {
+      if (index_params == null) {
+        index = g.createManualIndex(index_name, Edge.class)
+      } else {
+        index = g.createManualIndex(index_name, Edge.class, index_params)
+      }
+    }
+    return index
   }
-  return index
+  def transaction = { final Closure closure ->
+    g.setMaxBufferSize(0);
+    g.startTransaction();
+    try {
+      results = closure();
+      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      return results; 
+    } catch (e) {
+      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      throw e;
+    }
+  }
+  return transaction(getOrCreateEdgeIndex);
 }
 
 // Utils
