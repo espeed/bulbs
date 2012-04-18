@@ -86,6 +86,7 @@ def create_indexed_edge(outV,label,inV,data,index_name,keys) {
       if (keys == null || keys.contains(entry.key))
 	index.put(entry.key,String.valueOf(entry.value),edge)
     }
+    index.put("label",String.valueOf(label),edge)
     return edge
   }
   def transaction = { final Closure closure ->
@@ -103,6 +104,7 @@ def create_indexed_edge(outV,label,inV,data,index_name,keys) {
   return transaction(createIndexedEdge);
 }
 
+// don't need to update indexed label, it can't change
 def update_indexed_edge(_id, data, index_name, keys) {
   def updateIndexedEdge = {
     edge = g.e(_id);

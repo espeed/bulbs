@@ -17,6 +17,8 @@ from bulbs.base.index import Index
 # When designing these things, it's important to remember that your 
 # understanding is incomplete.
 
+# Bulbs is written as a series of layers, designed from the bottom up.
+
 class Graph(object):
     """
     Abstract base class for the server-specific Graph implementations. 
