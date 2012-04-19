@@ -57,10 +57,15 @@ class NodeTestCase(BulbsTestCase):
 class RelationshipTestCase(BulbsTestCase):
 
     def setUp(self):
-        indices = self.vertex_index_proxy(self.index_class,self.client)
+        indicesV = self.vertex_index_proxy(self.index_class,self.client)
+        indicesE = self.edge_index_proxy(self.index_class,self.client)
+
         self.people = NodeProxy(Person,self.client)
+        self.people.index = indicesV.get_or_create("people")
+
         self.knows = RelationshipProxy(Knows,self.client)
-        self.people.index = indices.get_or_create("people")
+        self.knows.index = indicesE.get_or_create("knows")
+
         self.james = self.people.create(name="James", age=34)
         self.julie = self.people.create(name="Julie", age=28)
         

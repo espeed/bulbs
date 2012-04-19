@@ -274,7 +274,7 @@ class ClientTestCase(unittest.TestCase):
         city1 = "Dallas"
         data1 = dict(city=city1)
         keys1 = ['city']
-        self.client.create_indexed_edge(V1_id, "knows", V2_id, data1, index_name, keys1)
+        resp = self.client.create_indexed_edge(V1_id, "knows", V2_id, data1, index_name, keys1)
         
         # Lookup Edge
         resp1 = self.client.lookup_edge(index_name, "city", city1)

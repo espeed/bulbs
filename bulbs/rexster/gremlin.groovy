@@ -76,7 +76,7 @@ def update_indexed_vertex(_id, data, index_name, keys) {
 
 // Model Proxy - Edge
 
-def create_indexed_edge(outV,label,inV,data,index_name,keys) {
+def create_indexed_edge(outV,label,inV,data,index_name,keys,label_var) {
   def createIndexedEdge = {
     index = g.idx(index_name)
     edge = g.addEdge(g.v(outV),g.v(inV),label)
@@ -86,7 +86,7 @@ def create_indexed_edge(outV,label,inV,data,index_name,keys) {
       if (keys == null || keys.contains(entry.key))
 	index.put(entry.key,String.valueOf(entry.value),edge)
     }
-    index.put("label",String.valueOf(label),edge)
+    index.put(label_var,String.valueOf(label),edge)
     return edge
   }
   def transaction = { final Closure closure ->

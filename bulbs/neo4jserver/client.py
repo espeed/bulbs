@@ -1015,7 +1015,7 @@ class Neo4jClient(Client):
 
         """
         data = self._remove_null_values(data)
-        edge_params = dict(outV=outV,label=label,inV=inV)
+        edge_params = dict(outV=outV,label=label,inV=inV,label_var=self.config.label_var)
         params = dict(data=data,index_name=index_name,keys=keys)
         params.update(edge_params)
         script = self.scripts.get("create_indexed_edge")
