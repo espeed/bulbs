@@ -843,7 +843,8 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        key, value = quote(key), quote(value)
+        # converting all values to strings because that's how they're stored
+        key, value = quote(key), quote(str(value))
         path = build_path(index_path, "node", index_name, key, value)
         params = None
         return self.request.get(path, params)
@@ -911,7 +912,8 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        key, value = quote(key), quote(value)
+        # converting all values to strings because that's how they're stored
+        key, value = quote(key), quote(str(value))
         path = build_path(index_path, edge_path, index_name, key, value)
         params = None
         return self.request.get(path, params)

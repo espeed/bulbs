@@ -719,8 +719,10 @@ class Relationship(Model, Edge):
         :rtype: None
 
         """
-        data = self._get_property_data()      
-        self._client.update_edge(self._id, data)
+        data = self._get_property_data()
+        index_name = self.get_index_name(self._client.config)
+        keys = self.get_index_keys()
+        self._client.update_indexed_edge(self._id, data, index_name, keys)
 
     #
     # Override the _create and _update methods to customize behavior.
