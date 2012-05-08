@@ -67,6 +67,8 @@ def initialize_element(client,result):
 
 def get_element_class(client,result):
     element_key = get_element_key(client,result)
+    #print client.registry.class_map
+    #print element_key
     element_class = client.registry.get_class(element_key)
     if element_class is None:
         # if element_class is not in registry, return the generic Vertex/Edge class
@@ -78,9 +80,15 @@ def get_element_key(client,result):
     var_map = dict(vertex=client.config.type_var,
                    edge=client.config.label_var)
     base_type = result.get_type()
-    key_var = var_map[base_type]
-    # if key_var not found, just return the generic type for the Vertex/Edge class
-    element_key = result.data.get(key_var,base_type)
+    if base_type == "vertex":
+        key_var = var_map[base_type]
+        # if key_var not found, just return the generic type for the Vertex/Edge class
+        element_key = result.data.get(key_var,base_type)
+    elif base_type == "edge":
+        label = result.get_label()
+        element_key = label if label in client.registry.class_map else base_type
+    else:
+        raise TypeError
     return element_key
 
 # Deprecated in favor of resp.one()
