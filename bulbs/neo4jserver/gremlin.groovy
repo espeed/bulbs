@@ -73,9 +73,8 @@ def create_indexed_edge(outV,label,inV,data,index_name,keys,label_var) {
       edge.setProperty(entry.key,entry.value)
       if (keys == null || keys.contains(entry.key))
 	index.add(edge,entry.key,String.valueOf(entry.value))
-        index.add(edge, entry.key, entry.value)
     }
-    index.add(edge, label_var, String.valueOf(label))
+    index.add(edge,label_var,String.valueOf(label))
     g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS)
     return edge
   } catch (e) {
