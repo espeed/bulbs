@@ -196,6 +196,7 @@ class Parser(object):
         # because of the way the GSE works. It's easier to handle version
         # control by just using the method_body, which the GSE compiles,
         # creates a class out of, and stores in a classMap for reuse.
+        # You can't do imports inside Groovy methods so just using the func body 
         #sha1 = self._get_sha1(method_definition)
         #self.methods[method_name] = (method_signature, method_definition, sha1)
         self.methods[method_name] = method_body

@@ -94,9 +94,9 @@ def get_or_create_vertex_index(index_name, index_params) {
     index = g.idx(index_name)
     if (index == null) {
       if (index_params == null) {
-        index = g.createManualIndex(index_name, Vertex.class)
+        index = g.createIndex(index_name, Vertex.class)
       } else {
-        index = g.createManualIndex(index_name, Vertex.class, index_params)
+        index = g.createIndex(index_name, Vertex.class, index_params)
       }
     }
     return index
@@ -121,9 +121,9 @@ def get_or_create_edge_index(index_name, index_params) {
     index = g.idx(index_name)
     if (index == null) {
       if (index_params == null) {
-        index = g.createManualIndex(index_name, Edge.class)
+        index = g.createIndex(index_name, Edge.class)
       } else {
-        index = g.createManualIndex(index_name, Edge.class, index_params)
+        index = g.createIndex(index_name, Edge.class, index_params)
       }
     }
     return index
