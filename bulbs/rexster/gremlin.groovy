@@ -22,7 +22,6 @@ def create_indexed_vertex(data,index_name,keys) {
     return vertex
   }
   def transaction = { final Closure closure ->
-    g.setMaxBufferSize(0);
     g.startTransaction();
     try {
       results = closure();
@@ -59,7 +58,6 @@ def update_indexed_vertex(_id, data, index_name, keys) {
     return vertex;
   }
   def transaction = { final Closure closure ->
-    g.setMaxBufferSize(0);
     g.startTransaction();
     try {
       results = closure();
@@ -90,7 +88,6 @@ def create_indexed_edge(outV,label,inV,data,index_name,keys,label_var) {
     return edge
   }
   def transaction = { final Closure closure ->
-    g.setMaxBufferSize(0);
     g.startTransaction();
     try {
       results = closure();
@@ -125,7 +122,6 @@ def update_indexed_edge(_id, data, index_name, keys) {
     }
   }
   def transaction = { final Closure closure ->
-    g.setMaxBufferSize(0);
     g.startTransaction();
     try {
       results = closure();
