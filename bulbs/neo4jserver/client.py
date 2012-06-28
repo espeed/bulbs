@@ -844,7 +844,7 @@ class Neo4jClient(Client):
 
         """
         # converting all values to strings because that's how they're stored
-        key, value = quote(key), quote(str(value))
+        key, value = quote(key, safe=''), quote(str(value), safe='')
         path = build_path(index_path, "node", index_name, key, value)
         params = None
         return self.request.get(path, params)
