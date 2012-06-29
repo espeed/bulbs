@@ -17,7 +17,7 @@ from bulbs.utils import get_logger
 from bulbs.json import JSONTypeSystem
 from bulbs.base import Client, Response, Result
 from bulbs.rest import Request, RESPONSE_HANDLERS, server_error
-from bulbs.utils import json, build_path, get_file_path, urlsplit, quote
+from bulbs.utils import json, build_path, get_file_path, urlsplit
 from bulbs.groovy import GroovyScripts
 
 # TODO: Clean up and generalize Yaml
@@ -844,7 +844,6 @@ class Neo4jClient(Client):
 
         """
         # converting all values to strings because that's how they're stored
-        key, value = quote(key, safe=''), quote(str(value), safe='')
         path = build_path(index_path, "node", index_name, key, value)
         params = None
         return self.request.get(path, params)
@@ -865,7 +864,6 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        key, value = quote(key), quote(value)
         path = build_path(index_path, "node", index_name ,key, value, _id)
         params = None
         return self.request.delete(path, params)
@@ -913,7 +911,6 @@ class Neo4jClient(Client):
 
         """
         # converting all values to strings because that's how they're stored
-        key, value = quote(key), quote(str(value))
         path = build_path(index_path, edge_path, index_name, key, value)
         params = None
         return self.request.get(path, params)
@@ -937,7 +934,6 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        key, value = quote(key), quote(value)
         path = build_path(index_path, edge_path, index_name, key, value, _id)
         params = None
         return self.request.delete(path, params)

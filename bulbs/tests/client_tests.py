@@ -258,9 +258,7 @@ class ClientTestCase(unittest.TestCase):
 
         # Remove a vertex from the index
         self.client.remove_vertex(index_name, _id, "name", name2)
-        
         resp3 = self.client.lookup_vertex(index_name, "name", name2)
-        print "TOTAL: ", resp3.total_size
         assert resp3.total_size == 0
         
     def test_indexed_edge_CRUD(self):

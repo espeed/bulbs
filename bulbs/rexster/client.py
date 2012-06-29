@@ -119,7 +119,7 @@ class RexsterResult(Result):
 
         """
         _outV = self.data.get('_outV')
-        return int(_outV)
+        return coerce_id(_outV)
         
     def get_inV(self):
         """
@@ -129,7 +129,7 @@ class RexsterResult(Result):
 
         """
         _inV = self.data.get('_inV')
-        return int(_inV)
+        return coerce_id(_inV)
 
     def get_label(self):
         """

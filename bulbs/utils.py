@@ -119,13 +119,11 @@ def get_key_value(key, value, pair):
 #
 
 def build_path(*args):
-    #path = "/".join(map(str,args))
     # don't include segment if it's None
-    segments = [str(segment) for segment in args if segment is not None]
-    # Only need to quote URL for index keys/values -- do it at the client level
-    #segments = [quote_plus(str(segment)) for segment in args if segment]
+    # quote_plus doesn't work for neo4j index lookups 
+    # e.g., index/node/test_idxV/name/James+Thornton
+    segments = [quote(str(segment), safe='') for segment in args if segment]
     path = "/".join(segments)
-    # would change this to quoteplus for plus signs, but doesn't work for Neo4j
     return path
 
 #

@@ -12,12 +12,15 @@ import time
 # $ python client_tests.py --db mydb
 db_name = "tinkergraph"
 
+#client = RexsterClient(db_name=db_name)
+#client.config.set_logger(DEBUG)
+
 class RexsterClientTestCase(ClientTestCase):
 
     def setUp(self):
         self.client = RexsterClient(db_name=db_name)
 
-
+        
 # The index test cases have been moved to the Bulbs ClientTestCAset
 
 class RexsterIndexTestCase(unittest.TestCase):
