@@ -4,7 +4,7 @@ import argparse
 import unittest
 from bulbs.config import Config
 from bulbs.tests.client_tests import ClientTestCase
-from bulbs.rexster.client import RexsterClient, REXSTER_URI
+from bulbs.rexster.client import RexsterClient, REXSTER_URI, DEBUG
 
 import time
 
@@ -16,6 +16,7 @@ class RexsterClientTestCase(ClientTestCase):
 
     def setUp(self):
         self.client = RexsterClient(db_name=db_name)
+
 
 # The index test cases have been moved to the Bulbs ClientTestCAset
 

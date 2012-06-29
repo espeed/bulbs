@@ -38,6 +38,10 @@ def not_found(http_resp):
     raise LookupError(http_resp)
     #return None
 
+def method_not_allowed(http_resp):
+    # TODO: is there a better error for this than SystemError?
+    raise SystemError(http_resp)
+
 def conflict(http_resp):
     raise SystemError(http_resp)
 
@@ -49,6 +53,7 @@ RESPONSE_HANDLERS = {200:ok,
                      204:no_content,
                      400:bad_request,
                      404:not_found,
+                     405:method_not_allowed,
                      409:conflict,
                      500:server_error}
 

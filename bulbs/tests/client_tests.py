@@ -1,7 +1,7 @@
 import unittest
 import random
 
-from bulbs.config import Config
+from bulbs.config import Config, DEBUG, ERROR
 from bulbs.registry import Registry
 from bulbs.base import TypeSystem
 
@@ -216,6 +216,9 @@ class ClientTestCase(unittest.TestCase):
     # Index Container Tests
 
     def test_indexed_vertex_CRUD(self):
+
+
+
         index_name = "test_idxV"
         self._delete_vertex_index(index_name)
         self.client.create_vertex_index(index_name)
@@ -257,9 +260,9 @@ class ClientTestCase(unittest.TestCase):
         self.client.remove_vertex(index_name, _id, "name", name2)
         
         resp3 = self.client.lookup_vertex(index_name, "name", name2)
+        print "TOTAL: ", resp3.total_size
         assert resp3.total_size == 0
         
-
     def test_indexed_edge_CRUD(self):
         index_name = "test_idxE"
         self._delete_edge_index(index_name)

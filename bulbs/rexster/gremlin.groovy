@@ -22,7 +22,7 @@ def create_indexed_vertex(data,index_name,keys) {
     return vertex
   }
   def transaction = { final Closure closure ->
-    g.startTransaction();
+    g.autoStartTransaction();
     try {
       results = closure();
       g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
@@ -58,7 +58,7 @@ def update_indexed_vertex(_id, data, index_name, keys) {
     return vertex;
   }
   def transaction = { final Closure closure ->
-    g.startTransaction();
+    g.autoStartTransaction();
     try {
       results = closure();
       g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
@@ -88,7 +88,7 @@ def create_indexed_edge(outV,label,inV,data,index_name,keys,label_var) {
     return edge
   }
   def transaction = { final Closure closure ->
-    g.startTransaction();
+    g.autoStartTransaction();
     try {
       results = closure();
       g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
@@ -122,7 +122,7 @@ def update_indexed_edge(_id, data, index_name, keys) {
     }
   }
   def transaction = { final Closure closure ->
-    g.startTransaction();
+    g.autoStartTransaction();
     try {
       results = closure();
       g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);

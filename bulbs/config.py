@@ -66,6 +66,7 @@ class Config(object):
         # Sanity checks...
         assert self.root_uri is not None
 
+    # TODO: fix duplicate log issue from setting logger multiple times
     def set_logger(self, log_level, log_handler=None):
         """
         Sets or updates the log level and log handler.

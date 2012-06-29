@@ -102,8 +102,7 @@ def get_or_create_vertex_index(index_name, index_params) {
     return index
   }
   def transaction = { final Closure closure ->
-    g.setMaxBufferSize(0);
-    g.startTransaction();
+    g.autoStartTransaction();
     try {
       results = closure();
       g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
@@ -129,8 +128,7 @@ def get_or_create_edge_index(index_name, index_params) {
     return index
   }
   def transaction = { final Closure closure ->
-    g.setMaxBufferSize(0);
-    g.startTransaction();
+    g.autoStartTransaction();
     try {
       results = closure();
       g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
