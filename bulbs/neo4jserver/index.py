@@ -51,8 +51,8 @@ class VertexIndexProxy(IndexProxy):
         :rtype: bulbs.neo4jserver.index.Index
         
         """
-        index_config = self._build_index_config(self.index_class)
-        resp = self.client.create_vertex_index(index_name,index_config)
+        config = self._build_index_config(self.index_class)
+        resp = self.client.create_vertex_index(index_name,index_config=config)
         index = self.index_class(self.client, resp.results)
         self.client.registry.add_index(index_name,index)
         return index
@@ -83,11 +83,10 @@ class VertexIndexProxy(IndexProxy):
         :rtype: bulbs.neo4jserver.index.Index
 
         """ 
-        # TODO: create will return the index if it already exists so
-        # we could reduce this down to just create() or make it a Gremlin script
-        index = self.get(index_name)
-        if not index:
-            index = self.create(index_name)
+        config = self._build_index_config(self.index_class)
+        resp = self.client.get_or_create_vertex_index(index_name,index_config=config)
+        index = self.index_class(self.client, resp.results)
+        self.client.registry.add_index(index_name,index)
         return index
 
     def delete(self, index_name):
@@ -127,8 +126,8 @@ class EdgeIndexProxy(IndexProxy):
         :rtype: bulbs.neo4jserver.index.Index
         
         """
-        index_config = self._build_index_config(self.index_class)
-        resp = self.client.create_edge_index(index_name,index_config)
+        config = self._build_index_config(self.index_class)
+        resp = self.client.create_edge_index(index_name,index_config=config)
         index = self.index_class(self.client,resp.results)
         self.client.registry.add_index(index_name,index)
         return index
@@ -159,9 +158,10 @@ class EdgeIndexProxy(IndexProxy):
         :rtype: bulbs.neo4jserver.index.Index
 
         """ 
-        index = self.get(index_name)
-        if not index:
-            index = self.create(index_name)
+        config = self._build_index_config(self.index_class)
+        resp = self.client.get_or_create_edge_index(index_name, index_config=config)
+        index = self.index_class(self.client, resp.results)
+        self.client.registry.add_index(index_name,index)
         return index
 
     def delete(self, index_name):
@@ -303,7 +303,7 @@ class FulltextIndex(Index):
         """
         Return elements mathing the query.
 
-        See http://lucene.apache.org/java/3_1_0/queryparsersyntax.html
+        See http://lucene.apache.org/core/3_6_0/queryparsersyntax.html
 
         :param query_string: The query formatted in the Lucene query language. 
         :type query_string: str
@@ -311,7 +311,8 @@ class FulltextIndex(Index):
         :rtype: Element generator
 
         """
-        resp = self.client.query_fulltext_index(self.index_name,query_string)
+        query = self._get_method(vertex="query_vertex", edge="query_edge")
+        resp = query(self.index_name, query_string)
         return initialize_elements(self.client,resp)
 
 class ExactIndex(Index):
@@ -409,7 +410,7 @@ class ExactIndex(Index):
         :rtype: Element generator
 
         """
-        # TODO: is there a way to do this via the REST API?
+        # TODO: Maybe update this to use the REST endpoint.
         script = self.client.scripts.get('query_exact_index')
         params = dict(index_name=self.index_name, key=key, query_string=query_string)
         resp = self.client.gremlin(script, params)

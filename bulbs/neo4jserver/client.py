@@ -690,13 +690,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        index_type = kwds.pop("index_type", "exact")
-        provider = kwds.pop("provider", "lucene")
-        #keys = kwds.pop("keys",None)
-        #config = {'type':index_type,'provider':provider,'keys':str(keys)}
-        config = {'type':index_type, 'provider':provider}
-        path = build_path(index_path, "node")
-        params = dict(name=index_name, config=config)
+        default_config = {'type': "exact", 'provider': "lucene"}
+        index_config = kwds.pop("index_config", default_config) 
+        path = build_path(index_path, vertex_path)
+        params = dict(name=index_name, config=index_config)
         resp = self.request.post(path, params)
         resp._set_index_name(index_name)        
         return resp
@@ -708,7 +705,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path(index_path,"node")
+        path = build_path(index_path,vertex_path)
         params = None
         return self.request.get(path, params)
 
@@ -728,6 +725,22 @@ class Neo4jClient(Client):
             resp._set_index_name(index_name)
         return resp
 
+    def get_or_create_vertex_index(self, index_name, *args, **kwds):
+        """
+        Get a Vertex Index or create it if it doesn't exist.
+
+        :param index_name: Index name.
+        :type index_name: str
+
+        :param index_config: Index configuration.
+        :type index_config: dict
+
+        :rtype: bulbs.neo4jserver.index.Index
+
+        """ 
+        # Neo4j's create index endpoint returns the index if it already exists
+        return self.create_vertex_index(index_name, *args, **kwds)
+
     def delete_vertex_index(self, index_name): 
         """
         Deletes the vertex index with the index_name.
@@ -738,7 +751,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path(index_path, "node", index_name)
+        path = build_path(index_path, vertex_path, index_name)
         params = None
         return self.request.delete(path, params)
 
@@ -754,8 +767,10 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
+        default_config = {'type': "exact", 'provider': "lucene"}
+        index_config = kwds.pop("index_config", default_config) 
         path = build_path(index_path, edge_path)
-        params = dict(name=index_name)
+        params = dict(name=index_name, config=index_config)
         resp = self.request.post(path, params)
         resp._set_index_name(index_name)
         return resp
@@ -786,6 +801,22 @@ class Neo4jClient(Client):
         if resp.results:
             resp._set_index_name(index_name)
         return resp
+
+    def get_or_create_edge_index(self, index_name, *args, **kwds):
+        """
+        Get a Edge Index or create it if it doesn't exist.
+
+        :param index_name: Index name.
+        :type index_name: str
+
+        :param index_config: Index configuration.
+        :type index_config: dict
+
+        :rtype: bulbs.neo4jserver.index.Index
+
+        """ 
+        # Neo4j's create index endpoint returns the index if it already exists
+        return self.create_edge_index(index_name, *args, **kwds)
 
     def delete_edge_index(self, index_name):
         """
@@ -822,8 +853,8 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        uri = "%s/%s/%d" % (self.config.root_uri, "node", _id)
-        path = build_path(index_path, "node", index_name)
+        uri = "%s/%s/%d" % (self.config.root_uri, vertex_path, _id)
+        path = build_path(index_path, vertex_path, index_name)
         params = dict(key=key, value=value, uri=uri)
         return self.request.post(path, params)
 
@@ -844,8 +875,25 @@ class Neo4jClient(Client):
 
         """
         # converting all values to strings because that's how they're stored
-        path = build_path(index_path, "node", index_name, key, value)
+        path = build_path(index_path, vertex_path, index_name, key, value)
         params = None
+        return self.request.get(path, params)
+
+    def query_vertex(self, index_name, query):
+        """
+        Queries the index and returns the Response.
+
+        :param index_name: Name of the index.
+        :type index_name: str
+
+        :param query: Lucene query string
+        :type query: str
+
+        :rtype: Neo4jResponse
+
+        """
+        path = build_path(index_path, vertex_path, index_name)
+        params = dict(query=query)
         return self.request.get(path, params)
 
     def remove_vertex(self, index_name, _id, key=None, value=None):
@@ -864,7 +912,7 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        path = build_path(index_path, "node", index_name ,key, value, _id)
+        path = build_path(index_path, vertex_path, index_name ,key, value, _id)
         params = None
         return self.request.delete(path, params)
         
@@ -913,6 +961,23 @@ class Neo4jClient(Client):
         # converting all values to strings because that's how they're stored
         path = build_path(index_path, edge_path, index_name, key, value)
         params = None
+        return self.request.get(path, params)
+
+    def query_edge(self, index_name, query):
+        """
+        Queries the index and returns the Response.
+
+        :param index_name: Name of the index.
+        :type index_name: str
+
+        :param query: Lucene query string
+        :type query: str
+
+        :rtype: Neo4jResponse
+
+        """
+        path = build_path(index_path, edge_path, index_name)
+        params = dict(query=query)
         return self.request.get(path, params)
 
     def remove_edge(self, index_name, _id, key=None, value=None):

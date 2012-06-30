@@ -53,7 +53,7 @@ class Graph(object):
         self.client = self.client_class(config)
         self.config = self.client.config
 
-        self._factory = Factory(self.client)
+        self.factory = Factory(self.client)
 
         self.vertices = self.build_proxy(Vertex)
         self.edges = self.build_proxy(Edge)
@@ -120,7 +120,7 @@ class Graph(object):
         """
         if not index_class:
             index_class = self.default_index
-        return self._factory.build_element_proxy(element_class, index_class)
+        return self.factory.build_element_proxy(element_class, index_class)
 
     def load_graphml(self, uri):
         """

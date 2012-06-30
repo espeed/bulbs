@@ -110,6 +110,21 @@ def update_indexed_edge(_id, data, index_name, keys) {
 }
 
 // Indices
+
+def get_or_create_vertex_index(index_name, config) {
+  neo4j = g.getRawGraph()
+  manager = g.getRawGraph().index()
+  index = manager.forNodes(index_name, config)
+  return index
+}
+
+def get_or_create_edge_index(index_name, config) {
+  neo4j = g.getRawGraph()
+  manager = g.getRawGraph().index()
+  index = manager.forRelationships(index_name, config)
+  return index
+}
+
 def query_exact_index(index_name, key, query_string) {
   // Neo4jTokens.QUERY_HEADER = "%query%"
   return g.idx(index_name).get(key, Neo4jTokens.QUERY_HEADER + query_string)
