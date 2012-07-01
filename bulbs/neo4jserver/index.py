@@ -177,7 +177,7 @@ class EdgeIndexProxy(IndexProxy):
         return self.client.delete_edge_index(index_name)
 
 #
-# Index Containers (Exact, Unique, Fulltext, Automatic)
+# Index Containers (Exact, Fulltext, Automatic, Unique)
 #
 
 class Index(object):
@@ -224,112 +224,6 @@ class Index(object):
 
         """
         return self.result.get_index_class()
-
-    def count(self, key=None, value=None, **pair):
-        """
-        Return the number of items in the index for the key and value.
-
-        :param key: The index key. 
-        :type key: str
-
-        :param value: The key's value.
-        :type value: str or int
-
-        :param pair: Optional key/value pair. Example: name="James"
-        :type pair: name/value pair
-
-        :rtype: int
-
-        """
-        key, value = self._get_key_value(key,value,pair)
-        script = self.client.scripts.get('index_count')
-        params = dict(index_name=self.index_name,key=key,value=value)
-        resp = self.client.gremlin(script,params)
-        total_size = int(resp.content)
-        return total_size
-
-    def _get_key_value(self, key, value, pair):
-        """
-        Returns the key and value, regardless of how it was entered.
-
-        :param key: The index key. 
-        :type key: str
-
-        :param value: The key's value.
-        :type value: str or int
-
-        :param pair: Optional key/value pair. Example: name="James"
-        :type pair: key/value pair
-
-        :rtype: tuple
-
-        """
-        if pair:
-            key, value = pair.popitem()
-        return key, value
-
-    def _get_method(self, **method_map):
-        """
-        Returns the right method, depending on the index class type.
-
-        :param method_map: Dict mapping the index class type to its method name. 
-        :type method_map: dict
-
-        :rtype: Callable
-
-        """
-        method_name = method_map[self.index_class]
-        method = getattr(self.client, method_name)
-        return method
-
-
-class FulltextIndex(Index):
-    """
-    Neo4j's Lucence fulltext index.
-
-    :cvar index_type: Index type.
-    :cvar index_provider: Index provider.
-    :cvar blueprints_type: Blueprints type.
-
-    :ivar client: Neo4jClient object 
-    :ivar result: Neo4jResult object.
-    
-    """
-    index_type = "fulltext"
-    index_provider = "lucene"
-    blueprints_type = "MANUAL"
-
-    def query(self, query_string):
-        """
-        Return elements mathing the query.
-
-        See http://lucene.apache.org/core/3_6_0/queryparsersyntax.html
-
-        :param query_string: The query formatted in the Lucene query language. 
-        :type query_string: str
-
-        :rtype: Element generator
-
-        """
-        query = self._get_method(vertex="query_vertex", edge="query_edge")
-        resp = query(self.index_name, query_string)
-        return initialize_elements(self.client,resp)
-
-class ExactIndex(Index):
-    """
-    Neo4j's Lucence exact index.
-
-    :cvar index_type: Index type.
-    :cvar index_provider: Index provider.
-    :cvar blueprints_type: Blueprints type.
-
-    :ivar client: Neo4jClient object 
-    :ivar result: Neo4jResult object.
-
-    """
-    index_type = "exact"
-    index_provider = "lucene"
-    blueprints_type = "MANUAL"
 
     def put(self, _id, key=None, value=None, **pair):
         """
@@ -397,25 +291,6 @@ class ExactIndex(Index):
         resp = lookup(self.index_name,key,value)
         return initialize_elements(self.client, resp)
 
-    def query(self, key, query_string):
-        """
-        Return all the elements in the index matching the query.
-
-        :param key: The index key. 
-        :type key: str
-
-        :param query_string: The query string. Example: "Jam*".
-        :type value: str or int
-
-        :rtype: Element generator
-
-        """
-        # TODO: Maybe update this to use the REST endpoint.
-        script = self.client.scripts.get('query_exact_index')
-        params = dict(index_name=self.index_name, key=key, query_string=query_string)
-        resp = self.client.gremlin(script, params)
-        return initialize_elements(self.client, resp)       
-
     #put_unique = update
     def put_unique(self, _id, key=None, value=None, **pair):
         """
@@ -482,6 +357,133 @@ class ExactIndex(Index):
         remove = self._get_method(vertex="remove_vertex", edge="remove_edge")
         return remove(self.index_name,_id,key,value)
 
+    def count(self, key=None, value=None, **pair):
+        """
+        Return the number of items in the index for the key and value.
+
+        :param key: The index key. 
+        :type key: str
+
+        :param value: The key's value.
+        :type value: str or int
+
+        :param pair: Optional key/value pair. Example: name="James"
+        :type pair: name/value pair
+
+        :rtype: int
+
+        """
+        key, value = self._get_key_value(key,value,pair)
+        script = self.client.scripts.get('index_count')
+        params = dict(index_name=self.index_name,key=key,value=value)
+        resp = self.client.gremlin(script,params)
+        total_size = int(resp.content)
+        return total_size
+
+    def _get_key_value(self, key, value, pair):
+        """
+        Returns the key and value, regardless of how it was entered.
+
+        :param key: The index key. 
+        :type key: str
+
+        :param value: The key's value.
+        :type value: str or int
+
+        :param pair: Optional key/value pair. Example: name="James"
+        :type pair: key/value pair
+
+        :rtype: tuple
+
+        """
+        if pair:
+            key, value = pair.popitem()
+        return key, value
+
+    def _get_method(self, **method_map):
+        """
+        Returns the right method, depending on the index class type.
+
+        :param method_map: Dict mapping the index class type to its method name. 
+        :type method_map: dict
+
+        :rtype: Callable
+
+        """
+        method_name = method_map[self.index_class]
+        method = getattr(self.client, method_name)
+        return method
+
+
+class ExactIndex(Index):
+    """
+    Neo4j's Lucence exact index.
+
+    :cvar index_type: Index type.
+    :cvar index_provider: Index provider.
+    :cvar blueprints_type: Blueprints type.
+
+    :ivar client: Neo4jClient object 
+    :ivar result: Neo4jResult object.
+
+    """
+    index_type = "exact"
+    index_provider = "lucene"
+    blueprints_type = "MANUAL"
+
+    def query(self, key, query_string):
+        """
+        Return all the elements in the index matching the query.
+
+        :param key: The index key. 
+        :type key: str
+
+        :param query_string: The query string. Example: "Jam*".
+        :type value: str or int
+
+        :rtype: Element generator
+
+        """
+        # TODO: Maybe update this to use the REST endpoint.
+        script = self.client.scripts.get('query_exact_index')
+        params = dict(index_name=self.index_name, key=key, query_string=query_string)
+        resp = self.client.gremlin(script, params)
+        return initialize_elements(self.client, resp)       
+
+# TODO: add fulltext index tests
+class FulltextIndex(Index):
+    """
+    Neo4j's Lucence fulltext index.
+
+    :cvar index_type: Index type.
+    :cvar index_provider: Index provider.
+    :cvar blueprints_type: Blueprints type.
+
+    :ivar client: Neo4jClient object 
+    :ivar result: Neo4jResult object.
+    
+    """
+    index_type = "fulltext"
+    index_provider = "lucene"
+    blueprints_type = "MANUAL"
+
+    def query(self, query_string):
+        """
+        Return elements mathing the query.
+
+        See http://lucene.apache.org/core/3_6_0/queryparsersyntax.html
+
+        :param query_string: The query formatted in the Lucene query language. 
+        :type query_string: str
+
+        :rtype: Element generator
+
+        """
+        query = self._get_method(vertex="query_vertex", edge="query_edge")
+        resp = query(self.index_name, query_string)
+        return initialize_elements(self.client,resp)
+
+
 
 # Uncdocumented -- experimental
 class AutomaticIndex(ExactIndex):
@@ -503,7 +505,7 @@ class AutomaticIndex(ExactIndex):
         raise NotImplementedError
 
 
-# Uncdocumented -- experimental
+# Uncdocumented -- experimental -- use put_unique and get_unique for now
 class UniqueIndex(ExactIndex):
     pass
 
