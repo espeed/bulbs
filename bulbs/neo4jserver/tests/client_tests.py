@@ -39,6 +39,7 @@ class Neo4jIndexTestCase(unittest.TestCase):
         edges = index.query("timestamp", "1*")
         assert list(edges) > 1
 
+
 class CypherTestCase(unittest.TestCase):
     
     def setUp(self):
