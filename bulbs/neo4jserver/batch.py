@@ -24,7 +24,7 @@ class Neo4jBatchRequest(Neo4jRequest):
         :param params: Optional URI parameters for the resource.
         :type params: dict
 
-        :rtype: Response
+        :rtype: str
 
         """
                 
