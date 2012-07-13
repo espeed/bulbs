@@ -28,7 +28,7 @@ class Neo4jBatchRequest(Neo4jRequest):
 
         """
                 
-        self.add_message(method, path, params)
+        return self.add_message(method, path, params)
 
         # return self 
         # would allow you to do self.request.post(path, params).send()
