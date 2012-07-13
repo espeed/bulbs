@@ -13,7 +13,7 @@ class Neo4jBatchRequest(Neo4jRequest):
 
     def request(self, method, path, params):
         """
-        Sends a request to the client.
+        Adds request to the messages list and returns a placeholder.
 
         :param method: HTTP method: GET, PUT, POST, or DELETE.
         :type method: str
