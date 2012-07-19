@@ -273,6 +273,26 @@ class Element(object):
         representation = "<%s: %s>" % (class_name, element_uri)
         return u(representation)    # Python 3
 
+    def __setstate__(self, state):
+        config = state['_config']
+        client_class = state['_client_class']
+        client = client_class(config)
+        state['_client'] = client
+        state['_vertices'] = VertexProxy(Vertex, client)
+        state['_edges'] = EdgeProxy(Edge, client)
+        del state['_client_class']
+        del state['_config']
+        self.__dict__ = state
+
+    def __getstate__(self):
+        state = self.__dict__.copy() 
+        state['_config'] = self._client.config
+        state['_client_class'] = self._client.__class__
+        del state['_client']
+        del state['_vertices']
+        del state['_edges']
+        return state
+        
     def get(self, name, default_value=None):
         """
         Returns the value of a Python attribute or the default value.
