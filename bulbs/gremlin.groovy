@@ -33,46 +33,76 @@ def get_edges() {
 // the || label == "null" is a hack until Rexster fixes its null label bug.
 // See https://github.com/tinkerpop/rexster/issues/197
 
-def outE(_id, label) {
+def outE(_id, label, start, limit) {
   if (label == null)
-    g.v(_id).outE()
+    pipe = g.v(_id).outE()
   else
-    g.v(_id).outE(label)
+    pipe = g.v(_id).outE(label)
+
+  if (start != null && limit != null)
+    pipe = pipe.range(start, start+limit-1)
+
+  return pipe
 }
 
-def inE(_id, label) {
+def inE(_id, label, start, limit) {
   if (label == null)
-    g.v(_id).inE()
+    pipe = g.v(_id).inE()
   else
-    g.v(_id).inE(label)
+    pipe = g.v(_id).inE(label)
+
+  if (start != null && limit != null)
+    pipe = pipe.range(start, start+limit-1)
+
+  return pipe
 }
 
-def bothE(_id, label) { 
+def bothE(_id, label, start, limit) { 
   if (label == null)
-    g.v(_id).bothE()
+    pipe = g.v(_id).bothE()
   else
-    g.v(_id).bothE(label)
+    pipe = g.v(_id).bothE(label)
+
+  if (start != null && limit != null)
+    pipe = pipe.range(start, start+limit-1)
+
+  return pipe
 }
 
-def outV(_id, label) {
+def outV(_id, label, start, limit) {
   if (label == null)
-    g.v(_id).out()
+    pipe = g.v(_id).out()
   else
-    g.v(_id).out(label)
+    pipe = g.v(_id).out(label)
+
+  if (start != null && limit != null)
+    pipe = pipe.range(start, start+limit-1)
+
+  return pipe
 }
 
-def inV(_id, label) {
+def inV(_id, label, start, limit) {
   if (label == null)
-    g.v(_id).in()
+    pipe = g.v(_id).in()
   else
-    g.v(_id).in(label)
+    pipe = g.v(_id).in(label)
+
+  if (start != null && limit != null)
+    pipe = pipe.range(start, start+limit-1)
+
+  return pipe
 }
 
-def bothV(_id, label) { 
+def bothV(_id, label, start, limit) { 
   if (label == null)
-    g.v(_id).both()
+    pipe = g.v(_id).both()
   else
-    g.v(_id).both(label)
+    pipe = g.v(_id).both(label)
+
+  if (start != null && limit != null)
+    pipe = pipe.range(start, start+limit-1)
+
+  return pipe
 }
 
 // Neo4j requires you delete all adjacent edges first. 

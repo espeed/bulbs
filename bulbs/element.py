@@ -411,7 +411,7 @@ class Vertex(Element):
         """
         return VertexProxy
 
-    def outE(self, label=None):
+    def outE(self, label=None, start=None, limit=None):
         """
         Returns the outgoing edges.
 
@@ -421,10 +421,10 @@ class Vertex(Element):
         :rtype: Edge generator
 
         """
-        resp = self._client.outE(self._id,label)
+        resp = self._client.outE(self._id, label, start, limit)
         return initialize_elements(self._client,resp)
 
-    def inE(self, label=None):
+    def inE(self, label=None, start=None, limit=None):
         """
         Returns the incoming edges.
 
@@ -434,10 +434,10 @@ class Vertex(Element):
         :rtype: Edge generator
 
         """
-        resp = self._client.inE(self._id,label)
+        resp = self._client.inE(self._id, label, start, limit)
         return initialize_elements(self._client,resp)
 
-    def bothE(self, label=None):
+    def bothE(self, label=None, start=None, limit=None):
         """
         Returns the incoming and outgoing edges.
 
@@ -447,10 +447,10 @@ class Vertex(Element):
         :rtype: Edge generator
 
         """
-        resp = self._client.bothE(self._id,label)
+        resp = self._client.bothE(self._id, label, start, limit)
         return initialize_elements(self._client,resp)
 
-    def outV(self, label=None):
+    def outV(self, label=None, start=None, limit=None):
         """
         Returns the out-adjacent vertices.
 
@@ -460,10 +460,10 @@ class Vertex(Element):
         :rtype: Vertex generator
 
         """
-        resp = self._client.outV(self._id,label)
+        resp = self._client.outV(self._id, label, start, limit)
         return initialize_elements(self._client,resp)
 
-    def inV(self, label=None):
+    def inV(self, label=None, start=None, limit=None):
         """
         Returns the in-adjacent vertices.
 
@@ -473,10 +473,10 @@ class Vertex(Element):
         :rtype: Vertex generator
 
         """
-        resp = self._client.inV(self._id,label)
+        resp = self._client.inV(self._id, label, start, limit)
         return initialize_elements(self._client,resp)
         
-    def bothV(self, label=None):
+    def bothV(self, label=None, start=None, limit=None):
         """
         Returns all incoming- and outgoing-adjacent vertices.
 
@@ -486,7 +486,7 @@ class Vertex(Element):
         :rtype: Vertex generator
 
         """
-        resp = self._client.bothV(self._id,label)
+        resp = self._client.bothV(self._id, label, start, limit)
         return initialize_elements(self._client,resp)
 
     def save(self):

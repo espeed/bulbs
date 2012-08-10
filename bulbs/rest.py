@@ -203,4 +203,13 @@ class Request(object):
         if username and password:
             self.http.add_credentials(username, password)
 
+    # how to reuse the http object?
+    def __getstate__(self):
+        state = self.__data__.copy()
+        del state['http']
+        return state
+
+    def __setstate__(self, state):
+        state['http'] = httplib2.Http()
+        self.__data__ = state
 

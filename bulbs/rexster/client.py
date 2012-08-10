@@ -504,7 +504,7 @@ class RexsterClient(Client):
 
     # Vertex Container
 
-    def outE(self,_id, label=None):
+    def outE(self,_id, label=None, start=None, limit=None):
         """
         Returns the outgoing edges of the vertex.
 
@@ -518,10 +518,10 @@ class RexsterClient(Client):
         
         """
         script = self.scripts.get('outE')
-        params = dict(_id=_id,label=label)
+        params = dict(_id=_id,label=label,start=start,limit=limit)
         return self.gremlin(script,params)
 
-    def inE(self,_id, label=None):
+    def inE(self,_id, label=None, start=None, limit=None):
         """
         Returns the incoming edges of the vertex.
 
@@ -535,10 +535,10 @@ class RexsterClient(Client):
 
         """
         script = self.scripts.get('inE')
-        params = dict(_id=_id,label=label)
+        params = dict(_id=_id,label=label,start=start,limit=limit)
         return self.gremlin(script,params)
 
-    def bothE(self,_id, label=None):
+    def bothE(self,_id, label=None, start=None, limit=None):
         """
         Returns the incoming and outgoing edges of the vertex.
 
@@ -552,10 +552,10 @@ class RexsterClient(Client):
         
         """
         script = self.scripts.get('bothE')
-        params = dict(_id=_id,label=label)
+        params = dict(_id=_id,label=label,start=start,limit=limit)
         return self.gremlin(script,params)
 
-    def outV(self,_id, label=None):
+    def outV(self,_id, label=None, start=None, limit=None):
         """
         Returns the out-adjacent vertices of the vertex.
 
@@ -569,10 +569,10 @@ class RexsterClient(Client):
 
         """
         script = self.scripts.get('outV')
-        params = dict(_id=_id,label=label)
+        params = dict(_id=_id,label=label,start=start,limit=limit)
         return self.gremlin(script,params)
         
-    def inV(self,_id, label=None):
+    def inV(self,_id, label=None, start=None, limit=None):
         """
         Returns the in-adjacent vertices of the vertex.
 
@@ -586,10 +586,10 @@ class RexsterClient(Client):
 
         """
         script = self.scripts.get('inV')
-        params = dict(_id=_id,label=label)
+        params = dict(_id=_id,label=label,start=start,limit=limit)
         return self.gremlin(script,params)
         
-    def bothV(self,_id, label=None):
+    def bothV(self,_id, label=None, start=None, limit=None):
         """
         Returns the incoming- and outgoing-adjacent vertices of the vertex.
 
@@ -603,7 +603,7 @@ class RexsterClient(Client):
 
         """
         script = self.scripts.get('bothV')
-        params = dict(_id=_id,label=label)
+        params = dict(_id=_id,label=label,start=start,limit=limit)
         return self.gremlin(script,params)
 
     # Index Proxy - General
