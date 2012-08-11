@@ -12,6 +12,7 @@ import time
 import datetime
 import calendar
 import pytz
+import omnijson as json # supports Python 2.5-3.2
 
 #
 # Python 3 
@@ -19,7 +20,7 @@ import pytz
 
 if sys.version < '3':
     import codecs
-    import ujson as json
+#    import ujson as json
     from urllib import quote, quote_plus, urlencode
     from urlparse import urlsplit, urlparse
 
@@ -27,7 +28,7 @@ if sys.version < '3':
         return codecs.unicode_escape_decode(x)[0]
 else:
     # ujson is faster but hasn't been ported to Python 3 yet
-    import json
+#    import json
     from urllib.parse import quote, quote_plus, urlencode, urlparse
     from urllib.parse import urlsplit
 

@@ -53,9 +53,8 @@ def run_tests():
     return suite()
 
 # Python 3
-install_requires = ['distribute', 'httplib2>=0.7.2', 'pyyaml>=3.10', 'six', 'pytz']
+install_requires = ['distribute', 'httplib2>=0.7.2', 'pyyaml>=3.10', 'six', 'pytz', 'omnijson']
 if sys.version < '3':
-    install_requires.append('ujson>=1.15')
     install_requires.append('python-dateutil==1.5')
 else:
     # argparse is in 3.2 but not 3.1
