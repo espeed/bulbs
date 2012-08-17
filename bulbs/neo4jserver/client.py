@@ -241,7 +241,7 @@ class Neo4jResponse(Response):
         # Temporary hack to catch Gremlin Plugin exceptions that return 200 status
         # See https://github.com/neo4j/community/issues/343
         # Example: '"java.lang.IllegalArgumentException: Unknown property type on..."'
-        if re.search("^\"java.(.*).Exception:", content):
+        if re.search(b"^\"java.(.*).Exception:", content):
             # raise error...
             server_error(response)
         
