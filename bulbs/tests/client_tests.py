@@ -232,7 +232,7 @@ class ClientTestCase(unittest.TestCase):
         
         # Lookup Vertex
         resp1 = self.client.lookup_vertex(index_name, "name", name1)
-        results1 = resp1.results.next()
+        results1 = next(resp1.results)
 
         assert results1.get_type() == "vertex"
         assert results1.get_data() == data1  
@@ -249,7 +249,7 @@ class ClientTestCase(unittest.TestCase):
 
         # Lookup Vertex
         resp2 = self.client.lookup_vertex(index_name, "name", name2)
-        result2 = resp2.results.next()
+        result2 = next(resp2.results)
 
         assert result2.get_type() == "vertex"
         assert result2.get_data() == data2
@@ -279,7 +279,7 @@ class ClientTestCase(unittest.TestCase):
         
         # Lookup Edge
         resp1 = self.client.lookup_edge(index_name, "city", city1)
-        results1 = resp1.results.next()
+        results1 = next(resp1.results)
 
         assert results1.get_type() == "edge"
         assert results1.get_data() == data1  
@@ -294,7 +294,7 @@ class ClientTestCase(unittest.TestCase):
 
         # Lookup Edge
         resp2 = self.client.lookup_edge(index_name, "city", city2)
-        result2 = resp2.results.next()
+        result2 = next(resp2.results)
 
         assert result2.get_type() == "edge"
         assert result2.get_data() == data2

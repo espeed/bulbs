@@ -32,12 +32,12 @@ class Neo4jIndexTestCase(unittest.TestCase):
     def test_query_exact_vertex_index(self):
         index = self.factory.get_index(Vertex, ExactIndex)
         vertices = index.query("name", "Jam*")
-        assert list(vertices) > 1
+        assert len(list(vertices)) > 1
 
     def test_query_exact_edge_index(self):
         index = self.factory.get_index(Edge, ExactIndex)
         edges = index.query("timestamp", "1*")
-        assert list(edges) > 1
+        assert len(list(edges)) > 1
 
 
 class CypherTestCase(unittest.TestCase):
