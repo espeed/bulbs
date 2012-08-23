@@ -18,11 +18,29 @@ class Element(object):
 
     def __init__(self, client):
 
+        # NOTE: moved all private prop defs here so they are declared and
+        # pre-defined in _properties so that setattr works in model NORMAL mode
+
         # Client object
         self._client = client
 
         # Property data
         self._data = {}
+
+        # Result object.
+        self._result = None
+
+        # Vertex Proxy Object
+        self._vertices = None
+
+        # Edge Proxy Object
+        self._edges = None
+
+        # Initialized Flag
+        # Initialize all non-database properties here because when _initialized
+        # is set to True, __setattr__ will assume all non-defined properties 
+        # are database properties and will set them in self._data.
+        self._initialized = True
 
     def _initialize(self, result):
         """
@@ -34,10 +52,9 @@ class Element(object):
         :rtype: None
 
         """
-        # Result object.
         self._result = result
 
-        # Property data. # TODO: Do we really need to make a copy?
+        # TODO: Do we really need to make a copy?
         self._data = result.get_data().copy() 
 
         # Sets the element ID to the var defined in Config. Defaults to eid.
@@ -48,10 +65,6 @@ class Element(object):
         self._vertices = VertexProxy(Vertex,self._client)
         self._edges = EdgeProxy(Edge,self._client)
 
-        # Initialize all non-database properties here because when _initialized
-        # is set to True, __setattr__ will assume all non-defined properties 
-        # are database properties and will set them in self._data.
-        self._initialized = True
        
     @classmethod
     def get_base_type(cls):

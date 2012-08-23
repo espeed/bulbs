@@ -407,6 +407,9 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
 
         """
         data = dict()
+        if self.__mode__ == NORMAL:
+            data = self._data
+
         for key in self._properties: 
             # TODO: make this work for calculated values.
             # Calculated props shouldn't be stored, but components should be.
