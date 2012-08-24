@@ -239,8 +239,7 @@ class PythonConverter(Converter):
         if isinstance(value, unicode):
             return json.loads(value)
 
-        if value is not None:
-            return dict(value)
+        return dict(value)
 
     def to_datetime(self, value):
         """
