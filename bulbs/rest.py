@@ -10,6 +10,7 @@ returning a Response object.
 """
 import httplib2
 
+import bulbs
 from bulbs.base import Response
 from .utils import json, get_logger, quote, urlencode
 
@@ -71,6 +72,7 @@ class Request(object):
         """
         self.config = config
         self.content_type = content_type
+        self.user_agent = "bulbs/%s" % (bulbs.__version__)
         self.http = httplib2.Http()    
         self._add_credentials(config.username, config.password)
         self._initialize()
@@ -184,7 +186,8 @@ class Request(object):
         log.debug("%s body: %s ", method, body)
                     
     def _build_request_args(self, path, method, params):
-        headers = {'Accept': 'application/json'}
+        headers = {'Accept': 'application/json',
+                   'User-Agent': self.user_agent}
         body = None
 
         uri = "%s/%s" % (self.config.root_uri.rstrip("/"), path.lstrip("/"))
