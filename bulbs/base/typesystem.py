@@ -45,3 +45,6 @@ class Converter(object):
 
     def to_null(self, value):
         raise NotImplementedError
+
+    def to_document(self, value):
+        raise NotImplementedError

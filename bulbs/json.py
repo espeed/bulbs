@@ -15,7 +15,7 @@ if sys.version > '3':
     unicode = str
 
 from bulbs.base import TypeSystem, Converter
-from .utils import to_timestamp, to_datetime
+from .utils import to_timestamp, to_datetime, json
 
 
 class DatabaseConverter(Converter):
@@ -126,6 +126,18 @@ class DatabaseConverter(Converter):
         """
         return value
 
+    def to_document(self, value):
+        """
+        Converts a Python object to a json string
+
+        :param value: Property value.
+        :type value: dict or list or None
+
+        :rtype: unicode or None
+        """
+        if value is not None:
+            return unicode(json.dumps(value))
+
 
 class PythonConverter(Converter):
     """Converts database values to Python values."""
@@ -214,15 +226,20 @@ class PythonConverter(Converter):
         Converts a JSON map to a Python dictionary.         
 
         :param value: Property value. 
-        :type value: dict or None
+        :type value: dict or unicode or None
 
         :rtype: dict or None
 
         :raises: ValueError
 
         """
-        if value is not None:
-            return dict(value)
+        if value is None:
+            return None
+
+        if isinstance(value, unicode):
+            return json.loads(value)
+
+        return dict(value)
 
     def to_datetime(self, value):
         """
@@ -255,7 +272,7 @@ class PythonConverter(Converter):
             raise ValueError
 
         return None
-    
+
 
 class JSONTypeSystem(TypeSystem):
     """
