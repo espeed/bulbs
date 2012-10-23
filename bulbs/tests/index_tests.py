@@ -18,7 +18,7 @@ class IndexTestCase(BulbsTestCase):
 
         self.indicesV.delete("test_idxV")
         self.indicesE.delete("test_idxE")
-
+        
         self.vertices = VertexProxy(Vertex,self.client)
         self.vertices.index = self.indicesV.get_or_create("test_idxV")
 

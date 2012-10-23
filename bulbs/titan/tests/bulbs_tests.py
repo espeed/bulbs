@@ -3,8 +3,8 @@ import unittest
 import argparse
 from bulbs.config import Config, DEBUG
 from bulbs.tests import BulbsTestCase, bulbs_test_suite
-from bulbs.rexster import Graph, RexsterClient, REXSTER_URI, \
-    VertexIndexProxy, EdgeIndexProxy, ManualIndex
+from bulbs.titan import Graph, TitanClient, TITAN_URI, \
+    VertexIndexProxy, EdgeIndexProxy, KeyIndex
 from bulbs.tests import GremlinTestCase
 
 # Setting a module var looks to be the easiest way to do this
@@ -12,11 +12,11 @@ db_name = "tinkergraph"
 
 def test_suite():
     # pass in a db_name to test a specific database
-    client = RexsterClient(db_name=db_name)
+    client = TitanClient(db_name=db_name)
     BulbsTestCase.client = client
     BulbsTestCase.vertex_index_proxy = VertexIndexProxy
     BulbsTestCase.edge_index_proxy = EdgeIndexProxy
-    BulbsTestCase.index_class = ManualIndex
+    BulbsTestCase.index_class = KeyIndex
     BulbsTestCase.graph = Graph(client.config)
 
     suite = bulbs_test_suite()
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # http://www.doughellmann.com/PyMOTW/argparse/
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--db', default="tinkergraph")
+    parser.add_argument('--db', default="titanexample")
     args = parser.parse_args()
     
     db_name = args.db

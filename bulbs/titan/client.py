@@ -235,11 +235,11 @@ class TitanClient(RexsterClient):
         raise NotImplementedError
 
     def get_index(self, name):
-       raise NotImplementedError
+        raise NotImplementedError
 
     def delete_index(self, name): 
         raise NotImplementedError
-            
+    
     # Index Proxy - Vertex
 
     def create_vertex_index(self, index_name, *args, **kwds):
@@ -390,7 +390,7 @@ class TitanClient(RexsterClient):
         :rtype: TitanResponse
 
         """
-        self.create_vertex(data)
+        return self.create_vertex(data)
     
     def update_indexed_vertex(self, _id, data, index_name, keys=None):
         """
@@ -411,7 +411,7 @@ class TitanClient(RexsterClient):
         :rtype: TitanResponse
 
         """
-        self.update_vertex(_id, data)
+        return self.update_vertex(_id, data)
 
     # Model Proxy - Edge
 
@@ -440,7 +440,7 @@ class TitanClient(RexsterClient):
         :rtype: TitanResponse
 
         """
-        self.create_edge(outV, label, inV, data)
+        return self.create_edge(outV, label, inV, data)
         
     def update_indexed_edge(self, _id, data, index_name, keys=None):
         """
@@ -461,7 +461,7 @@ class TitanClient(RexsterClient):
         :rtype: TitanResponse
 
         """
-        self.update_edge(_id, data)
+        return self.update_edge(_id, data)
 
 
 

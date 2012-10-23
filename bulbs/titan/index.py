@@ -59,6 +59,8 @@ class VertexIndexProxy(IndexProxy):
         
         """
         index = self.index_class(self.client, None)
+        index.base_type = "vertex"
+        index._index_name = index_name
         self.client.registry.add_index(index_name, index)
         return index
 
@@ -72,7 +74,7 @@ class VertexIndexProxy(IndexProxy):
         :rtype: bulbs.rexster.index.Index
 
         """ 
-        return self.get() # index_name is ignored (N/A)
+        return self.get(index_name)
 
     def delete(self, index_name):
         """ 
@@ -128,6 +130,8 @@ class EdgeIndexProxy(IndexProxy):
         
         """
         index = self.index_class(self.client, None)
+        index.base_type = "edge"
+        index._index_name = index_name
         self.client.registry.add_index(index_name, index)
         return index
 
@@ -142,7 +146,7 @@ class EdgeIndexProxy(IndexProxy):
         :rtype: bulbs.rexster.index.Index
 
         """ 
-        return self.get() # index_name is ignored (N/A)
+        return self.get(index_name)
 
     def delete(self,index_name):
         """ 
@@ -167,6 +171,9 @@ class Index(object):
         self.client = client
         self.result = result
         self.base_type = None # set by Factory.get_index
+        self._index_name = None # ditto 
+        # the index_name is actually ignored with Titan, 
+        # but setting it like normal to make tests pass
 
     @classmethod 
     def get_proxy_class(cls, base_type):
@@ -191,7 +198,7 @@ class Index(object):
 
         """
         # faking the index name as "vertex"
-        return self.base_type
+        return self._index_name
 
     @property
     def index_class(self):
