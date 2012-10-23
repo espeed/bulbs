@@ -20,18 +20,19 @@ class Factory(object):
         element_proxy.index = primary_index
         return element_proxy
 
-    def build_index_proxy(self, element_class, index_class):
-        base_type = element_class.get_base_type()
-        proxy_class = index_class.get_proxy_class(base_type)
-        index_proxy = proxy_class(index_class, self.client)
-        return index_proxy
-
     def get_index(self, element_class, index_class, index_name=None):
         if index_name is None:
             index_name = element_class.get_index_name(self.client.config)
         index_proxy = self.build_index_proxy(element_class, index_class)
         index = index_proxy.get_or_create(index_name)
+        index.base_type = element_class.get_base_type() # added for Titan
         return index
+
+    def build_index_proxy(self, element_class, index_class):
+        base_type = element_class.get_base_type()
+        proxy_class = index_class.get_proxy_class(base_type)
+        index_proxy = proxy_class(index_class, self.client)
+        return index_proxy
 
     
 

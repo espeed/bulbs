@@ -353,6 +353,7 @@ class RexsterClient(Client):
         params = dict(script=script,params=params)
         return self.request.post(gremlin_path,params)
 
+
     # Vertex Proxy
 
     def create_vertex(self, data):

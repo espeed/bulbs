@@ -16,8 +16,7 @@ config = Config(REXSTER_URI)
 BulbsTestCase.client = RexsterClient(config)
 BulbsTestCase.index_class = ManualIndex
 
-# is this being used anywhere? -- JT 10/22/2012
-
+ 
 class IndexTestCase(BulbsTestCase):
     
     def setUp(self):

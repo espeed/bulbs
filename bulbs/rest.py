@@ -58,6 +58,8 @@ RESPONSE_HANDLERS = {200:ok,
                      409:conflict,
                      500:server_error}
 
+# good posture good brain
+
 class Request(object):
     """Used for connecting to the a REST server over HTTP."""
 

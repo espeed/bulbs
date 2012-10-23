@@ -3,6 +3,7 @@ from bulbs.config import Config
 from bulbs.utils import json
 from bulbs.neo4jserver import Neo4jClient, NEO4J_URI
 from bulbs.tests.client_tests import ClientTestCase
+from bulbs.tests.client_index_tests import ClientIndexTestCase
 
 from bulbs.factory import Factory
 from bulbs.element import Vertex, Edge
@@ -17,6 +18,15 @@ class Neo4jClientTestCase(ClientTestCase):
         config = Config(NEO4J_URI)
         self.client = Neo4jClient(config)
 
+# Separated client index tests for Titan
+class Neo4jClientIndexTestCase(ClientIndexTestCase):
+
+    def setUp(self):
+        config = Config(NEO4J_URI)
+        self.client = Neo4jClient(config)
+
+
+# why is this here? - JT 10/22/2012
 class Neo4jIndexTestCase(unittest.TestCase):
     
     def setUp(self):
@@ -59,6 +69,7 @@ class CypherTestCase(unittest.TestCase):
 def neo4j_client_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(Neo4jClientTestCase))
+    suite.addTest(unittest.makeSuite(Neo4jClientIndexTestCase))
     suite.addTest(unittest.makeSuite(Neo4jIndexTestCase))
     #suite.addTest(unittest.makeSuite(GremlinTestCase))
     #suite.addTest(unittest.makeSuite(CypherTestCase))
