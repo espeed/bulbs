@@ -18,7 +18,18 @@ def bulbs_test_suite():
     suite.addTest(unittest.makeSuite(VertexProxyTestCase))
     suite.addTest(unittest.makeSuite(EdgeProxyTestCase))
     # TODO: Add automatic/key-index tests
-    if BulbsTestCase.index_class(None, None).index_type is "manual":
+    try:
+        # Temporary hack...
+        # The IndexTestCase currently only tests manual indices
+        # but Titan only uses an automatic KeyIndex, and 
+        # it's index_type is hardcoded to "automatic"
+        # index_type is a property that requires results being set so
+        # it will barf if it's not hardcoded like Titan
+        # so if it barfs, we know it's a manual index and thus
+        # we want to run the test
+        BulbsTestCase.index_class(None, None).index_type
+        # don't run the test for Titan
+    except:
         suite.addTest(unittest.makeSuite(IndexTestCase))
     suite.addTest(unittest.makeSuite(NodeTestCase))
     suite.addTest(unittest.makeSuite(RelationshipTestCase))

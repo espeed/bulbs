@@ -51,13 +51,13 @@ log = get_logger(__name__)
 # Element Utils
 #
 
+
 def initialize_elements(client,response):
     # return None if there were no results; otherwise,
     # return a generator of initialized elements.
     if response.total_size > 0:
-        for result in response.results:
-            yield initialize_element(client,result)
-
+        # yield doesn't work for conditionals
+        return (initialize_element(client, result) for result in response.results)
 
 def initialize_element(client,result):
     # result should be a single Result object, not a list or generator
