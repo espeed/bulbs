@@ -308,6 +308,41 @@ class Float(Property):
     def to_python(self,type_system,value):
         return type_system.python.to_float(value)              
 
+class Bool(Property):
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
+
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
+
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, bool, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed.
+
+    """
+    #: Python type
+    python_type = bool
+
+    def to_db(self,type_system,value):
+        return type_system.database.to_bool(value)
+
+    def to_python(self,type_system,value):
+        return type_system.python.to_bool(value)
+
 class Null(Property):
     """
     :param fget: Method name that returns a calculated value. Defaults to None.
