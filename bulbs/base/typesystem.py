@@ -37,6 +37,9 @@ class Converter(object):
     def to_float(self, value):
         raise NotImplementedError
 
+    def to_bool(self, value):
+        raise NotImplementedError
+
     def to_list(self, value):
         raise NotImplementedError
 
