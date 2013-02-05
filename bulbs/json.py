@@ -67,7 +67,7 @@ class DatabaseConverter(Converter):
 
     def to_bool(self, value):
         """
-        Passes through a Python long.
+        Passes through a Python bool.
 
         :param value: Property value.
         :type value: bool or None
@@ -220,12 +220,12 @@ class PythonConverter(Converter):
 
     def to_bool(self, value):
         """
-        Converts a JSON number to a Python float.
+        Converts a JSON boolean value to a Python bool.
 
         :param value: Property value.
-        :type value: float or None
+        :type value: bool or None
 
-        :rtype: float or None
+        :rtype: bool or None
 
         :raises: ValueError
 
