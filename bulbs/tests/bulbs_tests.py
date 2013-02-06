@@ -22,7 +22,7 @@ def bulbs_test_suite():
         # Temporary hack...
         # The IndexTestCase currently only tests manual indices
         # but Titan only uses an automatic KeyIndex, and 
-        # it's index_type is hardcoded to "automatic"
+        # its index_type is hardcoded to "automatic"
         # index_type is a property that requires results being set so
         # it will barf if it's not hardcoded like Titan
         # so if it barfs, we know it's a manual index and thus

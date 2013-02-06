@@ -102,6 +102,7 @@ class Graph(object):
 
         """
         proxy = self.build_proxy(element_class, index_class)
+        self.client.registry.add_proxy(proxy_name, proxy)
         setattr(self, proxy_name, proxy)
     
     def build_proxy(self, element_class, index_class=None):
