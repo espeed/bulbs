@@ -65,6 +65,18 @@ class DatabaseConverter(Converter):
         """
         return value
 
+    def to_bool(self, value):
+        """
+        Passes through a Python bool.
+
+        :param value: Property value.
+        :type value: bool or None
+
+        :rtype: bool or None
+
+        """
+        return value
+
     def to_float(self, value):
         """
         Passes through a Python float.
@@ -205,6 +217,21 @@ class PythonConverter(Converter):
         """
         if value is not None:
             return float(value)              
+
+    def to_bool(self, value):
+        """
+        Converts a JSON boolean value to a Python bool.
+
+        :param value: Property value.
+        :type value: bool or None
+
+        :rtype: bool or None
+
+        :raises: ValueError
+
+        """
+        if value is not None:
+            return bool(value)
 
     def to_list(self, value):
         """

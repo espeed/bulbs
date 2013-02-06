@@ -1,7 +1,7 @@
 import unittest
 from .testcase import BulbsTestCase
 from bulbs.model import Node, NodeProxy, Relationship, RelationshipProxy
-from bulbs.property import Integer, String, DateTime
+from bulbs.property import Integer, String, DateTime, Bool
 from bulbs.utils import current_datetime
 
 class Knows(Relationship):
@@ -16,6 +16,7 @@ class Person(Node):
     
     name = String(nullable=False)
     age  = Integer()
+    is_adult = Bool()
 
 
 
@@ -25,13 +26,14 @@ class NodeTestCase(BulbsTestCase):
         indices = self.vertex_index_proxy(self.index_class,self.client)
         self.people = NodeProxy(Person,self.client)
         self.people.index = indices.get_or_create("person")
-        self.james = self.people.create(name="James", age=34)
+        self.james = self.people.create(name="James", age=34, is_adult=True)
 
     def test_properties(self):
         #assert type(self.james.eid) == int
         assert self.james.element_type == "person"
         assert self.james.name == "James"
         assert self.james.age == 34
+        assert self.james.is_adult is True
 
     def test_get(self):
         person = self.people.get(self.james.eid)
