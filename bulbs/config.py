@@ -81,7 +81,7 @@ class Config(object):
 
         """
         log = get_logger(__name__)
-        log.root.setLevel(log_level)
+        log.setLevel(log_level)
         self.log_level = log_level 
         if log_handler is not None:
             log.root.addHandler(log_handler())
