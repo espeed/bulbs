@@ -53,7 +53,7 @@ def run_tests():
     return suite()
 
 # Python 3
-install_requires = ['distribute', 'httplib2>=0.7.2', 'pyyaml>=3.10', 'six', 'pytz', 'omnijson']
+install_requires = ['distribute', 'httplib2>=0.7.2', 'pyyaml>=3.10', 'six', 'omnijson']
 if sys.version < '3':
     install_requires.append('python-dateutil==1.5')
 else:
