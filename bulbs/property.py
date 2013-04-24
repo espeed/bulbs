@@ -18,7 +18,7 @@ import datetime
 import dateutil.parser
 from numbers import Number
 
-from .utils import get_logger, to_datetime
+from .utils import get_logger, to_datetime, to_date
 
 log = get_logger(__name__)
 
@@ -553,4 +553,67 @@ class DateTime(Property):
 
         return dt
 
+
+class Date(Property):
+    """
+    :param fget: Method name that returns a calculated value. Defaults to None.
+    :type fget: str
+
+    :param name: Database property name. Defaults to the Property key.
+    :type name: str
+
+    :param default: Default property value. Defaults to None.
+    :type default: str, int, long, float, list, dict, or Callable
+
+    :param nullable: If True, the Property can be null. Defaults to True.
+    :type nullable: bool
+
+    :param indexed: If True, index the Property in the DB. Defaults to False.
+    :type indexed: bool
+
+    :ivar fget: Name of the method that gets the calculated Property value.
+    :ivar name: Database property name. Defaults to the Property key.
+    :ivar default: Default property value. Defaults to None.
+    :ivar nullable: If True, the Property can be null. Defaults to True.
+    :ivar indexed: If True, index the Property in the DB. Defaults to False.
+
+    .. note:: If no Properties have index=True, all Properties are indexed. 
+
+    """
+    #: Python type
+    python_type = datetime.date
+
+    def to_db(self, type_system, value):
+        return type_system.database.to_date(value)
+
+    def to_python(self, type_system, value):
+        return type_system.python.to_date(value)
+
+    def is_valid(self, key, value):
+        # how do you assert it's UTC?
+        #Don't use assert except for sanity check during development 
+        # (it gets turned to a no-op when you run with python -o), and 
+        # don't raise the wrong kind of exception (such as, an AssertionError 
+        # when a TypeError is clearly what you mean here).
+        return isinstance(value, datetime.date)
+
+    def _coerce(self, value):
+        # Coerce user input to the Python type
+        # Overloaded from Property since this is a special case
+        # http://labix.org/python-dateutil#head-a23e8ae0a661d77b89dfb3476f85b26f0b30349c
+        # return dateutils.parse(value)
+        # Not using parse -- let the client code do that. Expect a UTC dateime object here.
+        # How you going to handle asserts? It's easy with ints.
+        
+        if isinstance(value, Number):
+            # catches unix timestamps
+            d = to_date(value)
+        elif isinstance(value, datetime.date):  
+            # value passed in was already in proper form
+            d = value
+        else:
+            # Python 3 unicode/str catchall
+            d = dateutil.parser.parse(value).date()
+
+        return d
     
