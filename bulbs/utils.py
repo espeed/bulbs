@@ -143,17 +143,27 @@ def current_datetime():
     #return datetime.datetime.utcfromtimestamp(now).replace(tzinfo=pytz.utc)
     return datetime.datetime.utcfromtimestamp(now)
 
+def current_date():
+    #Return  a date object
+    return to_date(current_timestamp())
+    
 def to_timestamp(datetime):
     # Converts a datetime object to unix UTC time
     return calendar.timegm(datetime.utctimetuple()) 
+
+def to_datestamp(date):
+    # Converts a date object to unix UTC time
+    return calendar.timegm(date.timetuple()) 
 
 def to_datetime(timestamp):
     # Converts unix UTC time into a UTC datetime object
     #return datetime.datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.utc)
     return datetime.datetime.utcfromtimestamp(timestamp)
 
-
-
+def to_date(timestamp):
+    # Converts unix UTC time into a date object
+    return datetime.date.fromtimestamp(timestamp)
+    
 # Exaplanations on dealing with time...
 
     # http://unix4lyfe.org/time/

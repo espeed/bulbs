@@ -15,7 +15,7 @@ if sys.version > '3':
     unicode = str
 
 from bulbs.base import TypeSystem, Converter
-from .utils import to_timestamp, to_datetime, json
+from .utils import to_timestamp, to_datetime, to_datestamp, to_date, json
 
 
 class DatabaseConverter(Converter):
@@ -118,13 +118,26 @@ class DatabaseConverter(Converter):
         Converts a Python datetime object to a timestamp integer.
 
         :param value: Property value. 
-        :type value: int or None
+        :type value: datetime or None
 
-        :rtype: datetime or None
+        :rtype: int or None
 
         """
         if value is not None:
             return to_timestamp(value)
+
+    def to_date(self, value):
+        """
+        Converts a Python date object to a timestamp integer.
+
+        :param value: Property value. 
+        :type value: date or None
+
+        :rtype: int or None
+
+        """
+        if value is not None:
+            return to_datestamp(value)
 
     def to_null(self, value):
         """
@@ -282,6 +295,21 @@ class PythonConverter(Converter):
         """
         if value is not None:
             return to_datetime(value)
+            
+    def to_date(self, value):
+        """
+        Converts a JSON integer timestamp to a Python date object.
+
+        :param value: Property value. 
+        :type value: int or None
+
+        :rtype: date or None
+
+        :raises: ValueError
+
+        """
+        if value is not None:
+            return to_date(value)
 
     def to_null(self, value):
         """
