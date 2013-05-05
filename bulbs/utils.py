@@ -11,7 +11,6 @@ import logging
 import time
 import datetime
 import calendar
-import pytz
 import omnijson as json # supports Python 2.5-3.2
 
 #
