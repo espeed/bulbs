@@ -6,8 +6,7 @@
 What is Bulbs?
 
 Bulbs is a Python persistence framework for graph databases that supports 
-Python 3 and Python 2.7 originally created by James Thornton 
-(https://plus.google.com/+JamesThornton?rel=author).
+Python 3 and Python 2.7 originally created by James Thornton. 
 
 It connects to several graph-database servers, including Neo4j Server and Rexster.
 
