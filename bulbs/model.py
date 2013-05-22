@@ -426,6 +426,15 @@ class Model(six.with_metaclass(ModelMeta, object)):  # Python 3
         log.debug("This is deprecated; use data() instead.")
         return self.data()
 
+    def __check__(self,data):
+        """
+        Override this method in the child class to throw an exception if the data dictionary is invalid
+        
+        :param data: Collection of parameters to be set for this Model
+        :type data: dict
+
+        """
+        pass
 
 class Node(Model, Vertex):
     """ 
@@ -548,6 +557,7 @@ class Node(Model, Vertex):
 
         """
         data = self._get_property_data()
+        self.__check__(data)
         index_name = self.get_index_name(self._client.config)
         keys = self.get_index_keys()
         self._client.update_indexed_vertex(self._id, data, index_name, keys)
@@ -571,6 +581,7 @@ class Node(Model, Vertex):
         """
         # bundle is an OrderedDict containing data, index_name, and keys
         data, index_name, keys = self.get_bundle(_data, **kwds)
+        self.__check__(data)
         resp = self._client.create_indexed_vertex(data, index_name, keys)
         result = resp.one()
         self._initialize(result)
@@ -592,6 +603,7 @@ class Node(Model, Vertex):
         
         """
         data, index_name, keys = self.get_bundle(_data, **kwds)
+        self.__check__(data)
         resp = self._client.update_indexed_vertex(_id, data, index_name, keys)
         result = resp.one()
         self._initialize(result)
@@ -723,6 +735,8 @@ class Relationship(Model, Edge):
 
         """
         data = self._get_property_data()
+        self.__check__(data)
+
         index_name = self.get_index_name(self._client.config)
         keys = self.get_index_keys()
         self._client.update_indexed_edge(self._id, data, index_name, keys)
@@ -747,6 +761,7 @@ class Relationship(Model, Edge):
         label = self.get_label(self._client.config)
         outV, inV = coerce_vertices(outV, inV)
         data, index_name, keys = self.get_bundle(_data, **kwds)
+        self.__check__(data)
         resp = self._client.create_indexed_edge(outV, label, inV, data, index_name, keys)
         result = resp.one()
         self._initialize(result)
@@ -768,6 +783,7 @@ class Relationship(Model, Edge):
         
         """
         data, index_name, keys = self.get_bundle(_data, **kwds)
+        self.__check__(data)
         resp = self._client.update_indexed_edge(_id, data, index_name, keys)
         result = resp.one()
         self._initialize(result)
@@ -816,7 +832,7 @@ class NodeProxy(VertexProxy):
         :param _id: The vertex ID.
         :type _id: int or str
 
-        :param _data: Opetional property data dict.
+        :param _data: Optional property data dict.
         :type _data: dict
 
         :param kwds: Optional property data keyword pairs. 
