@@ -184,7 +184,7 @@ class Element(object):
         # dict_.get() is faster than getattr()
         _initialized = dict_.get("_initialized", False)
 
-        if key in dict_ or _initialized is False:
+        if key in dict_ or _initialized is False or key in self.__class__.__dict__:
             # set the attribute normally
             object.__setattr__(self, key, value)
         else:
