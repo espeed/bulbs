@@ -166,6 +166,7 @@ class Property(object):
 
     def _coerce(self, value):
         # overload coerce for special types like DateTime
+        value = value.decode( 'utf-8' )
         return self.python_type(value)
 
 class String(Property): 
