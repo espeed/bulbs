@@ -84,7 +84,7 @@ class Config(object):
         log.setLevel(log_level)
         self.log_level = log_level 
         if log_handler is not None:
-            log.root.addHandler(log_handler())
+            log.addHandler(log_handler())
 
     def set_neo4j_heroku(self, log_level=ERROR, log_handler=None):
         """
