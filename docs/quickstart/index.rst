@@ -4,7 +4,7 @@
 
 Quickstart
 ==========
-.. title:: Quickstart Documenation for Bulbs, a Python Framework for Graph Databases
+.. title:: Quickstart Documentation for Bulbs, a Python Framework for Graph Databases
 .. rubric:: Bulbs is a Python persistence framework for graph databases.
 .. snippet:: social
 

@@ -4,7 +4,7 @@
 
 Docs
 ====
-.. title:: Bulbs Documenation, a Python Framework for Graph Databases
+.. title:: Bulbs Documentation, a Python Framework for Graph Databases
 .. rubric:: Bulbs is a Python persistence framework for graph databases.
 .. snippet:: social
 
