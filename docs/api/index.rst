@@ -3,7 +3,7 @@
 
 Bulbs API
 =========
-.. title:: Bulbs API Documenation, a Python Framework for Graph Databases
+.. title:: Bulbs API Documentation, a Python Framework for Graph Databases
 .. rubric:: Open-source Python library for graph databases.
 .. snippet:: social
 
