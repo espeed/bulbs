@@ -134,10 +134,10 @@ def get_or_create_vertex_index(index_name, index_params) {
   def transaction = { final Closure closure ->
     try {
       results = closure();
-      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      g.commit();
       return results; 
     } catch (e) {
-      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      g.rollback();
       throw e;
     }
   }
@@ -159,10 +159,10 @@ def get_or_create_edge_index(index_name, index_params) {
   def transaction = { final Closure closure ->
     try {
       results = closure();
-      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      g.commit();
       return results; 
     } catch (e) {
-      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      g.rollback();
       throw e;
     }
   }

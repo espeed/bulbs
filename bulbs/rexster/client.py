@@ -21,7 +21,7 @@ from bulbs.utils import json, build_path, get_file_path, urlsplit, coerce_id
 
 
 # The default URIs
-REXSTER_URI = "http://localhost:8182/graphs/tinkergraph"
+REXSTER_URI = "http://localhost:8182/graphs/emptygraph"  # emptygraph has mock-tx enabled 
 SAIL_URI = "http://localhost:8182/graphs/sailgraph"
 
 # The logger defined in Config

@@ -24,10 +24,10 @@ def create_indexed_vertex(data,index_name,keys) {
   def transaction = { final Closure closure ->
     try {
       results = closure();
-      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      g.commit();
       return results; 
     } catch (e) {
-      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      g.rollback();
       throw e;
     }
   }
@@ -59,10 +59,10 @@ def update_indexed_vertex(_id, data, index_name, keys) {
   def transaction = { final Closure closure ->
     try {
       results = closure();
-      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      g.commit();
       return results; 
     } catch (e) {
-      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      g.rollback();
       throw e;
     }
   }
@@ -88,10 +88,10 @@ def create_indexed_edge(outV,label,inV,data,index_name,keys,label_var) {
   def transaction = { final Closure closure ->
     try {
       results = closure();
-      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      g.commit();
       return results; 
     } catch (e) {
-      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      g.rollback();
       throw e;
     }
   }
@@ -121,10 +121,10 @@ def update_indexed_edge(_id, data, index_name, keys) {
   def transaction = { final Closure closure ->
     try {
       results = closure();
-      g.stopTransaction(TransactionalGraph.Conclusion.SUCCESS);
+      g.commit();
       return results; 
     } catch (e) {
-      g.stopTransaction(TransactionalGraph.Conclusion.FAILURE);
+      g.rollback();
       throw e;
     }
   }

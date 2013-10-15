@@ -125,7 +125,7 @@ def build_path(*args):
     # don't include segment if it's None
     # quote_plus doesn't work for neo4j index lookups 
     # e.g., index/node/test_idxV/name/James+Thornton
-    segments = [quote(unicode(segment).decode('utf-8').encode('utf-8'), safe='') for segment in args if segment is not None]
+    segments = [quote(u(str(segment)), safe='') for segment in args if segment is not None]
     path = "/".join(segments)
     return path
 

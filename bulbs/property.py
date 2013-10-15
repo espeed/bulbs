@@ -18,6 +18,7 @@ import datetime
 import dateutil.parser
 from numbers import Number
 
+import utils
 from .utils import get_logger, to_datetime, to_date
 
 log = get_logger(__name__)
@@ -166,7 +167,6 @@ class Property(object):
 
     def _coerce(self, value):
         # overload coerce for special types like DateTime
-        value = value.decode( 'utf-8' )
         return self.python_type(value)
 
 class String(Property): 
@@ -202,7 +202,10 @@ class String(Property):
         return type_system.database.to_string(value)
 
     def to_python(self,type_system,value):
-        return type_system.python.to_string(value)    
+        return type_system.python.to_string(value)
+
+    def _coerce(self, value):
+        return utils.u(value)
 
 class Integer(Property):    
     """

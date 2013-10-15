@@ -8,7 +8,7 @@ from bulbs.titan import Graph, TitanClient, TITAN_URI, \
 from bulbs.tests import GremlinTestCase
 
 # Setting a module var looks to be the easiest way to do this
-db_name = "tinkergraph"
+db_name = "emptygraph"
 
 def test_suite():
     # pass in a db_name to test a specific database
