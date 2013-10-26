@@ -18,7 +18,7 @@ import datetime
 import dateutil.parser
 from numbers import Number
 
-import utils
+from . import utils
 from .utils import get_logger, to_datetime, to_date
 
 log = get_logger(__name__)
