@@ -123,7 +123,7 @@ class GroovyScripts(object):
         self.source_file_map[file_path] = namespace
         self.namespace_map[namespace].update(methods)
 
-    def refresh(self):
+    def refresh(self, namespace=None):
         """
         Refreshes the script index by re-reading the Groovy source files.
 

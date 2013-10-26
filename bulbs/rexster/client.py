@@ -337,7 +337,7 @@ class RexsterClient(Client):
 
     # Gremlin
 
-    def gremlin(self, script, params=None): 
+    def gremlin(self, script, params=None, load=None): 
         """
         Executes a Gremlin script and returns the Response.
 
@@ -352,8 +352,8 @@ class RexsterClient(Client):
         """
         params = dict(script=script, params=params)
         if self.config.server_scripts is True:
-            params["load"] = self.scripts.namespace_map.keys() 
-        return self.request.post(gremlin_path,params)
+            params["load"] = load or [self.scripts.default_namespace]
+        return self.request.post(gremlin_path, params)
 
 
     # Vertex Proxy
