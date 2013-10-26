@@ -35,6 +35,7 @@ class Config(object):
     :ivar vertex_index: Name of the vertex index. Defaults to "vertex". 
     :ivar edge_index: Name of the edge index. Defaults to "edge". 
     :ivar autoindex: Enable auto indexing. Defaults to True.
+    :ivar server_scripts: Scripts are defined server side. Defaults to False.
 
     Example:
 
@@ -59,6 +60,7 @@ class Config(object):
         self.vertex_index = "vertex"
         self.edge_index = "edge"
         self.autoindex = True
+        self.server_scripts = False
         
         # Set the default log level and log handler
         self.set_logger(self.log_level, self.log_handler)

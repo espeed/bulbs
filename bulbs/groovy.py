@@ -2,6 +2,7 @@ import os
 import re
 import sre_parse
 import sre_compile
+from collections import namedtuple
 from sre_constants import BRANCH, SUBPATTERN
 import hashlib
 from . import utils
@@ -15,12 +16,20 @@ from . import utils
 # TODO: Simplify this. You don't need group pattern detection.
 
 
+
+Method = namedtuple('Method', ['definition', 'signature', 'body', 'sha1'])
+
 class GroovyScripts(object):
     """
     Store and manage an index of Gremlin-Groovy scripts.
 
+    :parm config: Config object.
+    :type config: bulbs.Config
+
     :param file_path: Path to the base Groovy scripts file.
     :type file_path: str
+
+    :ivar config: Config object.
 
     :ivar source_files: List containing the absolute paths to the script files,
                         in the order they were added.
@@ -34,7 +43,8 @@ class GroovyScripts(object):
     #: Relative path to the default script file
     default_file = "gremlin.groovy"
 
-    def __init__(self, file_path=None):
+    def __init__(self, config, file_path=None):
+        self.config = config
         self.source_files = list()  # an ordered set might be better
 
         # methods format: methods[method_name] = method_body
@@ -43,6 +53,19 @@ class GroovyScripts(object):
         if file_path is None:
             file_path = self._get_default_file()
         self.update(file_path)
+
+    def get_method(self, method_name):
+        """
+        Returns a Python namedtuple for the Groovy script with the method name.
+        
+        :param method_name: Name of a Groovy method.
+        :type method_name: str
+
+        :rtype: bulbs.groovy.Method
+
+        """
+        return self.methods[method_name]
+
 
     def get(self, method_name):
         """
@@ -54,10 +77,11 @@ class GroovyScripts(object):
         :rtype: str
 
         """
-        return self.methods[method_name]
         #script = self._build_script(method_definition, method_signature)
-        #return script
-
+        method = self.methods[method_name]
+        script = method.signature if self.config.server_scripts is True else method.body 
+        return script
+ 
     def update(self, file_path):
         """
         Updates the script index with the Groovy methods in the script file.
@@ -197,9 +221,10 @@ class Parser(object):
         # control by just using the method_body, which the GSE compiles,
         # creates a class out of, and stores in a classMap for reuse.
         # You can't do imports inside Groovy methods so just using the func body 
-        #sha1 = self._get_sha1(method_definition)
+        sha1 = self._get_sha1(method_definition)
         #self.methods[method_name] = (method_signature, method_definition, sha1)
-        self.methods[method_name] = method_body
+        method = Method(method_definition, method_signature, method_body, sha1)
+        self.methods[method_name] = method
 
     def _get_method_signature(self,method_definition):
         pattern = '^def(.*){'

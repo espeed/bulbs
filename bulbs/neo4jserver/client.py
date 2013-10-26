@@ -354,7 +354,7 @@ class Neo4jClient(Client):
         self.request = self.request_class(self.config, self.type_system.content_type)
 
         # Neo4j supports Gremlin so include the Gremlin-Groovy script library
-        self.scripts = GroovyScripts()
+        self.scripts = GroovyScripts(self.config)
         
         # Also include the Neo4j Server-specific Gremlin-Groovy scripts
         scripts_file = get_file_path(__file__, "gremlin.groovy")
