@@ -1,8 +1,9 @@
 import os
 import re
+import string
 import sre_parse
 import sre_compile
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 from sre_constants import BRANCH, SUBPATTERN
 import hashlib
 from . import utils
@@ -19,6 +20,15 @@ from . import utils
 
 Method = namedtuple('Method', ['definition', 'signature', 'body', 'sha1'])
 
+class LastUpdatedOrderedDict(OrderedDict):
+    """Store items in the order the keys were last added."""
+
+    def __setitem__(self, key, value):
+        if key in self:
+            del self[key]
+        OrderedDict.__setitem__(self, key, value)
+
+
 class GroovyScripts(object):
     """
     Store and manage an index of Gremlin-Groovy scripts.
@@ -33,7 +43,9 @@ class GroovyScripts(object):
 
     :ivar source_files: List containing the absolute paths to the script files,
                         in the order they were added.
-    :ivar methods: Dict mapping Groovy method names to the actual scripts.
+    :ivar methods: LastUpdatedOrderedDict mapping Groovy method names to the 
+                   Python Method object, which is a namedtuple containing the 
+                   Groovy script's definition, signature, body, and sha1.
 
     .. note:: Use the update() method to add subsequent script files. 
               Order matters. Groovy methods are overridden if subsequently added
@@ -45,29 +57,23 @@ class GroovyScripts(object):
 
     def __init__(self, config, file_path=None):
         self.config = config
-        self.source_files = list()  # an ordered set might be better
 
-        # methods format: methods[method_name] = method_body
-        self.methods = dict()
+        self.source_file_map = OrderedDict()   # source_file_map[file_path] = namespace
+
+        # may have model-specific namespaces
+        # methods format: methods[method_name] = method_object
+        self.namespace_map = OrderedDict()     # namespace_map[namespace] = methods
 
         if file_path is None:
             file_path = self._get_default_file()
-        self.update(file_path)
-
-    def get_method(self, method_name):
-        """
-        Returns a Python namedtuple for the Groovy script with the method name.
-        
-        :param method_name: Name of a Groovy method.
-        :type method_name: str
-
-        :rtype: bulbs.groovy.Method
-
-        """
-        return self.methods[method_name]
+        # default_namespace is derifed from the default_file so
+        # default_namespace will be "gremlin" assuming you don't change default_file
+        # or override default_file by passing in an explicit file_path
+        self.default_namespace = self._get_filename(file_path) 
+        self.update(file_path, self.default_namespace)
 
 
-    def get(self, method_name):
+    def get(self, method_name, namespace=None):
         """
         Returns the Groovy script with the method name.
         
@@ -77,12 +83,32 @@ class GroovyScripts(object):
         :rtype: str
 
         """
-        #script = self._build_script(method_definition, method_signature)
-        method = self.methods[method_name]
+        # Example: my_method                # uses default_namespace
+        #          my_method, my_namespace  # pass in namespace as an arg
+        #          my_namespace:my_method   # pass in  namespace via a method_name prefix
+        method = self.get_method(method_name, namespace)
         script = method.signature if self.config.server_scripts is True else method.body 
+        #script = self._build_script(method_definition, method_signature)
         return script
+
+    def get_methods(self, namespace):
+        return self.namespace_map[namespace]
+
+    def get_method(self, method_name, namespace=None):
+        """
+        Returns a Python namedtuple for the Groovy script with the method name.
+        
+        :param method_name: Name of a Groovy method.
+        :type method_name: str
+
+        :rtype: bulbs.groovy.Method
+
+        """
+        namespace, method_name = self._get_namespace_and_method_name(method_name, namespace)
+        methods = self.get_methods(namespace)
+        return methods[method_name]
  
-    def update(self, file_path):
+    def update(self, file_path, namespace=None):
         """
         Updates the script index with the Groovy methods in the script file.
 
@@ -91,8 +117,11 @@ class GroovyScripts(object):
         """
         file_path = os.path.abspath(file_path)
         methods = self._get_methods(file_path)
-        self._add_source_file(file_path)
-        self.methods.update(methods)
+        if namespace is None:
+            namespace = self._get_filename(file_path)
+        self._maybe_create_namespace(namespace)
+        self.source_file_map[file_path] = namespace
+        self.namespace_map[namespace].update(methods)
 
     def refresh(self):
         """
@@ -101,13 +130,30 @@ class GroovyScripts(object):
         :rtype: None
 
         """
-        for file_path in self.source_files:
+        for file_path in self.source_file_map:
+            namespace = self.source_file_map[file_path]
             methods = self._get_methods(file_path)
-            self.methods.update(methods)
+            self.namespace_map[namespace].update(methods)
 
-    def _add_source_file(self,file_path):
-        # order matters (last in takes precedence if it overrides a method)
-        self.source_files.append(file_path)
+    def _maybe_create_namespace(self, namespace):
+        if namespace not in self.namespace_map:
+            methods = LastUpdatedOrderedDict()
+            self.namespace_map[namespace] = methods
+
+    def _get_filename(self, file_path):
+        base_name = os.path.basename(file_path)
+        file_name, file_ext = os.path.splitext(base_name)
+        return file_name
+
+    def _get_namespace_and_method_name(self, method_name, namespace=None):
+        if namespace is None:
+            namespace = self.default_namespace
+        parts = string.split(method_name, ":") 
+        if len(parts) == 2:
+            # a namespace explicitly set in method_name takes precedent
+            namespace = parts[0]
+            method_name = parts[1]
+        return namespace, method_name
 
     def _get_methods(self,file_path):
         return Parser(file_path).get_methods()
@@ -202,7 +248,7 @@ class Scanner:
 class Parser(object):
 
     def __init__(self, groovy_file):
-        self.methods = {}
+        self.methods = OrderedDict()
         # handler format: (pattern, callback)
         handlers = [ ("^def( .*)", self.add_method), ]
         Scanner(handlers).scan(groovy_file)

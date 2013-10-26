@@ -350,7 +350,9 @@ class RexsterClient(Client):
         :rtype: RexsterResponse
 
         """
-        params = dict(script=script,params=params)
+        params = dict(script=script, params=params)
+        if self.config.server_scripts is True:
+            params["load"] = self.scripts.namespace_map.keys() 
         return self.request.post(gremlin_path,params)
 
 

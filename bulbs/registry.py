@@ -3,6 +3,7 @@
 # Copyright 2012 James Thornton (http://jamesthornton.com)
 # BSD License (see LICENSE for details)
 #
+from collections import OrderedDict
 from bulbs.element import Vertex, Edge
 
 
@@ -20,7 +21,7 @@ class Registry(object):
         self.class_map = dict(vertex=Vertex,edge=Edge)
         self.proxy_map = dict()
         self.index_map = dict()
-        self.scripts_map = dict()
+        self.scripts_map = OrderedDict()
 
     # Classes
 

@@ -7,6 +7,7 @@
 Interface for interacting with a graph database through Rexster.
 
 """
+import os
 from bulbs.config import Config
 from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, Edge
@@ -57,6 +58,26 @@ class Graph(BaseGraph):
         self.gremlin = Gremlin(self.client)
         self.scripts = self.client.scripts    # for convienience 
 
+    def make_script_files(self, out_dir=None):
+        """
+        Generates a server-side scripts file.
+        """
+        #out_file = self.default_file if out_file not None else out_file
+        namespace_contents = []
+        for namespace in self.scripts.namespace_map:
+            methods = self.scripts.namespace_map[namespace]
+            # building script content from stored methods 
+            # instead of sourcing files directly to filter out overridden methods
+            method_defs = []
+            for method_name in methods:
+                method = methods[method_name]
+                method_defs.append(method.definition)
+            content = "\n\n".join(method_defs)
+            scripts_file = "%s.groovy" % namespace
+            if out_dir:
+                scripts_file = os.path.join(out_dir, scripts_file)
+            with open(scripts_file, "w") as fout:
+                fout.write(content + "\n")
 
     def load_graphml(self,uri):
         """

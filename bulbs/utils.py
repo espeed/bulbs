@@ -41,8 +41,11 @@ else:
 # Logging
 #
 
-def get_logger(name,level=None):
-    logger = logging.getLogger(name)
+bulbs_logger = logging.getLogger('bulbs')
+
+def get_logger(name, level=None):
+    #logger = logging.getLogger(name)
+    logger = bulbs_logger.getChild(name)
     if level:
         logger.setLevel(level)
     return logger
