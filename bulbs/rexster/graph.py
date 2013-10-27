@@ -61,21 +61,19 @@ class Graph(BaseGraph):
     def make_script_files(self, out_dir=None):
         """
         Generates a server-side scripts file.
+
         """
-        #out_file = self.default_file if out_file not None else out_file
-        namespace_contents = []
+        out_dir = out_dir or os.getcwd()
         for namespace in self.scripts.namespace_map:
-            methods = self.scripts.namespace_map[namespace]
             # building script content from stored methods 
             # instead of sourcing files directly to filter out overridden methods
+            methods = self.scripts.namespace_map[namespace]
+            scripts_file = os.path.join(out_dir, "%s.groovy" % namespace)
             method_defs = []
             for method_name in methods:
                 method = methods[method_name]
                 method_defs.append(method.definition)
             content = "\n\n".join(method_defs)
-            scripts_file = "%s.groovy" % namespace
-            if out_dir:
-                scripts_file = os.path.join(out_dir, scripts_file)
             with open(scripts_file, "w") as fout:
                 fout.write(content + "\n")
 
