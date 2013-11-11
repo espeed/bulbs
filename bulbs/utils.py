@@ -13,6 +13,21 @@ import datetime
 import calendar
 import omnijson as json # supports Python 2.5-3.2
 
+
+
+#
+# Unicode - see Armin's http://lucumr.pocoo.org/2013/7/2/the-updated-guide-to-unicode/
+#
+
+def decoding_dance(s, charset='utf-8', errors='replace'):
+    return s.encode('latin1').decode(charset, errors)
+
+def encoding_dance(s, charset='utf-8', errors='replace'):
+    if isinstance(s, bytes):
+        return s.decode('latin1', errors)
+    return s.encode(charset).decode('latin1', errors)
+
+
 #
 # Python 3 
 #
@@ -24,7 +39,9 @@ if sys.version < '3':
     from urlparse import urlsplit, urlparse
 
     def u(x):
-        return codecs.unicode_escape_decode(x)[0]
+        #return codecs.unicode_escape_decode(x)[0]
+        return decoding_dance(x)
+        
 else:
     # ujson is faster but hasn't been ported to Python 3 yet
 #    import json
@@ -124,13 +141,17 @@ def get_key_value(key, value, pair):
 # Client Utils
 #
 
+
 def build_path(*args):
     # don't include segment if it's None
-    # quote_plus doesn't work for neo4j index lookups 
-    # e.g., index/node/test_idxV/name/James+Thornton
+    # quote_plus doesn't work for neo4j index lookups;
+    # for example, this won't work: index/node/test_idxV/name/James+Thornton
     segments = [quote(u(str(segment)), safe='') for segment in args if segment is not None]
     path = "/".join(segments)
     return path
+
+#def quote_segment(segment):
+#    return segment if type(segment) == unicode else 
 
 #
 # Time Utils

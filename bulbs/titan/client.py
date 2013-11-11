@@ -118,10 +118,29 @@ class TitanClient(RexsterClient):
     default_uri = TITAN_URI
     request_class = TitanRequest
 
+
+
     def __init__(self, config=None, db_name=None):
         super(TitanClient, self).__init__(config, db_name)
+        index_data_type = dict(string="String", 
+                               integer="Integer", 
+                               geoshape="Geoshape")
 
     # Titan-Specific Index Methods
+
+    # https://github.com/thinkaurelius/titan/wiki/Indexing-Backend-Overview                       
+    # https://github.com/thinkaurelius/titan/wiki/Type-Definition-Overview
+
+
+    def create_edge_label(self, label):
+        pass
+
+    def create_vertex_property_key():
+        pass
+
+    def create_edge_property_key():
+        pass
+    
 
     def create_vertex_key_index(self, key):
         path = build_path(key_index_path, "vertex", key)

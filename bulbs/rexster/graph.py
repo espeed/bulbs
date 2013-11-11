@@ -8,6 +8,7 @@ Interface for interacting with a graph database through Rexster.
 
 """
 import os
+import io
 from bulbs.config import Config
 from bulbs.gremlin import Gremlin
 from bulbs.element import Vertex, Edge
@@ -74,7 +75,7 @@ class Graph(BaseGraph):
                 method = methods[method_name]
                 method_defs.append(method.definition)
             content = "\n\n".join(method_defs)
-            with open(scripts_file, "w") as fout:
+            with io.open(scripts_file, "w", encoding='utf-8') as fout:
                 fout.write(content + "\n")
 
     def load_graphml(self,uri):

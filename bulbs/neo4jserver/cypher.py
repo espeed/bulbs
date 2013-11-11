@@ -5,6 +5,7 @@
 #
 
 import os
+import io
 import re
 import yaml 
 from string import Template
@@ -64,13 +65,13 @@ class Yaml(object):
 
     def _get_templates(self,file_name):
         templates = dict()
-        f = open(file_name)
-        yaml_map = yaml.load(f)    
-        for name in yaml_map: # Python 3
-            template = yaml_map[name]
-            #template = ';'.join(lines.split('\n'))
-            method_signature = self._get_method_signature(template)
-            templates[name] = Template(template)
+        with io.open (file_name, encoding='utf-8') as f:
+            yaml_map = yaml.load(f)    
+            for name in yaml_map: # Python 3
+                template = yaml_map[name]
+                #template = ';'.join(lines.split('\n'))
+                method_signature = self._get_method_signature(template)
+                templates[name] = Template(template)
         return templates
 
     def _get_method_signature(self,template):

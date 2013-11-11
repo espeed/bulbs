@@ -1,4 +1,5 @@
 import os
+import io
 import re
 import string
 import sre_parse
@@ -148,7 +149,7 @@ class GroovyScripts(object):
     def _get_namespace_and_method_name(self, method_name, namespace=None):
         if namespace is None:
             namespace = self.default_namespace
-        parts = string.split(method_name, ":") 
+        parts = method_name.split(":") 
         if len(parts) == 2:
             # a namespace explicitly set in method_name takes precedent
             namespace = parts[0]
@@ -240,7 +241,7 @@ class Scanner:
             callback(self,match.group(1))
 
     def scan(self,file_path):
-        fin = open(file_path, 'r')    
+        fin = io.open(file_path, 'r', encoding='utf-8')    
         for line in fin:
             self.get_item(fin,line)
 
@@ -289,8 +290,9 @@ class Parser(object):
 
     def _get_sha1(self,method_definition):
         # this is used to detect version changes
+        method_definition_bytes = method_definition.encode('utf-8')
         sha1 = hashlib.sha1()
-        sha1.update(method_definition)
+        sha1.update(method_definition_bytes)
         return sha1.hexdigest()
 
 

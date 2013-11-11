@@ -1,4 +1,5 @@
 import os
+import io
 import yaml 
 from string import Template
 from .utils import get_file_path
@@ -37,11 +38,11 @@ class Yaml(object):
 
     def _get_templates(self,file_name):
         templates = dict()
-        f = open(file_name)
-        yaml_map = yaml.load(f)    
-        for name in yaml_map: # Python 3
-            template = yaml_map[name] 
-            templates[name] = Template(template)
+        with io.open(file_name, encoding='utf-8') as f:
+            yaml_map = yaml.load(f)    
+            for name in yaml_map: # Python 3
+                template = yaml_map[name] 
+                templates[name] = Template(template)
         return templates
 
     #def _quote_params(self,params):
