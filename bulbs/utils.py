@@ -7,6 +7,8 @@ import os
 import sys
 import inspect
 import logging
+import numbers
+import codecs
 
 import time
 import datetime
@@ -16,32 +18,18 @@ import omnijson as json # supports Python 2.5-3.2
 
 
 #
-# Unicode - see Armin's http://lucumr.pocoo.org/2013/7/2/the-updated-guide-to-unicode/
-#
-
-def decoding_dance(s, charset='utf-8', errors='replace'):
-    return s.encode('latin1').decode(charset, errors)
-
-def encoding_dance(s, charset='utf-8', errors='replace'):
-    if isinstance(s, bytes):
-        return s.decode('latin1', errors)
-    return s.encode(charset).decode('latin1', errors)
-
-
-#
 # Python 3 
 #
 
 if sys.version < '3':
-    import codecs
 #    import ujson as json
     from urllib import quote, quote_plus, urlencode
     from urlparse import urlsplit, urlparse
 
-    def u(x):
-        #return codecs.unicode_escape_decode(x)[0]
-        return decoding_dance(x)
-        
+    # def u(x):
+    #     return codecs.unicode_escape_decode(x)[0]
+
+                
 else:
     # ujson is faster but hasn't been ported to Python 3 yet
 #    import json
@@ -51,8 +39,18 @@ else:
     long = int
     unicode = str
 
-    def u(x):
-        return x
+    # def u(x):
+    #     return x
+
+# NOTE: now using the same unicode func for both Python 2 and Python 3
+# http://stackoverflow.com/questions/6625782/unicode-literals-that-work-in-python-3-and-2
+# Unicode - see Armin's http://lucumr.pocoo.org/2013/7/2/the-updated-guide-to-unicode/
+def u(x):
+    byte_string, length = codecs.unicode_escape_encode(x)
+    unicode_string, length = codecs.unicode_escape_decode(x)
+    return unicode_string
+
+
 
 #
 # Logging
@@ -146,12 +144,14 @@ def build_path(*args):
     # don't include segment if it's None
     # quote_plus doesn't work for neo4j index lookups;
     # for example, this won't work: index/node/test_idxV/name/James+Thornton
-    segments = [quote(u(str(segment)), safe='') for segment in args if segment is not None]
+    segments = [quote(u(to_string(segment)), safe='') for segment in args if segment is not None]
     path = "/".join(segments)
     return path
 
-#def quote_segment(segment):
-#    return segment if type(segment) == unicode else 
+def to_string(value):
+    # maybe convert a number to a string
+    return value if not isinstance(value, numbers.Number) else str(value)
+   
 
 #
 # Time Utils
