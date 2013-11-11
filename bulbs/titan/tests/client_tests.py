@@ -11,7 +11,7 @@ import time
 
 # Default database. You can override this with the command line:
 # $ python client_tests.py --db mydb
-db_name = "titanexample"
+db_name = "graph"
 
 #client = TitanClient(db_name=db_name)
 #client.config.set_logger(DEBUG)

@@ -47,7 +47,7 @@ else:
 # Unicode - see Armin's http://lucumr.pocoo.org/2013/7/2/the-updated-guide-to-unicode/
 def u(x):
     byte_string, length = codecs.unicode_escape_encode(x)
-    unicode_string, length = codecs.unicode_escape_decode(x)
+    unicode_string, length = codecs.unicode_escape_decode(byte_string)
     return unicode_string
 
 

@@ -8,7 +8,7 @@ from bulbs.titan import Graph, TitanClient, TITAN_URI, \
 from bulbs.tests import GremlinTestCase
 
 # Setting a module var looks to be the easiest way to do this
-db_name = "emptygraph"
+db_name = "graph"
 
 def test_suite():
     # pass in a db_name to test a specific database
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # http://www.doughellmann.com/PyMOTW/argparse/
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--db', default="titanexample")
+    parser.add_argument('--db', default="graph")
     args = parser.parse_args()
     
     db_name = args.db

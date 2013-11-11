@@ -282,9 +282,14 @@ class KeyIndex(Index):
     def create_key(self, key):
         # TODO: You can't create a key if prop already exists - workaround?
         if self.base_type is "edge":
-            # Titan does not support edge indices.
-            raise NotImplementedError
-        return self.client.create_vertex_index_key(key)
+            return self.create_edge_key(key)
+        return self.create_vertex_key(key)
+                        
+    def create_vertex_key(self, key):
+        return self.client.create_vertex_key_index(key)        
+
+    def create_edge_key(self, key):
+        return self.client.create_vertex_key_index(key)
 
     def rebuild(self):
         raise NotImplementedError # (for now)

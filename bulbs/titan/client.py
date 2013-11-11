@@ -26,8 +26,7 @@ from bulbs.rexster.client import RexsterClient, \
     RexsterResponse, RexsterResult
 
 # The default URIs
-TITAN_URI = "http://localhost:8182/graphs/titanexample"
-SAIL_URI = "http://localhost:8182/graphs/sailgraph"
+TITAN_URI = "http://localhost:8182/graphs/graph"
 
 # The logger defined in Config
 log = get_logger(__name__)
@@ -89,6 +88,11 @@ class TitanRequest(Request):
     response_class = TitanResponse
 
 
+data_type = dict(string="String", 
+                 integer="Integer", 
+                 geoshape="Geoshape",)
+
+
 class TitanClient(RexsterClient):
     """
     Low-level client that sends a request to Titan and returns a response.
@@ -122,37 +126,7 @@ class TitanClient(RexsterClient):
 
     def __init__(self, config=None, db_name=None):
         super(TitanClient, self).__init__(config, db_name)
-        index_data_type = dict(string="String", 
-                               integer="Integer", 
-                               geoshape="Geoshape")
 
-    # Titan-Specific Index Methods
-
-    # https://github.com/thinkaurelius/titan/wiki/Indexing-Backend-Overview                       
-    # https://github.com/thinkaurelius/titan/wiki/Type-Definition-Overview
-
-
-    def create_edge_label(self, label):
-        pass
-
-    def create_vertex_property_key():
-        pass
-
-    def create_edge_property_key():
-        pass
-    
-
-    def create_vertex_key_index(self, key):
-        path = build_path(key_index_path, "vertex", key)
-        params = None
-        return self.request.post(path, params)
-
-    def create_edge_key_index(self, key):
-        # Titan doesn't support edge indices
-        #path = build_path(key_index_path, "edge", key)
-        #params = None
-        #return self.request.post(path, params)
-        raise NotImplementedError
 
     # GET 
 
@@ -219,6 +193,33 @@ class TitanClient(RexsterClient):
 
     # Key Indices
 
+    # Titan-Specific Index Methods
+
+    # https://github.com/thinkaurelius/titan/wiki/Indexing-Backend-Overview                       
+    # https://github.com/thinkaurelius/titan/wiki/Type-Definition-Overview
+
+    def create_edge_label(self, label):
+        # TODO: custom gremlin method
+        pass
+
+    def create_vertex_property_key():
+        # TODO: custom gremlin method
+        pass
+
+    def create_edge_property_key():
+        # TODO: custom gremlin method
+        pass
+    
+    def create_vertex_key_index(self, key):
+        path = build_path(key_index_path, "vertex", key)
+        params = None
+        return self.request.post(path, params)
+
+    def create_edge_key_index(self, key):
+        path = build_path(key_index_path, "edge", key)
+        params = None
+        return self.request.post(path, params)
+
     def get_vertex_keys(self):
         path = build_path(key_index_path, "vertex")
         params = None
@@ -233,18 +234,6 @@ class TitanClient(RexsterClient):
         path = key_index_path
         params = None
         return self.request.get(path, params)
-
-    # POST
-    
-    def create_vertex_index_key(self, key):
-        path = build_path(key_index_path, "vertex", key)
-        params = None
-        return self.request.post(path, params)
-
-    def create_edge_index_key(self, key):
-        path = build_path(key_index_path, "edge", key)
-        params = None
-        return self.request.post(path, params)
 
 
     # Index Proxy - General
