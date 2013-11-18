@@ -358,7 +358,7 @@ class RexsterClient(Client):
 
     # Vertex Proxy
 
-    def create_vertex(self, data):
+    def create_vertex(self, data, keys=None):
         """
         Creates a vertex and returns the Response.
 
@@ -395,7 +395,7 @@ class RexsterClient(Client):
         params = None
         return self.gremlin(script, params)
 
-    def update_vertex(self, _id, data):
+    def update_vertex(self, _id, data, keys=None):
         """
         Updates the vertex with the _id and returns the Response.
 
@@ -427,7 +427,7 @@ class RexsterClient(Client):
 
     # Edge Proxy
 
-    def create_edge(self, outV, label, inV, data={}): 
+    def create_edge(self, outV, label, inV, data={}, keys=None): 
         """
         Creates a edge and returns the Response.
         
@@ -475,7 +475,7 @@ class RexsterClient(Client):
         params = None
         return self.gremlin(script, params)
 
-    def update_edge(self,_id,data):
+    def update_edge(self,_id, data, keys=None):
         """
         Updates the edge with the _id and returns the Response.
 

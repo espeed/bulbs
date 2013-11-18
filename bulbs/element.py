@@ -548,7 +548,7 @@ class VertexProxy(object):
         # Add element class to Registry so we can initialize query results.
         self.client.registry.add_class(element_class)
 
-    def create(self, _data=None, **kwds):
+    def create(self, _data=None, _keys=None, **kwds):
         """
         Adds a vertex to the database and returns it.
 
@@ -562,7 +562,7 @@ class VertexProxy(object):
 
         """
         data = build_data(_data, kwds)
-        resp = self.client.create_vertex(data)
+        resp = self.client.create_vertex(data, keys=_keys)
         return initialize_element(self.client, resp.results)
 
     def get(self, _id):
@@ -581,7 +581,7 @@ class VertexProxy(object):
         except LookupError:
             return None
         
-    def get_or_create(self, key, value, _data=None, **kwds):
+    def get_or_create(self, key, value, _data=None, _keys=None, **kwds):
         """
         Lookup a vertex in the index and create it if it doesn't exsit.
 
@@ -606,7 +606,7 @@ class VertexProxy(object):
         # EdgeProxy doesn't have this method anyway.
         vertex = self.index.get_unique(key, value)
         if vertex is None:
-            vertex = self.create(_data, **kwds)
+            vertex = self.create(_data, keys=_keys, **kwds)
         return vertex
 
     def get_all(self):
@@ -619,7 +619,7 @@ class VertexProxy(object):
         resp = self.client.get_all_vertices()
         return initialize_elements(self.client, resp)
 
-    def update(self,_id, _data=None, **kwds):
+    def update(self,_id, _data=None, _keys=None, **kwds):
         """
         Updates an element in the graph DB and returns it.
 
@@ -638,7 +638,7 @@ class VertexProxy(object):
         # NOTE: this no longer returns an initialized element because not all 
         # Clients return element data, e.g. Neo4jServer retuns nothing.
         data = build_data(_data, kwds)
-        self.client.update_vertex(_id, _data)
+        self.client.update_vertex(_id, _data, keys=_keys)
 
     def remove_properties(self, _id):
         """
@@ -851,7 +851,7 @@ class EdgeProxy(object):
         # Add element class to Registry so we can initialize query results.
         self.client.registry.add_class(element_class)
 
-    def create(self, outV, label, inV, _data=None, **kwds):
+    def create(self, outV, label, inV, _data=None, _keys=None, **kwds):
         """
         Creates an edge in the database and returns it.
         
@@ -876,7 +876,7 @@ class EdgeProxy(object):
         assert label is not None
         data = build_data(_data, kwds)
         outV, inV = coerce_vertices(outV, inV)
-        resp = self.client.create_edge(outV, label, inV, data)
+        resp = self.client.create_edge(outV, label, inV, data, keys=_keys)
         return initialize_element(self.client, resp.results)
 
     def get(self,_id):
@@ -906,7 +906,7 @@ class EdgeProxy(object):
         return initialize_elements(self.client, resp)
 
 
-    def update(self,_id, _data=None, **kwds):
+    def update(self,_id, _data=None, _keys=None, **kwds):
         """ 
         Updates an edge in the database and returns it. 
         
@@ -925,7 +925,7 @@ class EdgeProxy(object):
         # NOTE: this no longer returns an initialized element because 
         # not all Clients return element data, e.g. Neo4jServer retuns nothing.
         data = build_data(_data, kwds)
-        return self.client.update_edge(_id, data)
+        return self.client.update_edge(_id, data, keys=_keys)
                     
     def remove_properties(self, _id):
         """

@@ -409,7 +409,7 @@ class Neo4jClient(Client):
 
     # Vertex Proxy
 
-    def create_vertex(self, data):
+    def create_vertex(self, data, keys=None):
         """
         Creates a vertex and returns the Response.
 
@@ -419,9 +419,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        if self.config.autoindex is True:
+        if keys or self.config.autoindex is True:
             index_name = self.config.vertex_index
-            return self.create_indexed_vertex(data, index_name, keys=None)
+            return self.create_indexed_vertex(data, index_name, keys=keys)
         path = vertex_path
         params = self._remove_null_values(data)
         return self.request.post(path, params)
@@ -451,7 +451,7 @@ class Neo4jClient(Client):
         params = None
         return self.gremlin(script, params)
 
-    def update_vertex(self, _id, data):
+    def update_vertex(self, _id, data, keys=None):
         """
         Updates the vertex with the _id and returns the Response.
 
@@ -464,9 +464,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        if self.config.autoindex is True:
+        if keys or self.config.autoindex is True:
             index_name = self.config.vertex_index
-            return self.update_indexed_vertex(_id,data,index_name,keys=None)
+            return self.update_indexed_vertex(_id,data,index_name,keys=keys)
         path = self._build_vertex_path(_id,"properties")
         params = self._remove_null_values(data)
         return self.request.put(path, params)
@@ -487,7 +487,7 @@ class Neo4jClient(Client):
         
     # Edge Proxy
 
-    def create_edge(self, outV, label, inV, data=None): 
+    def create_edge(self, outV, label, inV, data=None, keys=None): 
         """
         Creates a edge and returns the Response.
         
@@ -506,9 +506,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        if self.config.autoindex is True:
+        if keys or self.config.autoindex is True:
             index_name = self.config.edge_index
-            return self.create_indexed_edge(outV,label,inV,data,index_name,keys=None)
+            return self.create_indexed_edge(outV,label,inV,data,index_name,keys=keys)
         data = self._remove_null_values(data)
         inV_uri = self._build_vertex_uri(inV)
         path = build_path(vertex_path, outV, "relationships")
@@ -540,7 +540,7 @@ class Neo4jClient(Client):
         params = None
         return self.gremlin(script, params)
 
-    def update_edge(self, _id, data):
+    def update_edge(self, _id, data, keys=None):
         """
         Updates the edge with the _id and returns the Response.
 
@@ -553,9 +553,9 @@ class Neo4jClient(Client):
         :rtype: Neo4jResponse
 
         """
-        if self.config.autoindex is True:
+        if keys or self.config.autoindex is True:
             index_name = self.config.edge_index
-            return self.update_indexed_edge(_id,data,index_name,keys=None)
+            return self.update_indexed_edge(_id,data,index_name,keys=keys)
         path = build_path(edge_path,_id,"properties")
         params = self._remove_null_values(data)
         return self.request.put(path, params)
