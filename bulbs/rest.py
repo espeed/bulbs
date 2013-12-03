@@ -12,7 +12,7 @@ import httplib2
 
 import bulbs
 from bulbs.base import Response
-from .utils import json, get_logger, quote, urlencode
+from .utils import json, get_logger, quote, urlencode, encode_dict
 
 
 log = get_logger(__name__)
@@ -195,9 +195,11 @@ class Request(object):
         uri = "%s/%s" % (self.config.root_uri.rstrip("/"), path.lstrip("/"))
 
         if params and method is GET:
+            params = encode_dict(params)
             uri = "%s?%s" % (uri, urlencode(params))
         
         if params and (method in [PUT, POST, DELETE]):
+            #params = encode_dict(params)
             body = json.dumps(params)
             post_headers = {'Content-Type': self.content_type}
             headers.update(post_headers)

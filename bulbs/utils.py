@@ -10,11 +10,11 @@ import logging
 import numbers
 import codecs
 
+import six  # Python 3
 import time
 import datetime
 import calendar
 import omnijson as json # supports Python 2.5-3.2
-
 
 
 #
@@ -144,14 +144,40 @@ def build_path(*args):
     # don't include segment if it's None
     # quote_plus doesn't work for neo4j index lookups;
     # for example, this won't work: index/node/test_idxV/name/James+Thornton
-    segments = [quote(u(to_string(segment)), safe='') for segment in args if segment is not None]
+    segments = [quote(to_bytes(segment), safe='') for segment in args if segment is not None]
     path = "/".join(segments)
     return path
+
+def to_bytes(value):
+    # urllib does not handle Unicode at all. 
+    # URLs don't contain non-ASCII characters, by definition. 
+    # When you're dealing with urllib you should use only byte strings. 
+    # http://stackoverflow.com/a/5605354/161085
+    string_value = to_string(value)             # may have been numeric
+    unicode_value = u(string_value)             # ensure unicode
+    byte_string = unicode_value.encode('utf8')  # encode as utf8 bytestring
+    return byte_string
 
 def to_string(value):
     # maybe convert a number to a string
     return value if not isinstance(value, numbers.Number) else str(value)
    
+def encode_value(value):
+    return value.encode('utf-8') if isinstance(value, str) else value
+
+def is_string(value):
+    return isinstance(value, six.string_types)
+
+def encode_dict(d):
+    for key in d:
+        val = d.pop(key)
+        #key = encode_value(key)
+        #d[key] = encode_value(val)
+        key = to_bytes(key) if is_string(key) else key
+        d[key] = to_bytes(val) if is_string(val) else val
+    return d
+        
+
 
 #
 # Time Utils

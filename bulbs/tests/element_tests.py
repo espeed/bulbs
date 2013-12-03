@@ -56,6 +56,7 @@ class VertexProxyTestCase(BulbsTestCase):
         assert v1b.name == data['name']
 
 
+
 class VertexTestCase(BulbsTestCase):
     
     def setUp(self):

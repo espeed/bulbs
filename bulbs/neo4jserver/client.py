@@ -9,7 +9,7 @@ Bulbs supports pluggable backends. This is the Neo4j Server client.
 """
 import re
 
-from bulbs.config import Config, DEBUG
+from bulbs.config import Config, DEBUG, ERROR
 from bulbs.registry import Registry
 from bulbs.utils import get_logger
 
@@ -878,7 +878,7 @@ class Neo4jClient(Client):
         path = build_path(index_path, vertex_path, index_name, key, value)
         params = None
         return self.request.get(path, params)
-
+        
     def query_vertex(self, index_name, query):
         """
         Queries the index and returns the Response.

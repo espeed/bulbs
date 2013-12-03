@@ -59,7 +59,7 @@ class Config(object):
         self.type_system = "json" 
         self.vertex_index = "vertex"
         self.edge_index = "edge"
-        self.autoindex = True
+        self.autoindex = True         # Titan Client sets autoindex to false
         self.server_scripts = False
         
         # Set the default log level and log handler

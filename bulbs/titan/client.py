@@ -127,6 +127,9 @@ class TitanClient(RexsterClient):
     def __init__(self, config=None, db_name=None):
         super(TitanClient, self).__init__(config, db_name)
 
+        # override so Rexster create_vertex() method doesn't try to index
+        self.config.autoindex = False 
+
 
     # GET 
 

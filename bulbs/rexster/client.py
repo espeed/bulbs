@@ -368,8 +368,11 @@ class RexsterClient(Client):
         :rtype: RexsterResponse
 
         """
+        if keys or self.config.autoindex is True:
+            index_name = self.config.vertex_index
+            return self.create_indexed_vertex(data, index_name, keys=keys)
         data = self._remove_null_values(data)
-        return self.request.post(vertex_path,data)
+        return self.request.post(vertex_path, data)
 
     def get_vertex(self, _id):
         """
@@ -446,6 +449,9 @@ class RexsterClient(Client):
         :rtype: RexsterResponse
 
         """
+        if keys or self.config.autoindex is True:
+            index_name = self.config.edge_index
+            return self.create_indexed_edge(outV,label,inV,data,index_name,keys=keys)
         data = self._remove_null_values(data)
         edge_data = dict(_outV=outV,_label=label,_inV=inV)
         data.update(edge_data)
@@ -921,7 +927,9 @@ class RexsterClient(Client):
         data = self._remove_null_values(data)
         params = dict(data=data,index_name=index_name,keys=keys)
         script = self.scripts.get("create_indexed_vertex")
-        return self.gremlin(script,params)
+        resp = self.gremlin(script,params)
+        resp.results = resp.one()
+        return resp
     
     def update_indexed_vertex(self, _id, data, index_name, keys=None):
         """
@@ -979,7 +987,9 @@ class RexsterClient(Client):
         params = dict(data=data,index_name=index_name,keys=keys)
         params.update(edge_params)
         script = self.scripts.get("create_indexed_edge")
-        return self.gremlin(script,params)
+        resp = self.gremlin(script,params)
+        resp.results = resp.one()
+        return resp
         
     def update_indexed_edge(self, _id, data, index_name, keys=None):
         """
