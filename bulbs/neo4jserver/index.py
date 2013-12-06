@@ -337,6 +337,35 @@ class Index(object):
             result = get_one_result(resp)
             return initialize_element(self.client,result)
 
+    def create_unique_vertex(self, key=None, value=None, data=None, **pair):
+        """
+        Returns a tuple containing two values. The first is the element if it
+        was created / found. The second is a boolean value the tells whether
+        the element was created (True) or not (False).
+
+        :param key: The index key.
+        :type key: str
+
+        :param value: The key's value.
+        :type value: str or int
+
+        :param pair: Optional key/value pair. Example: name="James"
+        :type pair: key/value pair
+
+        :rtype: tuple
+
+        """
+        key, value = self._get_key_value(key,value,pair)
+        data = {} if data is None else data
+        create = self._get_method(vertex="create_unique_vertex")
+        resp = create(self.index_name, key, value, data)
+        if resp.total_size > 0:
+            result = get_one_result(resp)
+            was_created = resp.headers['status'] == '201'
+            return initialize_element(self.client, result), was_created
+        else:
+            return None, False
+
     def remove(self, _id, key=None, value=None, **pair):
         """
         Remove the element from the index located by key/value.
