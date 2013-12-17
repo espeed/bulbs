@@ -878,6 +878,33 @@ class Neo4jClient(Client):
         path = build_path(index_path, vertex_path, index_name, key, value)
         params = None
         return self.request.get(path, params)
+
+    def create_unique_vertex(self, index_name, key, value, data=None):
+        """
+        Create unique (based on the key / value pair) vertex with the properties
+        described by data.
+
+        :param index_name: Name of the index.
+        :type index_name: str
+
+        :param key: Name of the key.
+        :type key: str
+
+        :param value: Value of the key.
+        :type value: str
+
+        :param data: Properties of the new element.
+        :type data: dict
+
+        :rtype: Neo4jResponse
+
+        """
+        data = {} if data is None else data
+        data = self._remove_null_values(data)
+        path = (build_path(index_path, vertex_path, index_name) +
+                '?uniqueness=get_or_create')
+        params = {'key': key, 'value': value, 'properties': data}
+        return self.request.post(path, params)
         
     def query_vertex(self, index_name, query):
         """
