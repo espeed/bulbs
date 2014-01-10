@@ -36,6 +36,7 @@ class Config(object):
     :ivar edge_index: Name of the edge index. Defaults to "edge". 
     :ivar autoindex: Enable auto indexing. Defaults to True.
     :ivar server_scripts: Scripts are defined server side. Defaults to False.
+    :ivar timeout: Optional timeout in seconds. Defaults to None
 
     Example:
 
@@ -47,7 +48,7 @@ class Config(object):
 
     """
 
-    def __init__(self, root_uri, username=None, password=None):
+    def __init__(self, root_uri, username=None, password=None, timeout=None):
         self.root_uri = root_uri
         self.username = username
         self.password = password
@@ -61,6 +62,7 @@ class Config(object):
         self.edge_index = "edge"
         self.autoindex = True         # Titan Client sets autoindex to false
         self.server_scripts = False
+        self.timeout = timeout
         
         # Set the default log level and log handler
         self.set_logger(self.log_level, self.log_handler)
