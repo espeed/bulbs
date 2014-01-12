@@ -75,7 +75,10 @@ class Request(object):
         self.config = config
         self.content_type = content_type
         self.user_agent = "bulbs/%s" % (bulbs.__version__)
-        self.http = httplib2.Http()    
+        if config.timeout is not None:
+            self.http = httplib2.Http(timeout=int(config.timeout))
+        else:
+            self.http = httplib2.Http()    
         self._add_credentials(config.username, config.password)
         self._initialize()
 
