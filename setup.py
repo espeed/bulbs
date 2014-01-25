@@ -64,7 +64,7 @@ else:
 
 setup (
     name = 'bulbs',
-    version = '0.3.26',
+    version = '0.3.27',
     url = 'https://github.com/espeed/bulbs',
     license = 'BSD',
     author = 'James Thornton',
