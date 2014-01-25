@@ -271,6 +271,26 @@ class Index(object):
         return initialize_elements(self.client,resp)
 
 
+    def get_unique(self,key=None,value=None,**pair):
+        """
+        Returns a max of 1 elements matching the key/value pair in the index.
+
+        :param key: The index key. This is optional because you can instead 
+                    supply a key/value pair such as name="James". 
+
+        :param value: The index key's value. This is optional because you can 
+                      instead supply a key/value pair such as name="James". 
+
+        :param pair: Optional keyword param. Instead of supplying key=name 
+                     and value = 'James', you can supply a key/value pair in
+                     the form of name='James'.
+        """
+        key, value = self._get_key_value(key,value,pair)
+        resp = self.client.lookup_vertex(self.index_name,key,value)
+        if resp.total_size > 0:
+            result = get_one_result(resp)
+            return initialize_element(self.client, result)
+
 class KeyIndex(Index):
 
     def keys(self):
