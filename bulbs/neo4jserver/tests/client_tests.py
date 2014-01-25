@@ -1,3 +1,4 @@
+from uuid import uuid1
 import unittest
 from bulbs.config import Config
 from bulbs.utils import json
@@ -18,12 +19,28 @@ class Neo4jClientTestCase(ClientTestCase):
         config = Config(NEO4J_URI)
         self.client = Neo4jClient(config)
 
+
 # Separated client index tests for Titan
 class Neo4jClientIndexTestCase(ClientIndexTestCase):
 
     def setUp(self):
         config = Config(NEO4J_URI)
         self.client = Neo4jClient(config)
+
+    def test_create_unique_vertex(self):
+        idx_name = 'test_idx'
+        self._delete_vertex_index(idx_name)
+        self.client.create_vertex_index(idx_name)
+
+        k, v = 'key', uuid1().get_hex()
+        args = (k, v, {k: v})
+        resp = self.client.create_unique_vertex(idx_name, *args)
+        assert resp.headers['status'] == '201'
+        assert resp.results.data.get(k) == v
+
+        resp = self.client.create_unique_vertex(idx_name, *args)
+        assert resp.headers['status'] == '200'
+        assert resp.results.data.get(k) == v
 
 
 # why is this here? - JT 10/22/2012
@@ -48,6 +65,19 @@ class Neo4jIndexTestCase(unittest.TestCase):
         index = self.factory.get_index(Edge, ExactIndex)
         edges = index.query("timestamp", "1*")
         assert len(list(edges)) > 1
+
+    def test_create_unique_vertex(self):
+        index = self.factory.get_index(Vertex, ExactIndex)
+        k, v = 'key', uuid1().get_hex()
+        args = (k, v, {k: v})
+
+        vertex, created = index.create_unique_vertex(*args)
+        assert isinstance(vertex, Vertex)
+        assert created is True
+
+        vertex, created = index.create_unique_vertex(*args)
+        assert isinstance(vertex, Vertex)
+        assert created is False
 
 
 class CypherTestCase(unittest.TestCase):
