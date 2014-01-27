@@ -87,8 +87,26 @@ class Config(object):
         #log = get_logger(__name__)
         bulbs_logger.setLevel(log_level)
         self.log_level = log_level 
+        
         if log_handler is not None:
-            bulbs_logger.addHandler(log_handler())
+            # Don't add log handler twice to prevent duplicate output
+            self._maybe_add_log_handler(log_handler)
+
+    def _maybe_add_log_handler(self, log_handler):
+        """
+        Adds log handler if an instance of it hasn't already been added.
+
+        :param log_handler: Python log handler.
+        :type log_handler: logging.Handler
+        
+        :rtype: None
+
+        """
+        for handler in bulbs_logger.handlers:
+            if isinstance(handler, log_handler):
+                return
+        # log handler hasn't been added yet so add it
+        bulbs_logger.addHandler(log_handler())
 
     def set_neo4j_heroku(self, log_level=ERROR, log_handler=None):
         """
