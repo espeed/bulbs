@@ -36,7 +36,7 @@ vertex_path = "node"
 edge_path = "relationship"
 index_path = "index"
 gremlin_path = "ext/GremlinPlugin/graphdb/execute_script"
-cypher_path = "ext/CypherPlugin/graphdb/execute_query"
+cypher_path = "cypher"
 
 
 class Neo4jResult(Result):
