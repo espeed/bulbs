@@ -200,6 +200,9 @@ class Request(object):
         if params and method is GET:
             params = encode_dict(params)
             uri = "%s?%s" % (uri, urlencode(params))
+            content_type = "%s ; charset=utf-8" % self.content_type
+            get_headers = {'Content-Type': content_type}
+            headers.update(get_headers)
         
         if params and (method in [PUT, POST, DELETE]):
             #params = encode_dict(params)

@@ -55,11 +55,26 @@ class IndexTestCase(BulbsTestCase):
         # https://github.com/espeed/bulbs/issues/117
         # using default index name because that's what create_indexed_vertex() uses
         name = u'Aname M\xf6ller' + bulbs.utils.to_string(random.random())
+        name = bulbs.utils.u(name)
         index_name = Vertex.get_index_name(self.vertices.client.config)
         self.vertices.client.config.set_logger(ERROR)
         self.vertices.index = self.indicesV.get_or_create(index_name)
         v1a = self.vertices.create(name=name)
         v1b = self.vertices.index.lookup(u"name", name)
         assert next(v1b).name == name
+
+    def test_ascii_encoding_index_lookup2(self):
+        # http://stackoverflow.com/questions/23057915/rexster-bulbs-unicode-node-property-node-created-but-not-found
+        # using default index name because that's what create_indexed_vertex() uses
+        name = u'Université de Montréal' + bulbs.utils.to_string(random.random())
+        name = bulbs.utils.u(name)
+        index_name = Vertex.get_index_name(self.vertices.client.config)
+        self.vertices.client.config.set_logger(ERROR)
+        self.vertices.index = self.indicesV.get_or_create(index_name)
+        v1a = self.vertices.create(name=name)
+        v1b = self.vertices.index.lookup(u"name", name)
+        assert next(v1b).name == name
+
+
 
 

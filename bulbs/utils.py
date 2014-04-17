@@ -27,9 +27,10 @@ if sys.version < '3':
     from urlparse import urlsplit, urlparse
 
     # def u(x):
-    #     return codecs.unicode_escape_decode(x)[0]
-
-                
+    #     if isinstance(x, str):
+    #         return x.decode('utf-8')
+    #     return x.encode('utf-8').decode('utf-8')
+                        
 else:
     # ujson is faster but hasn't been ported to Python 3 yet
 #    import json
@@ -40,7 +41,9 @@ else:
     unicode = str
 
     # def u(x):
-    #     return x
+    #     return x.encode('utf-8').decode('utf-8')
+         
+         
 
 # NOTE: now using the same unicode func for both Python 2 and Python 3
 # http://stackoverflow.com/questions/6625782/unicode-literals-that-work-in-python-3-and-2

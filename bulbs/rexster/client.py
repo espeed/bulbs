@@ -318,7 +318,8 @@ class RexsterClient(Client):
         self.config = config or Config(uri)
         self.registry = Registry(self.config)
         self.type_system = JSONTypeSystem()
-        self.request = self.request_class(self.config, self.type_system.content_type)
+        self.content_type = self.type_system.content_type + "; charset=utf-8" 
+        self.request = self.request_class(self.config, self.content_type)
 
         # Rexster supports Gremlin so include the Gremlin-Groovy script library
         self.scripts = GroovyScripts(self.config) 
