@@ -14,7 +14,7 @@ databases and the first piece of a larger Web-development toolkit that
 will be released in the upcoming weeks.
 
 It's like an ORM for graphs, but instead of SQL, you use the
-graph-traveral language `Gremlin <http://gremlin.tinkerpop.com>`_ to
+graph-traversal language `Gremlin <http://gremlin.tinkerpop.com>`_ to
 query the database.
 
 You can use it to connect to `Neo4j Server <http://neo4j.org/>`_ or `Rexster 
