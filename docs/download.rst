@@ -64,7 +64,7 @@ See the `Neo4j docs <http://docs.neo4j.org/chunked/milestone/>`_ for more detail
 Get Rexster
 ~~~~~~~~~~~
 
-To get Rexster, make sure you have `Git <http://git-scm.com/>`_ and `Mavern <http://maven.apache.org/>`_ installed, then do:
+To get Rexster, make sure you have `Git <http://git-scm.com/>`_ and `Maven <http://maven.apache.org/>`_ installed, then do:
 
 .. code-block:: bash
 
