@@ -41,7 +41,7 @@ class Property(object):
     :type nullable: bool
 
     :param indexed: If True, index the Property in the DB. Defaults to False.
-    :type indexeded: bool
+    :type indexed: bool
 
     :ivar fget: Name of the method that gets the calculated Property value.
     :ivar name: Database property name. Defaults to the Property key.
