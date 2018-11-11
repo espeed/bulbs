@@ -33,7 +33,7 @@ And a few Python libraries, such as ujson and httplib2.
 
 ## Where are the docs?
 
-The 0.3.x docs are now online at [Bulbflow.com](http://bulbflow.com).
+The 0.3.x docs are now online at [Bulbflow.org](http://bulbflow.org).
 
 
 * [Bulbs Overview on StackOverflow](http://stackoverflow.com/tags/bulbs/info)
